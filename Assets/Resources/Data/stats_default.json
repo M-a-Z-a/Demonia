@@ -1,0 +1,32 @@
+{
+
+
+  "stats": [
+    {
+      "name": "health",
+      "value": 100,
+      "max": 100
+    },
+    {
+      "name": "shield",
+      "value": 100,
+      "max": 100
+    }
+  ],
+
+  "attributes": [
+    {
+      "name": "name0",
+      "value": 0
+    },
+    {
+      "name": "name1",
+      "value": 0
+    },
+    {
+      "name": "name2",
+      "value": 2
+    }
+  ]
+
+}
