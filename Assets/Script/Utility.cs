@@ -36,6 +36,11 @@ public static class Utility
 
     public static Vector2 TowardsTargetVector(Vector2 a, Vector2 b, Vector2 add)
     { return new Vector2(TowardsTargetValue(a.x, b.x, add.x), TowardsTargetValue(a.y, b.y, add.y)); }
+    public static Vector2 TowardsTargetVector(Vector2 a, Vector2 b, float add)
+    {
+        Vector2 _add = (b - a).Abs().normalized * add;
+        return new Vector2(TowardsTargetValue(a.x, b.x, _add.x), TowardsTargetValue(a.y, b.y, _add.y)); 
+    }
     public static Vector2 Vector2Clamp(Vector2 vec, Vector2 min, Vector2 max)
     { return new Vector2(Mathf.Clamp(vec.x, min.x, max.x), Mathf.Clamp(vec.y, min.x, max.x)); }
     public static Vector2 Vector2Abs(Vector2 vec)
@@ -94,7 +99,9 @@ public static class Utility
 
 
     public static float Scalar(Vector2 a, Vector2 b)
-    { return a.x * b.x + a.y * b.y; }
+    { 
+        return a.x * b.x + a.y * b.y; 
+    }
 }
 
 

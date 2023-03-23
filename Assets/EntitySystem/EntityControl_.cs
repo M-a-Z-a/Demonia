@@ -55,9 +55,9 @@ public class EntityControl_ : Entity
 
 
 
-    protected override void Start()
+    protected override void Awake()
     {
-        base.Start();
+        base.Awake();
         rb = GetComponent<Rigidbody2D>();
         bcoll = GetComponent<BoxCollider2D>();
 
@@ -65,12 +65,11 @@ public class EntityControl_ : Entity
         pmat.bounciness = 0;
         pmat.friction = 0;
         rb.sharedMaterial = pmat;
-        lastPosition = transform.position;
 
         SetupStateGroups();
     }
 
-    private void Awake()
+    private void Start()
     {
         lastPosition = transform.position;
     }

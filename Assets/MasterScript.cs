@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MasterScript : MonoBehaviour
@@ -10,7 +11,7 @@ public class MasterScript : MonoBehaviour
     public InputManager.InputVector2 inputVector;
 
     // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
         left = InputManager.SetInputKey("left", KeyCode.LeftArrow);
         right = InputManager.SetInputKey("right", KeyCode.RightArrow);
@@ -21,6 +22,10 @@ public class MasterScript : MonoBehaviour
         directionY = InputManager.SetInputDirection("y", up, down);
 
         inputVector = InputManager.SetInputVector2("direction", directionX, directionY);
+    }
+    void Start()
+    {
+
     }
 
     // Update is called once per frame

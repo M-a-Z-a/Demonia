@@ -24,14 +24,16 @@ public class ScreenFader : MonoBehaviour
     Coroutine cFade, cPause;
     List<IEnumerator> fadeQue = new();
 
+    private void Awake()
+    {
+        Validate();
+        if (!_sfades.Contains(this))
+        { _sfades.Add(this); }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        Validate();
-
-        if (!_sfades.Contains(this))
-        { _sfades.Add(this); }
-        
         SetColor(Color.black);
         FadeTo(Color.white, 1f);
         FadeTo(new Color(1, 1, 1, 0f), 2f);
@@ -63,7 +65,7 @@ public class ScreenFader : MonoBehaviour
 
     void Validate()
     {
-        if (TestAndGetRawImage())
+        if (!TestAndGetRawImage())
         {
             Debug.LogWarning($"Screen fader does not have RawImage component!", this);
             this.enabled = false;

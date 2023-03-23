@@ -14,12 +14,17 @@ public class CameraControl : MonoBehaviour
     Vector2 targetPos;
     public Rect bounds;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
         instance = this;
         cam = GetComponent<Camera>();
         pixcam = GetComponent<PixelPerfectCamera>();
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        followTarget = Player.instance.transform;
     }
 
     // Update is called once per frame

@@ -11,7 +11,7 @@ public class EntityStats : MonoBehaviour
 
     [SerializeField] string entityStatsPath = "";
     static string _gEntityStatsPath = "Data/stats_default";
-    static EntityStats _gEntityStats = new EntityStats();
+    static EntityStats _gEntityStats;
     public Dictionary<string, Stat> stats { get => _stats; }
     public Dictionary<string, Attribute> attributes { get => _attributes; }
     public List<StatusEffect> statusEffects { get => _statusEffects; }

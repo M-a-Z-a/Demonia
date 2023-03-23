@@ -10,53 +10,72 @@ public class EntityMoverClasses : MonoBehaviour
 
         public RaycastHit2D[] rays;
         protected RaycastHit2D rMin, rMax, rhit;
-        public Vector2 _origin, _offset;
+        public Vector2 _direction, _origin, _offset;
         public int rayCount;
-        public int hits;
+        public int hits, tresholdHits;
         public int shortIndex;
+        public LayerMask layerMask; 
         public RaycastHit2D shortHit { get => rays[shortIndex]; }
+        public RaycastHit2D first { get => rays[0]; }
+        public RaycastHit2D last { get => rays[rays.Length - 1]; }
 
-        protected float hitDistance, hitBaseDistance;
+        public float hitDistance, hitBaseDistance, hitTresholdDistance;
 
-        public abstract int Cast(Vector2 offset, Rect rect, Vector2 direction, float distance, float base_distance, LayerMask layerMask);
+        public abstract int Cast(Vector2 offset, Rect rect, float distance, float treshold = -1);
+
+        public RaycastHit2D this[int index]
+        { get => rays[index]; }
     }
 
     public class RaycastGroup2DVertical : RaycastGroup2D
     {
 
-
-        public RaycastGroup2DVertical(int rayCount)
+        public RaycastGroup2DVertical(int rayCount, Vector2 direction, Vector2 origin_offset, LayerMask layerMask)
         {
             rays = new RaycastHit2D[rayCount];
+            _origin = origin_offset;
             this.rayCount = rayCount;
+            _direction = direction;
+            this.layerMask = layerMask;
         }
 
 
-        public override int Cast(Vector2 offset, Rect rect, Vector2 direction, float distance, float base_distance, LayerMask layerMask)
+        public override int Cast(Vector2 offset, Rect rect, float distance, float treshold = 0)
         {
-
             Vector2 pos = offset + _origin;
+            float base_dist = _direction.y < 0 ? (rect.height / 2 + _origin.y) : (rect.height / 2 - _origin.y);
 
-            float wlen = CastSideRays(pos, rect.width, out Vector2 vecLeft, out Vector2 vecRight, layerMask);
+            float wlen = CastSideRays(pos, rect.width, out Vector2 vecLeft, out Vector2 vecRight);
             float jump = wlen / (rays.Length - 1);
-            float dist = base_distance + distance;
+            float dist = base_dist + distance;
 
             shortIndex = 0;
-            hits = 0;
+            hits = 0; tresholdHits = 0;
             hitDistance = dist;
-            hitBaseDistance = hitDistance - base_distance;
+            hitBaseDistance = hitDistance - base_dist;
+            hitTresholdDistance = hitBaseDistance - treshold;
 
             Vector2 rpos;
             for (int i = 0; i < rays.Length; i++)
             {
-                rpos = new Vector2(pos.x + vecLeft.x + jump * i, pos.y + vecLeft.y);
-                rhit = Physics2D.Raycast(rpos, direction, dist, layerMask);
+                rpos = new Vector2(vecLeft.x + jump * i,  vecLeft.y);
+                rhit = Physics2D.Raycast(rpos, _direction, dist, layerMask);
                 if (rhit.collider)
                 {
-                    shortIndex = i;
                     hits++;
-                    hitDistance = rhit.distance;
-                    hitBaseDistance = hitDistance - base_distance;
+                    if (rhit.distance < hitDistance)
+                    {
+                        shortIndex = i;
+                        hitDistance = rhit.distance;
+                        hitBaseDistance = hitDistance - base_dist; 
+                        hitTresholdDistance = hitBaseDistance - treshold;
+                    }
+                    if (hitBaseDistance < treshold) tresholdHits++;
+                    Debug.DrawLine(rpos, rhit.point, Color.red);
+                }
+                else
+                {
+                    Debug.DrawRay(rpos, _direction * dist, Color.yellow);
                 }
                 rays[i] = rhit;
             }
@@ -65,7 +84,7 @@ public class EntityMoverClasses : MonoBehaviour
         }
 
 
-        float CastSideRays(Vector2 pos, float width, out Vector2 vecLeft, out Vector2 vecRight, LayerMask layerMask)
+        float CastSideRays(Vector2 pos, float width, out Vector2 vecLeft, out Vector2 vecRight)
         {
             vecLeft = Vector2.zero; vecRight = Vector2.zero;
             float w = width / 2;
@@ -73,18 +92,98 @@ public class EntityMoverClasses : MonoBehaviour
             rMax = Physics2D.Raycast(pos, Vector2.right, w, layerMask);
 
             if (rMin.collider)
-            { vecLeft = rMin.point; }
+            { vecLeft = rMin.point; vecLeft.x += 0.05f; }
             else
-            { vecLeft = new Vector2(pos.x - w, pos.y); vecLeft.x += 0.02f; }
+            { vecLeft = new Vector2(pos.x - w, pos.y);  }
 
             if (rMax.collider)
-            { vecRight = rMax.point; vecRight.x -= 0.02f; }
+            { vecRight = rMax.point; vecRight.x -= 0.05f; }
             else
-            { vecLeft = new Vector2(pos.x + w, pos.y); }
+            { vecRight = new Vector2(pos.x + w, pos.y); }
 
             return vecRight.x - vecLeft.x;
         }
 
+    }
+
+    
+    public class RaycastGroup2DHorizontal : RaycastGroup2D
+    {
+        public RaycastGroup2DHorizontal(int rayCount, Vector2 direction, Vector2 origin_offset, LayerMask layerMask)
+        {
+            rays = new RaycastHit2D[rayCount];
+            _origin = origin_offset;
+            this.rayCount = rayCount;
+            _direction = direction;
+            this.layerMask = layerMask;
+        }
+
+
+        public override int Cast(Vector2 offset, Rect rect, float distance, float treshold = -1)
+        {
+            Vector2 pos = offset + _origin;
+            float base_dist = _direction.x < 0 ? (rect.width / 2 + _origin.x) : (rect.width / 2 - _origin.x);
+
+            float wlen = CastSideRays(pos, rect.height, out Vector2 vecDown, out Vector2 vecUp);
+            float jump = wlen / (rays.Length - 1);
+            float dist = base_dist + distance;
+
+            shortIndex = 0;
+            hits = 0; tresholdHits = 0;
+            hitDistance = dist;
+            hitBaseDistance = hitDistance - base_dist;
+
+            hitTresholdDistance = hitBaseDistance - treshold;
+
+            Vector2 rpos;
+            for (int i = 0; i < rays.Length; i++)
+            {
+                rpos = new Vector2(vecDown.x, vecDown.y + jump * i);
+                rhit = Physics2D.Raycast(rpos, _direction, dist, layerMask);
+                if (rhit.collider)
+                {
+                    hits++;
+                    if (rhit.distance < hitDistance)
+                    {
+                        shortIndex = i;
+                        hitDistance = rhit.distance;
+                        hitBaseDistance = hitDistance - base_dist;
+                        hitTresholdDistance = hitBaseDistance - treshold;
+                    }
+                    if (hitBaseDistance < treshold) tresholdHits++;
+                       
+                    Debug.DrawLine(rpos, rhit.point, Color.red);
+                }
+                else
+                {
+                    Debug.DrawRay(rpos, _direction * dist, Color.yellow);
+                }
+                rays[i] = rhit;
+            }
+
+            return hits;
+        }
+
+
+        float CastSideRays(Vector2 pos, float height, out Vector2 vecDown, out Vector2 vecUp)
+        {
+            vecDown = Vector2.zero; vecUp = Vector2.zero;
+            float h = height / 2;
+            rMin = Physics2D.Raycast(pos, Vector2.down, h, layerMask);
+            rMax = Physics2D.Raycast(pos, Vector2.up, h, layerMask);
+
+            if (rMin.collider)
+            { vecDown = rMin.point; vecDown.y += 0.05f; }
+            else
+            { vecDown = new Vector2(pos.x, pos.y - h); }
+
+            if (rMax.collider)
+            { vecUp = rMax.point; vecUp.y -= 0.05f; }
+            else
+            { vecUp = new Vector2(pos.x, pos.y + h); }
+
+            return vecUp.y - vecDown.y;
+        }
     }
 
 

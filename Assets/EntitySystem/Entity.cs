@@ -13,7 +13,7 @@ public class Entity : MonoBehaviour
     public Vector2 velocity { get => _velocity; }
     protected Vector2 _velocity;
 
-    protected virtual void Start()
+    protected virtual void Awake()
     {
         FetchEntityComponents();
     }

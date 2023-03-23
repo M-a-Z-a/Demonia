@@ -32,7 +32,7 @@ public class Player : MonoBehaviour
     bool haltActions = false, haltMovement = false, haltJump = false;
     float haltActions_t = 0f, haltMovement_t = 0f, haltJump_t = 0f;
 
-    void Start()
+    private void Awake()
     {
         if (instance)
         { Debug.Log("Instance of \"Player\" already exists?"); }
@@ -41,12 +41,6 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         entity = GetComponent<EntityController>();
         entityStats = GetComponent<EntityStats>();
-        inputVector = InputManager.GetInputVector<InputVector2>("direction");
-        left = inputVector.inputX.negative;
-        left = inputVector.inputX.positive;
-        jump = InputManager.SetInputKey("jump", KeyCode.X);
-
-        cameraTarget = transform.Find("CameraTarget");
 
         speed = entityStats.GetSetAttribute("speed", 10);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 10);
@@ -55,7 +49,15 @@ public class Player : MonoBehaviour
         wallGrabDrag = entityStats.GetSetAttribute("wallgrabdrag", 4f);
         WallGrabLowVelocity = entityStats.GetSetAttribute("wallgrablowvelocity", -15f);
 
-        CameraControl.instance.followTarget = transform;
+        cameraTarget = transform.Find("CameraTarget");
+    }
+
+    void Start()
+    {
+        inputVector = InputManager.GetInputVector<InputVector2>("direction");
+        left = inputVector.inputX.negative;
+        right = inputVector.inputX.positive;
+        jump = InputManager.SetInputKey("jump", KeyCode.X);
     }
 
 
