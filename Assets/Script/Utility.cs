@@ -49,6 +49,19 @@ public static class Utility
     { return Vector2Abs(vec); }
     public static Vector2 Redirect(this Vector2 vec, Vector2 dir)
     { float mag = vec.magnitude; return dir * mag; }
+    public static Vector2 Redirect(this Vector2 vec, Vector2 dir, float delta)
+    { float mag = vec.magnitude * delta; return dir * mag; }
+
+    public static Vector2 MoveAndRedirect(this Vector2 vec, float distance, Vector2 redirect, float delta)
+    {
+        float mag = vec.magnitude;
+        float lmin = Mathf.Min(distance, mag);
+        float leftov = distance - lmin;
+        Vector2 nvec = vec.normalized * lmin;
+        if (leftov > 0) return nvec + redirect * leftov;
+        return nvec;
+    }
+
     public static float Angle(this Vector2 vec)
     { return Vector2.Angle(vec, Vector2.right); }
     public static Vector2 Turn90CW(this Vector2 vec)
@@ -68,10 +81,20 @@ public static class Utility
 
     public static Vector2 Add(this Vector2 vec, float x = 0, float y = 0)
     { return new Vector2(vec.x + x, vec.y + y); }
+    public static Vector2 Add(this Vector2 vec, Vector2 o)
+    { return new Vector2(vec.x + o.x, vec.y + o.y); }
+    public static Vector2 Add(this Vector2 vec, Vector3 o)
+    { return new Vector2(vec.x+o.x, vec.y + o.y); }
     public static Vector3 Add(this Vector3 vec, float x = 0, float y = 0, float z = 0)
     { return new Vector3(vec.x + x, vec.y + y, vec.z + z); }
+    public static Vector3 Add(this Vector3 vec, Vector2 o)
+    { return new Vector3(vec.x + o.x, vec.y + o.y, vec.z); }
+    public static Vector3 Add(this Vector3 vec, Vector3 o)
+    { return new Vector3(vec.x + o.x, vec.y + o.y, vec.z + o.z); }
 
 
+    public static float Scalar(Vector2 a, Vector2 b)
+    { return a.x * b.x + a.y * b.y; }
 }
 
 
