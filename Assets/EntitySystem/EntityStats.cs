@@ -15,7 +15,6 @@ public class EntityStats : MonoBehaviour
     public Dictionary<string, Stat> stats { get => _stats; }
     public Dictionary<string, Attribute> attributes { get => _attributes; }
     public List<StatusEffect> statusEffects { get => _statusEffects; }
-    public bool TEST_loadjson;
 
     private void Start()
     {
@@ -24,11 +23,6 @@ public class EntityStats : MonoBehaviour
 
     private void OnValidate()
     {
-        if (TEST_loadjson)
-        { 
-            TEST_loadjson = false;
-            LoadStats();
-        }
     }
 
     private void Update()

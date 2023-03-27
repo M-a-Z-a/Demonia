@@ -10,18 +10,24 @@ public class Entity : MonoBehaviour
     public EntityStats entityStats { get => _entityStats; }
     protected EntityStats _entityStats;
 
+
     public Vector2 velocity { get => _velocity; }
-    protected Vector2 _velocity;
+    protected Vector2 _velocity = Vector2.zero;
 
     protected virtual void Awake()
     {
         FetchEntityComponents();
+    }
+    protected virtual void Start()
+    {
+
     }
 
     protected virtual void OnValidate()
     {
         Rename(_entityName);
     }
+
 
 
     public void Rename(string name)

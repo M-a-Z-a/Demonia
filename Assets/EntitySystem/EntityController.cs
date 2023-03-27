@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using static EntityMoverClasses;
+using static EntityUtil;
 using static Utility;
 
 public class EntityController : Entity
@@ -62,7 +62,7 @@ public class EntityController : Entity
         Rect r = new Rect(bcoll.offset - bcoll.size / 2, bcoll.size);
         rect = r;
 
-        Vector2 offset = new Vector2(0.01f, 0.01f); // Vector2.zero;
+        Vector2 offset = new Vector2(0.025f, 0.025f); // Vector2.zero;
         collDist = Vector2.one * Physics2D.defaultContactOffset + offset; //new Vector2(0.04f, 0.04f);
         detectDist = new Vector2(0.05f, 0.05f);
         collHalf = bcoll.size / 2 + collDist;
@@ -71,12 +71,7 @@ public class EntityController : Entity
         rcgUp = new RaycastGroup2DVertical(3, Vector2.up, new Vector2(0, 0.5f), groundMask);
         rcgLeft = new RaycastGroup2DHorizontal(5, Vector2.left, new Vector2(0, 0), groundMask);
         rcgRight = new RaycastGroup2DHorizontal(5, Vector2.right, new Vector2(0, 0), groundMask);
-        /*
-        float xMin = r.xMin + offset.x, 
-            xMax = r.xMax - offset.x, 
-            yMin = r.yMin + offset.y, 
-            yMax = r.yMax - offset.y;
-        */
+
     }
 
 
@@ -174,8 +169,6 @@ public class EntityController : Entity
     void GroundedMove(ref Vector2 pos, ref Vector2 vel)
     {
         groundedVelocity = vel.magnitude;
-        vel = TowardsTargetVector(vel, _gNormal.Turn90CW() * targetMove.x * speed, 4f * Time.deltaTime);
-        Debug.Log(vel);
         if (vel.x > 0)
         {
             float a = 0;

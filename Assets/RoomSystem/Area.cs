@@ -4,18 +4,32 @@ using UnityEngine;
 
 public class Area : MonoBehaviour
 {
-    static Area _activeArea;
-    public static Area activeArea { get => _activeArea; }
+    public static Area activeArea { get; protected set; }
+    List<Room> rooms;
 
+    private void Awake()
+    {
+        activeArea = this;
+    }
     private void Start()
     {
-        if (ScreenFader.GetScreenFader("main fader", out ScreenFader sfade))
+        rooms = new();
+        foreach (Transform t in transform)
         {
-            sfade.SetColor(Color.black);
-            sfade.Pause(1f);
-            sfade.FadeTo(Color.white, 0.5f);
-            sfade.FadeTo(new Color(1, 1, 1, 0f), 1f);
+            if (t.TryGetComponent<Room>(out Room r))
+            { rooms.Add(r); }
         }
     }
 
+    public static bool FindPlayerRoom(out Room room)
+    {
+        room = null;
+        Vector2 ppos = Player.pTransform.position;
+        foreach (Room r in activeArea.rooms)
+        {
+            if (r.roomBounds.Contains(ppos))
+            { room = r; return true; }
+        }
+        return false;
+    }
 }

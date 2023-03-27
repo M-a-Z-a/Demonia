@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EntityMoverClasses : MonoBehaviour
+public class EntityUtil : MonoBehaviour
 {
 
     public abstract class RaycastGroup2D

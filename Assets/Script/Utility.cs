@@ -5,19 +5,24 @@ using UnityEngine;
 public static class Utility
 {
 
+    public const float _rad90 = Mathf.PI / 2;
+    public const float _rad180 = Mathf.PI;
+    public const float _rad270 = _rad90 * 3;
+    public const float _rad360 = Mathf.PI * 2;
+    
+
     public static float ClampMultiplier(float value, float mult, float min, float max)
     { return Mathf.Clamp(value * mult, min, max) / mult; }
     public static float ClampDivision(float value, float div, float min, float max)
     { return Mathf.Clamp(value / div, min, max) * div; }
 
-    public static float SineSlider(float d)
-    { return Mathf.Sin(d); }
-    public static float SineSlider(float d, float r)
-    { return Mathf.Sin(d) * r; }
-    public static float InverseSineSlider(float d)
-    { return 1f - Mathf.Sin(d); }
-    public static float InverseSineSlider(float d, float r)
-    { return (1f - Mathf.Sin(d)) * r; }
+    public static float LerpCurve01(float t)
+    { return (Mathf.Cos((1f-t)*Mathf.PI)+1)/2; }
+    public static float LerpCurve(float a, float b, float t)
+    { return Mathf.Lerp( a, b, LerpCurve01(t) ); }
+
+    public static float Range(float a, float b)
+    { return b - a; }
 
     public static float TowardsTargetValue(float a, float b, float add)
     {
@@ -27,6 +32,20 @@ public static class Utility
         { return Mathf.Max(a - add, b); }
         return a;
     }
+
+    public static float TowardsTargetVelocity(float vel, float target, float attack, float release, float t)
+    {
+        if (target > vel)
+        { 
+            
+        }
+        if (target < vel)
+        { 
+            
+        }
+        return vel;
+    }
+
     public static bool IsEqualPolarity(float a, float b)
     {
         if (a < 0)
@@ -39,7 +58,7 @@ public static class Utility
     public static Vector2 TowardsTargetVector(Vector2 a, Vector2 b, float add)
     {
         Vector2 _add = (b - a).Abs().normalized * add;
-        return new Vector2(TowardsTargetValue(a.x, b.x, _add.x), TowardsTargetValue(a.y, b.y, _add.y)); 
+        return new Vector2(TowardsTargetValue(a.x, b.x, _add.x), TowardsTargetValue(a.y, b.y, _add.y));
     }
     public static Vector2 Vector2Clamp(Vector2 vec, Vector2 min, Vector2 max)
     { return new Vector2(Mathf.Clamp(vec.x, min.x, max.x), Mathf.Clamp(vec.y, min.x, max.x)); }
@@ -89,7 +108,7 @@ public static class Utility
     public static Vector2 Add(this Vector2 vec, Vector2 o)
     { return new Vector2(vec.x + o.x, vec.y + o.y); }
     public static Vector2 Add(this Vector2 vec, Vector3 o)
-    { return new Vector2(vec.x+o.x, vec.y + o.y); }
+    { return new Vector2(vec.x + o.x, vec.y + o.y); }
     public static Vector3 Add(this Vector3 vec, float x = 0, float y = 0, float z = 0)
     { return new Vector3(vec.x + x, vec.y + y, vec.z + z); }
     public static Vector3 Add(this Vector3 vec, Vector2 o)
@@ -97,13 +116,144 @@ public static class Utility
     public static Vector3 Add(this Vector3 vec, Vector3 o)
     { return new Vector3(vec.x + o.x, vec.y + o.y, vec.z + o.z); }
 
+    public static void DrawGizmo(this Rect rect, Vector2 offset)
+    {
+        Gizmos.DrawRay(rect.min, new Vector2(rect.width, 0));
+        Gizmos.DrawRay(rect.min, new Vector2(0, rect.height));
+        Gizmos.DrawRay(rect.max, new Vector2(-rect.width, 0));
+        Gizmos.DrawRay(rect.max, new Vector2(0, rect.height));
+    }
+    public static Rect Rect(this BoxCollider2D coll)
+    { return new Rect(coll.offset+coll.size/2, coll.size); }
+    public static void SetRect(this Rect rect, BoxCollider2D coll)
+    { rect.position = coll.offset; rect.size = coll.size; }
+    public static Vector2 GetHalfSize(this Rect rect)
+    { return new Vector2(rect.width / 2, rect.height / 2); }
 
-    public static float Scalar(Vector2 a, Vector2 b)
-    { 
-        return a.x * b.x + a.y * b.y; 
+    public static float ToRad(this float value)
+    { return value * Mathf.Deg2Rad; }
+    public static float ToDeg(this float value)
+    { return value * Mathf.Rad2Deg; }
+
+
+    public static Component GetSetCompononent<T>(this GameObject go, T component) where T : Component
+    {
+        if (go.TryGetComponent<T>(out T c_out)) 
+        { return c_out; }
+        return go.AddComponent<T>();
+    }
+
+
+    public class CurveSlider
+    {
+        float _easeIn, _easeOut, _start, _end, _rang, _xMin, _astart, _aend;
+        bool isLinear = false;
+        public CurveSlider(float ease_in, float ease_out)
+        { UpdateValues(ease_in, ease_out); }
+
+        void UpdateValues(float ease_in, float ease_out)
+        {
+            _easeIn = Mathf.Clamp01(ease_in);
+            _easeOut = Mathf.Clamp01(ease_out);
+
+            float a1 = _rad90 - _rad90 * _easeIn;
+            float a2 = _rad90 - _rad90 * _easeOut;
+
+
+            _astart = Mathf.Sin(a1);
+            _aend = Mathf.Sin(a2);
+        }
+
+        public float Evaluate(float a, float b, float t)
+        { return Mathf.Lerp(a, b, Evaluate01(t)); }
+        public float Evaluate01(float t)
+        {
+            t = Mathf.Clamp01(t);
+            float t1 = LerpCurve01(t);
+
+            float a1 = _astart * t;
+            float a2 = 1f - _aend * (1f - t);
+
+            return Mathf.Lerp(a1, a2, t1);
+        }
+
+        public void TESTVAL()
+        { Debug.Log($"{_astart} {_aend}"); }
+
+        IEnumerator<float> IGetLine(int count)
+        {
+            float div = Mathf.Max(count - 1, 1);
+            int i; for (i = 0; i < count; i++)
+            { yield return Evaluate01((float)i / div); }
+        }
+
+        public void DrawGizmo(Vector2 offset, Vector2 scale, int segments)
+        {
+            float div = Mathf.Max(segments - 1, 1);
+            Vector2 lpos = new Vector2(offset.x, offset.y);
+            Vector2 npos; float idiv;
+            int i; for(i = 1; i < segments; i++)
+            {
+                idiv = (float)i / div;
+                npos = new Vector2(offset.x + scale.x * idiv, offset.y + Evaluate01(idiv) * scale.y);
+                Gizmos.DrawLine(lpos, npos);
+                lpos = npos;
+            }
+        }
+    }
+
+    public class Curve
+    {
+
+        float _attack, _attackTime, _release, _releaseTime, _delta;
+        public float attack { get => _attack; set => Mathf.Abs(value); }
+        public float release { get => _release; set => Mathf.Abs(value); }
+        public bool accelerating = false;
+        public Curve(float attack, float release)
+        {
+            _attack = attack; _release = release; 
+        }
+
+        public float Evaluate()
+        {
+            if (accelerating) return EvaluateAttack(_delta);
+            return EvaluateRelease(_delta);
+        }
+
+        float EvaluateAttack(float d)
+        {
+            float tconst = -1f / (_attackTime / Mathf.Log(0.01f));
+            return Mathf.Exp(_delta / tconst);
+        }
+        float EvaluateRelease(float d)
+        {
+            float tconst = -1f / (_releaseTime / Mathf.Log(0.01f));
+            return Mathf.Exp(_delta / tconst);
+        }
+
+        IEnumerator IAttack()
+        {
+            float d = 0;
+            while (d < 1f)
+            {
+                d += Time.deltaTime / _attackTime;
+                EvaluateAttack(d);
+                yield return null;
+            }
+        }
+        IEnumerator IRelease()
+        {
+            float d = 0;
+            while (d > 0)
+            {
+                d -= Time.deltaTime / _releaseTime;
+                EvaluateAttack(d);
+                yield return null;
+            }
+        }
+        
     }
 }
-
 
 
 

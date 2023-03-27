@@ -7,6 +7,7 @@ using UnityEngine.Events;
 
 public class ScreenFader : MonoBehaviour
 {
+    
     static List<ScreenFader> _sfades = new();
     public static List<ScreenFader> screenFades { get => _sfades; }
     
@@ -29,16 +30,20 @@ public class ScreenFader : MonoBehaviour
         Validate();
         if (!_sfades.Contains(this))
         { _sfades.Add(this); }
+        SetColor(Color.clear);
     }
 
-    // Start is called before the first frame update
     void Start()
     {
-        SetColor(Color.black);
-        FadeTo(Color.white, 1f);
-        FadeTo(new Color(1, 1, 1, 0f), 2f);
     }
 
+    public static bool GetScreenFader(int index, out ScreenFader screenFader)
+    {
+        if (index < 0 && index >= _sfades.Count) 
+        { screenFader = null; return false; }
+        screenFader = _sfades[index]; 
+        return true;
+    }
     public static bool GetScreenFader(string alias, out ScreenFader screenFader)
     {
         foreach (ScreenFader sf in _sfades)
@@ -62,6 +67,15 @@ public class ScreenFader : MonoBehaviour
         }
         return sflist.Count;
     }
+    public static List<string> GetScreenFaderAliases()
+    {
+        List<string> nlist = new List<string>();
+        for (int i = 0; i < _sfades.Count; i++)
+        { nlist.Add(_sfades[i].alias); }
+        return nlist;
+    }
+    
+    
 
     void Validate()
     {
@@ -91,27 +105,28 @@ public class ScreenFader : MonoBehaviour
     }
 
 
-    public bool FadeTo(Color? color, float time)
+
+    public Coroutine FadeTo(Color? color, float time)
     { return FadeFromTo(null, color, time); }
-    public bool FadeTo(Color? color, float time, FadeColorDeltaDelegate delta_scale)
+    public Coroutine FadeTo(Color? color, float time, FadeColorDeltaDelegate delta_scale)
     { return FadeFromTo(null, color, time); }
-    public bool FadeFromTo(Color? start_color, Color? end_color, float time)
+    public Coroutine FadeFromTo(Color? start_color, Color? end_color, float time)
     {
-        if (!TestAndGetRawImage()) return false;
+        if (!TestAndGetRawImage()) return null;
         int fque = fadeQue.Count;
         fadeQue.Add(IFade(start_color, end_color, time, FadeColorDeltaDefault));
         if (fque == 0)
         { cFade = StartCoroutine(fadeQue[0]); }
-        return true;
+        return cFade;
     }
-    public bool FadeFromTo(Color? start_color, Color? end_color, float time, FadeColorDeltaDelegate delta_scale)
+    public Coroutine FadeFromTo(Color? start_color, Color? end_color, float time, FadeColorDeltaDelegate delta_scale)
     {
-        if (!TestAndGetRawImage()) return false;
+        if (!TestAndGetRawImage()) return null;
         int fque = fadeQue.Count;
         fadeQue.Add(IFade(start_color, end_color, time, delta_scale));
         if (fque == 0)
         { cFade = StartCoroutine(fadeQue[0]); }
-        return true;
+        return cFade;
     }
 
     public bool SetColor(Color color, bool stop = true)
@@ -172,7 +187,6 @@ public class ScreenFader : MonoBehaviour
         paused = false;
         cPause = null;
     }
-
 
     Color FadeColorDeltaDefault(float d, Color a, Color b)
     { return Color.Lerp(a, b, d); }
