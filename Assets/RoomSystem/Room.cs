@@ -49,7 +49,6 @@ public class Room : MonoBehaviour
         if (activeRoom == null)
         { 
             activeRoom = this;
-            CameraControl.instance.bounds = roomBounds;
         }
     }
 

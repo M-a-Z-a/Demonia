@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Text.RegularExpressions;
 
 public class EntityStats : MonoBehaviour
 {
@@ -8,13 +9,19 @@ public class EntityStats : MonoBehaviour
     [SerializeField] Dictionary<string, Stat> _stats = new();
     [SerializeField] Dictionary<string, Attribute> _attributes = new();
     [SerializeField] List<StatusEffect> _statusEffects = new();
+    Dictionary<string, int> _flags = new();
 
     [SerializeField] string entityStatsPath = "";
     static string _gEntityStatsPath = "Data/stats_default";
-    static EntityStats _gEntityStats;
+    //static EntityStats _gEntityStats;
     public Dictionary<string, Stat> stats { get => _stats; }
     public Dictionary<string, Attribute> attributes { get => _attributes; }
     public List<StatusEffect> statusEffects { get => _statusEffects; }
+
+    private void Awake()
+    {
+        GetSetStat("health");
+    }
 
     private void Start()
     {
@@ -30,6 +37,48 @@ public class EntityStats : MonoBehaviour
         UpdateEffects();
     }
 
+    public bool GetFlag(string flag)
+    { return _flags.ContainsKey(flag); }
+    void AddFlag(string flag)
+    {
+        if (_flags.ContainsKey(flag))
+        { _flags[flag]++; return; }
+        _flags.Add(flag, 1);
+    }
+    void RemoveFlag(string flag)
+    {
+        if (_flags.TryGetValue(flag, out int v))
+        { 
+            if (v > 1) 
+            { _flags["flag"]--; return; }
+            _flags.Remove("flag");
+        }
+    }
+
+
+    public void ApplyDamage(Damage damage, MonoBehaviour origin, bool applyEffects = true)
+    {
+        for (int i = 0; i < damage.flags.Count; i++)
+        {
+            switch (damage.flags[i])
+            {
+                case "positive":
+                    break;
+
+                case "neutral":
+                    break;
+
+                case "negative":
+                default:
+                    break;
+            }
+        }
+        _stats["health"].value -= damage.damage;
+
+        if (!applyEffects) return;
+        for (int i = 0; i < damage.effects.Count; i++)
+        { AddEffect(damage.effects[i], origin); }
+    }
 
     public bool AddEffect(StatusEffect effect, MonoBehaviour origin, bool apply_OnStart = true)
     {
@@ -106,13 +155,14 @@ public class EntityStats : MonoBehaviour
         return _attributes[name];
     }
 
-
+    /*
     public static bool TryGetGlobalAttribute(string name, out Attribute attr)
     { return _gEntityStats.TryGetAttribute(name, out attr); }
     public static Attribute GetGlobalAttribute(string name)
     { _gEntityStats.TryGetAttribute(name, out Attribute attr); return attr; }
     public static Attribute GetSetGlobalAttribute(string name, float value_if_set = 0f)
     { return _gEntityStats.GetSetAttribute(name, value_if_set); }
+    */
 
 
     [System.Serializable]
@@ -168,12 +218,14 @@ public class EntityStats : MonoBehaviour
     [System.Serializable]
     public class StatusEffect
     {
-        string _name;
-        MonoBehaviour _origin;
-        EntityStats _estats;
-        protected EntityStats entityStats { get => _estats; }
         public string name { get => _name; }
-
+        string _name;
+        protected EntityStats entityStats { get => _estats; }
+        EntityStats _estats;
+        public List<string> flags { get => _flags; }
+        List<string> _flags = new();
+        public MonoBehaviour origin { get => _origin; }
+        MonoBehaviour _origin;
         public StatusEffect(string name)
         { _name = name; }
 
@@ -197,9 +249,35 @@ public class EntityStats : MonoBehaviour
             { return _estats.RemoveEffect(this); }
             return false;
         }
+
+        protected bool AddFlag(string flag)
+        {
+            if (_flags.Contains(flag)) return false;
+            _flags.Add(flag);
+            return true;
+        }
+        protected bool RemoveFlag(string flag)
+        { return _flags.Remove(flag); }
+
     }
 
+    public class Damage
+    {
+        public float damage { get => _damage; }
+        protected float _damage;
+        public List<string> flags { get => _flags; }
+        protected List<string> _flags;
+        public List<StatusEffect> effects { get => _effects; }
+        protected List<StatusEffect> _effects;
 
+        public Damage(float damage, IEnumerable<StatusEffect> statusEffects = null, IEnumerable<string> flags = null)
+        {
+            _damage = Mathf.Max(damage, 0);
+            _effects = statusEffects == null ? new() : new(statusEffects);
+            _flags = flags == null ? new() : new(flags);
+        }
+
+    }
 
 
 
@@ -221,10 +299,11 @@ public class EntityStats : MonoBehaviour
     }
 
 
-
+    /*
     public static void LoadGlobalDefaults()
     { _gEntityStats.LoadStats(_gEntityStatsPath, false); }
 
+    */
 
     public bool LoadStats(bool compareToDefault = true)
     { return LoadStats(entityStatsPath, compareToDefault); }
