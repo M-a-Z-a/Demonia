@@ -13,7 +13,6 @@ public class EntityStats : MonoBehaviour
 
     [SerializeField] string entityStatsPath = "";
     static string _gEntityStatsPath = "Data/stats_default";
-    //static EntityStats _gEntityStats;
     public Dictionary<string, Stat> stats { get => _stats; }
     public Dictionary<string, Attribute> attributes { get => _attributes; }
     public List<StatusEffect> statusEffects { get => _statusEffects; }
@@ -155,14 +154,6 @@ public class EntityStats : MonoBehaviour
         return _attributes[name];
     }
 
-    /*
-    public static bool TryGetGlobalAttribute(string name, out Attribute attr)
-    { return _gEntityStats.TryGetAttribute(name, out attr); }
-    public static Attribute GetGlobalAttribute(string name)
-    { _gEntityStats.TryGetAttribute(name, out Attribute attr); return attr; }
-    public static Attribute GetSetGlobalAttribute(string name, float value_if_set = 0f)
-    { return _gEntityStats.GetSetAttribute(name, value_if_set); }
-    */
 
 
     [System.Serializable]
@@ -280,15 +271,6 @@ public class EntityStats : MonoBehaviour
     }
 
 
-
-
-
-
-
-
-
-
-
     public void LoadFromResources(string path)
     {
         TextAsset t = Resources.Load<TextAsset>(path);
@@ -298,12 +280,6 @@ public class EntityStats : MonoBehaviour
         }
     }
 
-
-    /*
-    public static void LoadGlobalDefaults()
-    { _gEntityStats.LoadStats(_gEntityStatsPath, false); }
-
-    */
 
     public bool LoadStats(bool compareToDefault = true)
     { return LoadStats(entityStatsPath, compareToDefault); }

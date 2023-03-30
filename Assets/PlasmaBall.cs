@@ -11,12 +11,10 @@ public class PlasmaBall : MonoBehaviour
     [SerializeField] Vector2 velocity = Vector2.zero;
     public float centerRadius = 0.25f, shockRadius = 2;
     float maxMag = 99f;
-    SplineComponent spline;
+    [SerializeField] int shockCount = 12;
 
     private void Awake()
-    {
-        spline = GetComponentInChildren<SplineComponent>();
-    }
+    { shockCount = Mathf.FloorToInt((float)shockCount / 2) * 2; }
     private void Start()
     {
         StartCoroutine(ILerpMaxMag(0.5f, 5f));
@@ -30,6 +28,7 @@ public class PlasmaBall : MonoBehaviour
         Utility.DrawGizmoCircle(transform.position, centerRadius);
         Gizmos.color = new Color(0.5f, 0, 0.75f);
         Utility.DrawGizmoCircle(transform.position, shockRadius);
+
     }
 
 
@@ -43,6 +42,7 @@ public class PlasmaBall : MonoBehaviour
         velocity = Utility.TowardsTargetVector(velocity, Vector2.zero, 0.1f * Time.deltaTime);
     }
 
+
     void RaycastCircle()
     {
         Vector2 tpos = transform.position;
@@ -51,13 +51,17 @@ public class PlasmaBall : MonoBehaviour
         float newa, shockrange = shockRadius-centerRadius;
         Vector2 veca, vecs;
         RaycastHit2D rhit;
-
-        for (int i = 1; i < 6; i++)
+        int ic; int iadd = -1;
+        for (int i = 0; i < shockCount; i+=2)
         {
-            newa = (a + add * i) * Mathf.Deg2Rad;
+            iadd++;
+
+            ic = i;
+            newa = (a + add * iadd) * Mathf.Deg2Rad;
             CastRay(newa);
 
-            newa = (a - add * i) * Mathf.Deg2Rad;
+            ic++; 
+            newa = (a - add * iadd) * Mathf.Deg2Rad;
             CastRay(newa);
         }
         return;
@@ -89,6 +93,21 @@ public class PlasmaBall : MonoBehaviour
             yield return null;
         }
         maxMag = target_speed;
+    }
+
+
+    private void OnTriggerStay2D(Collider2D coll)
+    {
+
+        if (coll.gameObject.TryGetComponent<Entity>(out Entity ent))
+        {
+            Vector2 dist = ent.transform.position - transform.position;
+            Vector2 dnorm = dist.normalized;
+            float magndelta = Mathf.Clamp(dist.magnitude / 4f, 0f, 1f);
+            velocity += (1f - magndelta) * 0.25f * Time.deltaTime * dnorm;
+            ent.AddForce((1f - magndelta) * 0.5f * Time.deltaTime * dnorm);
+            Debug.DrawLine(transform.position, ent.transform.position, Color.Lerp(Color.red, Color.blue, magndelta));
+        }
     }
 
 }

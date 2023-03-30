@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviour
         left = InputManager.SetInputKey("left", KeyCode.LeftArrow);
         right = InputManager.SetInputKey("right", KeyCode.RightArrow);
         up = InputManager.SetInputKey("up", KeyCode.UpArrow);
-        down = InputManager.SetInputKey("dowb", KeyCode.DownArrow);
+        down = InputManager.SetInputKey("down", KeyCode.DownArrow);
 
         directionX = InputManager.SetInputDirection("x", right, left);
         directionY = InputManager.SetInputDirection("y", up, down);

@@ -16,40 +16,34 @@ public class PlayerController : Entity
     EntityController entity;
     BoxCollider2D coll;
     Rect rect; bool rectChanged = false;
+    protected bool simulationEnabled = true;
 
     [SerializeField] LayerMask groundMask;
 
     [Range(0f, 1f)]
     [SerializeField] float attackIn, attackOut, releaseIn, releaseOut;
-    float moveDelta;
 
     EntityStats.Attribute speed, fallSpeedCap, fallDamageTreshold, speedApexMult, accelSpeed, decelSpeed;
     float xSpeedMult = 1f, gravityMult = 1f;
 
     RayGroup2D rgLeft, rgRight, rgUp, rgDown;
 
+    Vector2 grabPoint = new Vector2(0.1f, 0.1f);
+
     protected bool stunFlag;
-    protected bool isGrounded, wallLeft, wallRight, wallUp;
+    protected bool isGrounded, wallLeft, wallRight, wallUp, ledgeLeft, ledgeRight;
     protected float wasGrounded = 0;
+
+    protected bool ledgegrabEnabled = true;
+
     Vector2 targetMove = Vector2.zero, groundVelocity = Vector2.zero;
     protected bool isJumping = false;
+    bool stopGravity = false;
+    float cGrav = 0f;
+    protected float currentGravity { get => cGrav; }
 
     Dir4 maxMove = new Dir4();
 
-    private void OnDrawGizmos()
-    {
-        velAttack = new CurveSlider(attackIn, attackOut);
-        velRelease = new CurveSlider(releaseIn, releaseOut);
-        Gizmos.color = Color.green;
-        rect.DrawGizmo(transform.position);
-
-        //velAttack.TESTVAL();
-        //velRelease.TESTVAL();
-        Gizmos.color = Color.green;
-        velAttack.DrawGizmo(Vector2.zero, new Vector2(1, 2), 20);
-        Gizmos.color = Color.yellow;
-        velRelease.DrawGizmo(new Vector2(1, 2), new Vector2(1, -2), 10);
-    }
 
     
     protected override void Awake()
@@ -94,9 +88,9 @@ public class PlayerController : Entity
 
     protected virtual void Update()
     {
+        if (!simulationEnabled) return;
+
         stunFlag = entityStats.GetFlag("stunned");
-
-
 
         maxMove.SetAll(1f);
         
@@ -150,15 +144,57 @@ public class PlayerController : Entity
                 if (targetMove.x != 0)
                 { spd *= 2; }
             }
-            _velocity.x = TowardsTargetValue(_velocity.x, tvel.x, spd * xSpeedMult * Time.deltaTime); 
+            _velocity.x = TowardsTargetValue(_velocity.x, tvel.x, spd * xSpeedMult * Time.deltaTime);
         }
-        
+
+        ledgeLeft = false; ledgeRight = false;
+
+        if (ledgegrabEnabled && _velocity.y < 0.1f)
+        {
+            Vector2 szhalf = rect.size / 2;
+            Vector3 tpos = transform.position;
+            int tdir = 0;
+            if (targetMove.x > 0)
+            { tdir = 1; }
+            else if (targetMove.x < 0)
+            { tdir = -1; }
+            else if (wallRight)
+            { tdir = 1; }
+            else if (wallLeft)
+            { tdir = -1; }
+            else 
+            { goto stoppa; } // goto stoppa label, drops out of if loop
+
+            Vector2 p1 = new Vector2(tpos.x, tpos.y + szhalf.y);
+            float cdist = grabPoint.x + 0.05f + szhalf.x;
+
+            RaycastHit2D rhit = Physics2D.Raycast(p1, tdir > 0 ? Vector2.right : Vector2.left, cdist, groundMask);
+            if (!rhit.collider)
+            {
+                p1.x += cdist * tdir;
+                cdist = grabPoint.y + 0.05f - Mathf.Min(_velocity.y * Time.deltaTime, 0);
+                rhit = Physics2D.Raycast(p1, Vector2.down, cdist, groundMask);
+                if (rhit.collider)
+                {
+                    if (tdir < 0) ledgeLeft = true;
+                    else ledgeRight = true;
+                    tpos.y = rhit.point.y - (szhalf.y - grabPoint.y);
+                    transform.position = tpos;
+                    _velocity.y = 0;
+                    stopGravity = true;
+                }
+            }
+        } stoppa:; // goto endpoint
+
     }
 
     void HandleGravity()
     {
-        gravityMult = _velocity.y < 0 ? 2f : (isJumping ? 1f : 4f);
-        _velocity.y = Mathf.Max(_velocity.y - 9.81f * gravityMult * Time.deltaTime, -fallSpeedCap);
+        if (stopGravity)
+        { stopGravity = false; cGrav = 0; return; }
+        gravityMult = _velocity.y < 0 ? 1f : (isJumping ? 0.5f : 2f);
+        cGrav = gravity * gravityMult;
+        _velocity.y = Mathf.Max(_velocity.y + cGrav * Time.deltaTime, -fallSpeedCap);
     }
 
 
@@ -180,7 +216,8 @@ public class PlayerController : Entity
                     if (_velocity.y < -fallDamageTreshold)
                     {
                         float rang = fallSpeedCap - fallDamageTreshold;
-                        OnEnterGrounded(_velocity, rang > 0 ? (Mathf.Abs(_velocity.y) - fallDamageTreshold) / rang : 1f);
+                        float val = rang > 0 ? (Mathf.Abs(_velocity.y) - fallDamageTreshold) / rang : 1f;
+                        OnEnterGrounded(_velocity, Mathf.Clamp(val, 0f, 1f));
                     }
                     else
                     { OnEnterGrounded(_velocity, 0f); }
@@ -225,6 +262,7 @@ public class PlayerController : Entity
                     wallLeft = true; 
                 } 
                 else { WallLeftElse(); }
+
                 tpos.x = rgLeft.shortHit.point.x + rHalf.x;//Mathf.Max(tpos.x, rgLeft.shortHit.point.x + rHalf.x);
                 transform.position = tpos;
                 _velocity.x = Mathf.Max(_velocity.x, 0);
@@ -250,6 +288,7 @@ public class PlayerController : Entity
                     wallRight = true;  
                 }
                 else { WallRightElse(); }
+
                 tpos.x = rgRight.shortHit.point.x - rHalf.x;// Mathf.Min(tpos.x, rgRight.shortHit.point.x - rHalf.x);
                 transform.position = tpos;
                 _velocity.x = Mathf.Min(_velocity.x, 0);
@@ -277,31 +316,38 @@ public class PlayerController : Entity
     {
         Vector2 nmove = _velocity * Time.deltaTime;
         if (nmove.y < 0)
-        { nmove.y = Mathf.Max(nmove.y, -maxMove.down); }
+        { nmove.y = Mathf.Max(nmove.y, -Mathf.Max(maxMove.down, 0)); }
         else if (nmove.y > 0)
-        { nmove.y = Mathf.Min(nmove.y, maxMove.up); }
+        { nmove.y = Mathf.Min(nmove.y, Mathf.Max(maxMove.up, 0)); }
 
         if (nmove.x < 0)
-        { nmove.x = Mathf.Max(nmove.x, -maxMove.left); }
-        else if (nmove.x < 0)
-        { nmove.x = Mathf.Min(nmove.x, maxMove.right); }
+        { nmove.x = Mathf.Max(nmove.x, -Mathf.Max(maxMove.left, 0)); }
+        else if (nmove.x > 0)
+        { nmove.x = Mathf.Min(nmove.x, Mathf.Max(maxMove.right, 0)); }
 
         Vector3 tpos = transform.position.Add(nmove.x, nmove.y);
         transform.position = tpos;
         rectChanged = false;
         targetMove = Vector2.zero;
+
+        // late fix
+        float yhalf = rect.size.y / 2;
+        RaycastHit2D rhit = Physics2D.Raycast(tpos, Vector2.down, yhalf-0.05f, groundMask);
+        if (rhit.collider)
+        { transform.position = new Vector3(tpos.x, rhit.point.y + yhalf, tpos.z); }
     }
 
 
+
     protected virtual void OnEnterGrounded(Vector2 velocity, float fallDamageDelta) 
-    { Debug.Log($"OnEnterGrounded({velocity}, {fallDamageDelta})"); }
+    { /*Debug.Log($"OnEnterGrounded({velocity}, {fallDamageDelta})");*/ }
     protected virtual void OnExitGrounded() 
-    { Debug.Log("OnExitGrounded()"); }
+    { /*Debug.Log("OnExitGrounded()");*/ }
 
     protected virtual void OnTouchWallLeft(Vector2 velocity)
-    { Debug.Log("OnTouchWallLeft()"); }
+    { /*Debug.Log("OnTouchWallLeft()");*/ }
     protected virtual void OnTouchWallRight(Vector2 velocity)
-    { Debug.Log("OnTouchWallRight()"); }
+    { /*Debug.Log("OnTouchWallRight()");*/ }
 
 
 
@@ -316,14 +362,14 @@ public class PlayerController : Entity
 
     protected void JumpInit(Vector2 force, float boostForce, float holdTime = 0.5f)
     {
-        Debug.Log("jump init");
+        //Debug.Log("jump init");
         if (isJumping) return; 
         isJumping = true; 
         _velocity += force; 
         StartCoroutine(IJumpBoost(boostForce, holdTime)); 
     }
     protected void JumpRelease()
-    { Debug.Log("jump released"); isJumping = false; }
+    { /*Debug.Log("jump released"); isJumping = false;*/ }
 
     void UpdateRect()
     { rect = coll.Rect(); rectChanged = true; }
@@ -341,30 +387,6 @@ public class PlayerController : Entity
         }
     }
 
-
-    IEnumerable<RaycastHit2D> CastRays(RaycastHit2D[] rhits, Vector2 origin, Vector2 dir, Vector2Range range, float dist, LayerMask layerMask)
-    {
-        Vector2 point; int arrLen = rhits.Length, arrLen1 = arrLen > 2 ? arrLen - 1 : 1;
-        for (int i = 0; i < arrLen; i++)
-        {
-            point = origin + Vector2.Lerp(range.start, range.end, (float)i / arrLen1);
-            yield return rhits[i] = Physics2D.Raycast(point, dir, dist, layerMask);
-        }
-    }
-    IEnumerable<RaycastHit2D> CastRays(int count, Vector2 origin, Vector2 dir, Vector2Range range, float dist, LayerMask layerMask)
-    {
-        Vector2 point;
-        for (int i = 0; i < count; i++)
-        {
-            point = origin + Vector2.Lerp(range.start, range.end, (float)i / (count - 1));
-            yield return Physics2D.Raycast(point, dir, dist, layerMask);
-        }
-    }
-    IEnumerable<Vector2> GetRayPositions(int count, Vector2Range range)
-    {
-        for (int i = 0; i < count; i++)
-        { yield return Vector2.Lerp(range.start, range.end, (float)i / (count - 1)); }
-    }
 
     IEnumerator IJumpBoost(float holdForce, float time)
     {
@@ -405,41 +427,17 @@ public class PlayerController : Entity
     }
     
 
-    IEnumerator IWaitActions(int updates, Action onStart, Action onEnd, Action<int, float> onLoop = null)
+    IEnumerator ILerpStaticMovement(Vector2 start, Vector2 end, float time)
     {
-        onStart?.Invoke();
-        int u = 0;
-        if (onLoop == null)
+        simulationEnabled = false;
+        float t = 0;
+        while (t < time || !simulationEnabled)
         {
-            while (u < updates)
-            { u++; yield return null; }
+            t += Time.deltaTime;
+            transform.position = Vector2.Lerp(start, end, t / time);
+            yield return null;
         }
-        else
-        {
-            while (u < updates)
-            {
-                onLoop(u, (float)u / updates); u++;
-                yield return null;
-            }
-        }
-        onEnd?.Invoke();
-    }
-    IEnumerator IWaitActions(float time, Action onStart, Action onEnd, Action<float, float> onLoop = null)
-    {
-        onStart?.Invoke();
-        if (onLoop == null)
-        { yield return new WaitForSeconds(time); }
-        else
-        {
-            float t = 0;
-            while (t < time)
-            {
-                onLoop(t, t / time);
-                t += Time.deltaTime;
-                yield return null;
-            }
-        }
-        onEnd?.Invoke();
+        simulationEnabled = true;
     }
 
 
@@ -482,6 +480,7 @@ public class PlayerController : Entity
             _rDiv = Mathf.Max(rayCount - 1, 1);
             this.layerMask = layerMask;
         }
+
 
         public int Cast(Vector2 origin, Vector2 direction, Vector2Range range, float distance)
         {
@@ -552,38 +551,28 @@ public class PlayerController : Entity
 
 
 /*
-        if (tvel.x > cvel.x)
-        {
-            if (p == 0)
-            {
-                moveDelta = Mathf.Max(moveDelta - Time.deltaTime * decelSpeed * 4, 0);
-                cvel.x = TowardsTargetValue(cvel.x, tvel.x, -EaseInSine01(moveDelta) * speed * Time.deltaTime);
-            } else {
-                moveDelta = Mathf.Min(moveDelta + Time.deltaTime * accelSpeed, 1);
-                cvel.x = TowardsTargetValue(cvel.x, tvel.x, EaseInSine01(moveDelta) * speed * Time.deltaTime);
-            }
-        }
-        else if (tvel.x < cvel.x)
-        {
-            if (p == 0)
-            {
-                moveDelta = Mathf.Max(moveDelta - Time.deltaTime * decelSpeed * 4, 0);
-                cvel.x = TowardsTargetValue(cvel.x, tvel.x, -EaseInSine01(moveDelta) * speed * Time.deltaTime);
-            } else {
-                moveDelta = Mathf.Min(moveDelta + Time.deltaTime * accelSpeed, 1);
-                cvel.x = TowardsTargetValue(cvel.x, tvel.x, EaseInSine01(moveDelta) * speed * Time.deltaTime);
-            }
-        }
-        else
-        {
-            moveDelta = Mathf.Max(moveDelta - Time.deltaTime * decelSpeed, 0);
-            cvel.x = TowardsTargetValue(cvel.x, tvel.x, speed * Time.deltaTime);
-        }
-
- int ComparePolarity()
-        {
-            if (cvel.x >= bvel.x && tvel.x > bvel.x) return 1;
-            if (cvel.x <= bvel.x && tvel.x < bvel.x) return -1;
-            return 0;
-        }
+IEnumerable<RaycastHit2D> CastRays(RaycastHit2D[] rhits, Vector2 origin, Vector2 dir, Vector2Range range, float dist, LayerMask layerMask)
+{
+    Vector2 point; int arrLen = rhits.Length, arrLen1 = arrLen > 2 ? arrLen - 1 : 1;
+    for (int i = 0; i < arrLen; i++)
+    {
+        point = origin + Vector2.Lerp(range.start, range.end, (float)i / arrLen1);
+        yield return rhits[i] = Physics2D.Raycast(point, dir, dist, layerMask);
+    }
+}
+IEnumerable<RaycastHit2D> CastRays(int count, Vector2 origin, Vector2 dir, Vector2Range range, float dist, LayerMask layerMask)
+{
+    Vector2 point;
+    for (int i = 0; i < count; i++)
+    {
+        point = origin + Vector2.Lerp(range.start, range.end, (float)i / (count - 1));
+        yield return Physics2D.Raycast(point, dir, dist, layerMask);
+    }
+}
+IEnumerable<Vector2> GetRayPositions(int count, Vector2Range range)
+{
+    for (int i = 0; i < count; i++)
+    { yield return Vector2.Lerp(range.start, range.end, (float)i / (count - 1)); }
+}
 */
+

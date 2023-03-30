@@ -13,9 +13,9 @@ public class ParallaxObject : Parallax
     {
         base.Start();
     }
-    protected override void LateUpdate()
+    protected override void Update()
     {
-        base.LateUpdate();
+        base.Update();
         transform.position = targetPosition;
     }
 }

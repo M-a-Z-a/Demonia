@@ -19,9 +19,9 @@ public class ParallaxMaterial : Parallax
         base.Start();
     }
 
-    protected override void LateUpdate()
+    protected override void Update()
     {
-        base.LateUpdate();
+        base.Update();
         rend.sharedMaterial.mainTextureOffset = targetPosition;
     }
 }

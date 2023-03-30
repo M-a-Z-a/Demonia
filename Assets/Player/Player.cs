@@ -11,12 +11,14 @@ public class Player : PlayerController
     public static Player instance { get; protected set; }
     public static Transform pTransform { get; protected set; }
 
+    MeshRenderer rend;
+    Material mat;
 
     Transform cameraTarget;
     InputVector2 inputVector;
-    InputKey left, right, jump;
+    InputKey left, right, up, down, jump;
     float moveMultLeft = 1f, moveMultRight = 1f;
-    
+    float wallYVel = 0f;
 
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
 
@@ -32,6 +34,10 @@ public class Player : PlayerController
 
         pTransform = transform;
         cameraTarget = transform.Find("CameraTarget");
+
+        rend = GetComponentInChildren<MeshRenderer>();
+        mat = new Material(rend.material);
+        rend.material = mat;
 
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 8f);
@@ -49,6 +55,9 @@ public class Player : PlayerController
         inputVector = InputManager.GetInputVector<InputVector2>("direction");
         left = inputVector.inputX.negative;
         right = inputVector.inputX.positive;
+        up = inputVector.inputY.positive;
+        down = inputVector.inputY.negative;
+
         jump = InputManager.SetInputKey("jump", KeyCode.X);
 
     }
@@ -66,26 +75,59 @@ public class Player : PlayerController
             if (jump.down)
             { JumpInit(new Vector2(0, jumpForce), jumpForce); StartCoroutine(IWaitJumpRelease()); }
         }
-
-        if (wallLeft)
+        else
         {
-            _velocity.y = Mathf.Max(-0.5f, _velocity.y);
-            if (jump.down)
-            { 
-                JumpInit(new Vector2(1, 1).normalized * jumpForce, jumpForce * 0.5f); 
-                StartCoroutine(IWaitLeftWalljump(0.4f));
-                StartCoroutine(IWaitJumpRelease());
+            if (ledgeLeft)
+            {
+                if (jump.down)
+                { 
+                    if (dir.y < 0)
+                    { StartCoroutine(IHaltLedgeGrab(0.2f)); }
+                    else
+                    { 
+                        JumpInit(AngleToVector2(dir.x < 0 ? 90f : 60f) * jumpForce, jumpForce * 0.5f); 
+                        StartCoroutine(IWaitJumpRelease()); 
+                    }
+
+                }
             }
-        }
-
-        if (wallRight)
-        {
-            _velocity.y = Mathf.Max(-0.5f, _velocity.y);
-            if (jump.down)
-            { 
-                JumpInit(new Vector2(-1, 1).normalized * jumpForce, jumpForce * 0.5f);
-                StartCoroutine(IWaitRightWalljump(0.4f));
-                StartCoroutine(IWaitJumpRelease());
+            else if (wallLeft)
+            {
+                //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
+                if (_velocity.y < 0)
+                { _velocity.y = TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x < 0 ? currentGravity * 1f : currentGravity * 0.8f)) * Time.deltaTime); }
+                if (jump.down && !ledgeLeft)
+                {
+                    JumpInit(AngleToVector2(dir.x > 0 ? 75f : 45f) * jumpForce, jumpForce * 0.5f);
+                    StartCoroutine(IWaitLeftWalljump(0.4f));
+                    StartCoroutine(IWaitJumpRelease());
+                }
+            }
+            
+            if (ledgeRight)
+            {
+                if (jump.down)
+                {
+                    if (dir.y < 0)
+                    { StartCoroutine(IHaltLedgeGrab(0.2f)); }
+                    else
+                    { 
+                        JumpInit(AngleToVector2(dir.x > 0 ? 90f : 105f) * jumpForce, jumpForce * 0.5f);
+                        StartCoroutine(IWaitJumpRelease());
+                    }
+                }
+            }
+            else if (wallRight)
+            {
+                //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
+                if (_velocity.y < 0)
+                { _velocity.y = TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x > 0 ? currentGravity * 1.2f : currentGravity * 0.8f)) * Time.deltaTime); }
+                if (jump.down && !ledgeRight)
+                {
+                    JumpInit(AngleToVector2(dir.x < 0 ? 105f : 135f) * jumpForce, jumpForce * 0.5f);
+                    StartCoroutine(IWaitRightWalljump(0.4f));
+                    StartCoroutine(IWaitJumpRelease());
+                }
             }
         }
     }
@@ -123,14 +165,40 @@ public class Player : PlayerController
         JumpRelease();
     }
 
+    IEnumerator IHaltLedgeGrab(float time)
+    {
+        if (!ledgegrabEnabled) yield break;
+        ledgegrabEnabled = false;
+        yield return new WaitForSeconds(time);
+        ledgegrabEnabled = true;
+    }
+
+    void DamageSlowdown(float pause_t = 0.2f, float fade_t = 0.25f)
+    {
+        StartCoroutine(IDamageFlash(Color.white, 0.2f));
+        TimeControl.SetTimeScaleFadeForTime(0.05f, pause_t, 0f, fade_t);
+    }
+
+    IEnumerator IDamageFlash(Color color, float time)
+    {
+        Color orig_color = mat.color;
+        
+        mat.SetColor("_Color", color);
+        mat.SetFloat("_ColorLerp", 1f);
+        yield return new WaitForSeconds(time);
+        mat.SetColor("_Color", orig_color);
+        mat.SetFloat("_ColorLerp", 0f);
+    }
+
 
     protected override void OnEnterGrounded(Vector2 velocity, float fallDamageDelta)
     {
         base.OnEnterGrounded(velocity, fallDamageDelta);
-        if (fallDamageDelta > 0.2f)
+        if (fallDamageDelta > 0.1f)
         {
-            TimeControl.SetTimeScaleFadeForTime(0, 0.5f, 0f, 1f);
-            _velocity.y = 5f;
+            float fdelta = Mathf.Clamp(fallDamageDelta*2, 0f, 1f);
+            DamageSlowdown(fdelta * 1f, fdelta * 0.5f);
+            _velocity.y = -velocity.y* EaseInOutCirc01( fdelta * 0.2f);
         }
     }
     protected override void OnTouchWallLeft(Vector2 velocity)

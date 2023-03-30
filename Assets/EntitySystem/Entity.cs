@@ -10,6 +10,7 @@ public class Entity : MonoBehaviour
     public EntityStats entityStats { get => _entityStats; }
     protected EntityStats _entityStats;
 
+    public static float gravity = -9.81f * 2;
 
     public Vector2 velocity { get => _velocity; }
     protected Vector2 _velocity = Vector2.zero;
@@ -42,4 +43,8 @@ public class Entity : MonoBehaviour
         { _entityStats = gameObject.AddComponent<EntityStats>(); }
     }
 
+    public virtual void AddForce(Vector2 force)
+    {
+        _velocity += force;
+    }
 }

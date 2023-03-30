@@ -80,53 +80,121 @@ public static partial class Utility
 
     public class Curve
     {
+        AnimationCurve curve;
+        Vector3[] spoints;
+        List<Vector3> points;
+        public int Segments { get => segments; set => SetSegmentCount(value); }
+        int segments;
+        public int Count { get => points.Count; }
+        public int LastIndex { get => points.Count - 1; }
+        public Vector3 this[int index]
+        { get => points[index]; }
 
-        float _attack, _attackTime, _release, _releaseTime, _delta;
-        public float attack { get => _attack; set => Mathf.Abs(value); }
-        public float release { get => _release; set => Mathf.Abs(value); }
-        public bool accelerating = false;
-        public Curve(float attack, float release)
+        void SetSegmentCount(int count)
         {
-            _attack = attack; _release = release;
+            segments = Mathf.Max(count, 2);
+            spoints = new Vector3[segments];
+            Update();
         }
 
-        public float Evaluate()
+        public Curve()
         {
-            if (accelerating) return EvaluateAttack(_delta);
-            return EvaluateRelease(_delta);
+            Debug.Log("curve base?");
+            curve = new();
+            points = new();
+            SetSegmentCount(11);
         }
 
-        float EvaluateAttack(float d)
+        public void DrawGizmo()
         {
-            float tconst = -1f / (_attackTime / Mathf.Log(0.01f));
-            return Mathf.Exp(_delta / tconst);
-        }
-        float EvaluateRelease(float d)
-        {
-            float tconst = -1f / (_releaseTime / Mathf.Log(0.01f));
-            return Mathf.Exp(_delta / tconst);
-        }
-
-        IEnumerator IAttack()
-        {
-            float d = 0;
-            while (d < 1f)
+            Vector3 npoint;
+            Vector3 lpoint = Evaluate(0);
+            float t_one = 1f / (Segments - 1f);
+            for (int i = 1; i < Segments; i++)
             {
-                d += Time.deltaTime / _attackTime;
-                EvaluateAttack(d);
-                yield return null;
+                npoint = Evaluate(i * t_one);
+                Gizmos.DrawLine(lpoint, npoint);
+                lpoint = npoint;
             }
         }
-        IEnumerator IRelease()
+
+        public void ClearPoints()
+        { points = new(); }
+
+        public bool SetPoint(int index, Vector3 point)
         {
-            float d = 0;
-            while (d > 0)
-            {
-                d -= Time.deltaTime / _releaseTime;
-                EvaluateAttack(d);
-                yield return null;
-            }
+            points[index] = point;
+            return true; 
         }
+
+        public void AddPoint(Vector3 point)
+        { points.Add(point); }
+        public void InsertPoint(int index, Vector3 point)
+        { points.Insert(index, point); }
+        public bool RemovePoint(Vector3 point)
+        { return points.Remove(point); }
+
+        public void AddPoints(params Vector3[] points)
+        { this.points.AddRange(points);  }
+        public void InsertPoints(int index, params Vector3[] points)
+        { this.points.InsertRange(index, points); }
+        public int RemovePoints(params Vector3[] points)
+        {
+            int rcount = 0;
+            for (int i = 0; i < points.Length; i++)
+            { if (this.points.Remove(points[i])) rcount++; }
+            return rcount;
+        }
+
+        public void Update()
+        {
+            int pdiff = curve.keys.Length - points.Count;
+            if (pdiff < 0)
+            { for (int i = 0; i < -pdiff; i++) { curve.AddKey(0,0); } }
+            else if (pdiff > 0)
+            {
+                int a = curve.keys.Length - 1, 
+                    b = curve.keys.Length - pdiff;
+                for (int i = a; i > b; i--)
+                { curve.RemoveKey(i); }
+            }
+
+            float t;
+            for (int i = 0; i < curve.keys.Length; i++)
+            {
+                t = (i + 1f) / (points.Count + 1f);
+                float tanIn = (points[i] - points[Mathf.Max(0, i - 1)]).magnitude, 
+                    tanOut = (points[Mathf.Min(points.Count - 1, i + 1)] - points[i]).magnitude;
+                curve.keys[i] = new Keyframe(t, points[i].x, tanIn, tanOut);
+            }
+
+            OnUpdate();
+        }
+
+
+        public Vector3[] GetCurve()
+        {
+            float p; int pseg = segments - 1;
+            for (int i = 0; i < segments; i++)
+            {
+                p = curve.Evaluate((float)i / pseg);
+                spoints[i] = new Vector3(p, p);
+            }
+            return spoints;
+        }
+
+        public Vector3 Evaluate(float t)
+        {
+            float p = curve.Evaluate(t);
+            return new Vector3(p, p);
+        }
+
+
+        protected virtual void OnSegmentsChanged()
+        {  }
+        protected virtual void OnUpdate()
+        {  }
 
     }
+
 }

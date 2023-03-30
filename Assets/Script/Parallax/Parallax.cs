@@ -20,7 +20,7 @@ public abstract class Parallax : MonoBehaviour
     }
 
     Vector3 tposdif;
-    protected virtual void LateUpdate()
+    protected virtual void Update()
     {
         tposdif = cTransform.position - referencePosition;
         tposdif.x *= relativePosition.x;

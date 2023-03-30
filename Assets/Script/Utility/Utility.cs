@@ -34,6 +34,7 @@ public static partial class Utility
     public static float EaseInOutCirc01(float t)
     { return t < 0.5 ? (1 - Mathf.Sqrt(1 - Mathf.Pow(2 * t, 2))) / 2 : (Mathf.Sqrt(1 - Mathf.Pow(-2 * t + 2, 2)) + 1) / 2; }
 
+
     public static float CurveCombination(float t, EaseActionDelegate _in, EaseActionDelegate _out, float offset = 0.5f)
     {
         if (t < offset)
@@ -69,22 +70,7 @@ public static partial class Utility
         return 0;
     }
     
-
-
-    public static float Angle(this Vector2 vec)
-    { return Vector2.Angle(vec, Vector2.right); }
-    public static float SignedAngle(this Vector2 vec)
-    { return Vector2.SignedAngle(vec, Vector2.right); }
-    public static Vector2 Turn90CW(this Vector2 vec)
-    { return new Vector2(vec.y, -vec.x); }
-    public static Vector2 Turn90CCW(this Vector2 vec)
-    { return new Vector2(-vec.y, vec.x); }
-    public static Vector2 Turn(this Vector2 vec, float a)
-    {
-        float mag = vec.magnitude;
-        float newa = Mathf.Atan2(vec.y, vec.x) + a * Mathf.Deg2Rad;
-        return new Vector2(Mathf.Cos(newa), Mathf.Sin(newa)) * mag;
-    }
+    
 
     
 
