@@ -20,11 +20,12 @@ TextureImporter:
     externalNormalMap: 0
     heightScale: 0.25
     normalMapFilter: 0
+    flipGreenChannel: 0
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
-  ignoreMasterTextureLimit: 0
+  ignoreMipmapLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -63,6 +64,7 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 0
+  swizzle: 50462976
   cookieLightType: 0
   platformSettings:
   - serializedVersion: 3
@@ -850,44 +852,43 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      tlset_01_7: -1036781428
-      tlset_01_11: 1182371979
-      tlset_01_32: -123496359
-      tlset_01_4: 1330181976
-      tlset_01_6: 1839235700
       tlset_01_0: -293065410
-      tlset_01_14: 319650316
-      tlset_01_33: 967074957
-      tlset_01_18: -2127818577
-      tlset_01_22: 778433854
-      tlset_01_3: -1625444375
-      tlset_01_15: 1737770600
-      tlset_01_17: 1241213702
-      tlset_01_9: -43990510
-      tlset_01_24: 968688127
-      tlset_01_2: 1756243964
-      tlset_01_25: 1023274621
-      tlset_01_29: 1029188279
-      tlset_01_30: 1088167593
-      tlset_01_27: -334271560
-      tlset_01_20: -702531288
-      tlset_01_10: -2015206995
-      tlset_01_8: 718527604
-      tlset_01_28: 1519144734
-      tlset_01_31: -1314508226
-      tlset_01_26: -488499279
-      tlset_01_23: 1190656294
-      tlset_01_5: 335806240
-      tlset_01_16: 1223979251
-      tlset_01_13: 2093481038
       tlset_01_1: 364715512
-      tlset_01_19: -2081916615
-      tlset_01_21: 964781754
+      tlset_01_10: -2015206995
+      tlset_01_11: 1182371979
       tlset_01_12: -1050338119
+      tlset_01_13: 2093481038
+      tlset_01_14: 319650316
+      tlset_01_15: 1737770600
+      tlset_01_16: 1223979251
+      tlset_01_17: 1241213702
+      tlset_01_18: -2127818577
+      tlset_01_19: -2081916615
+      tlset_01_2: 1756243964
+      tlset_01_20: -702531288
+      tlset_01_21: 964781754
+      tlset_01_22: 778433854
+      tlset_01_23: 1190656294
+      tlset_01_24: 968688127
+      tlset_01_25: 1023274621
+      tlset_01_26: -488499279
+      tlset_01_27: -334271560
+      tlset_01_28: 1519144734
+      tlset_01_29: 1029188279
+      tlset_01_3: -1625444375
+      tlset_01_30: 1088167593
+      tlset_01_31: -1314508226
+      tlset_01_32: -123496359
+      tlset_01_33: 967074957
       tlset_01_34: -1317845752
-  spritePackingTag: 
+      tlset_01_4: 1330181976
+      tlset_01_5: 335806240
+      tlset_01_6: 1839235700
+      tlset_01_7: -1036781428
+      tlset_01_8: 718527604
+      tlset_01_9: -43990510
+  mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  pSDShowRemoveMatteOption: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 

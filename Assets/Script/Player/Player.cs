@@ -16,11 +16,15 @@ public class Player : PlayerController
 
     Transform cameraTarget;
     InputVector2 inputVector;
-    InputKey left, right, up, down, jump;
+    InputKey left, right, up, down, jump, attackA, attackB;
     float moveMultLeft = 1f, moveMultRight = 1f;
     float wallYVel = 0f;
 
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
+
+    int cComboStage = 0;
+    float cComboTimer = 0, cComboLastAttackDelay = 0;
+    
 
     protected override void OnValidate()
     {
@@ -59,6 +63,8 @@ public class Player : PlayerController
         down = inputVector.inputY.negative;
 
         jump = InputManager.SetInputKey("jump", KeyCode.X);
+        attackA = InputManager.SetInputKey("attackA", KeyCode.C);
+        attackB = InputManager.SetInputKey("attackB", KeyCode.V);
 
     }
 
@@ -70,10 +76,35 @@ public class Player : PlayerController
         base.Update();
 
         Move(dir.x *= dir.x < 0 ? moveMultLeft : moveMultRight);
-        if (isGrounded || wasGrounded < coyoteTime)
+        if (wasGrounded < coyoteTime)
         {
             if (jump.down)
             { JumpInit(new Vector2(0, jumpForce), jumpForce); StartCoroutine(IWaitJumpRelease()); }
+
+            if (isGrounded)
+            {
+                if (attackA.down)
+                {
+                    if (cComboTimer > 0)
+                    {
+                        if (cComboTimer < cComboLastAttackDelay)
+                        {
+                            cComboStage++;
+                            Debug.Log($"!Combo+ [{cComboStage}]");
+                            cComboTimer = 1f;
+                            cComboLastAttackDelay = cComboTimer - 0.2f;
+                        }
+                    }
+                    else
+                    {
+                        cComboStage = 1;
+                        Debug.Log($"!Combo Init [{cComboStage}]");
+                        cComboTimer = 1f;
+                        cComboLastAttackDelay = cComboTimer - 0.2f;
+                        StartCoroutine(IComboTimer(cComboTimer));
+                    }
+                }
+            }
         }
         else
         {
@@ -88,7 +119,6 @@ public class Player : PlayerController
                         JumpInit(AngleToVector2(dir.x < 0 ? 90f : 60f) * jumpForce, jumpForce * 0.5f); 
                         StartCoroutine(IWaitJumpRelease()); 
                     }
-
                 }
             }
             else if (wallLeft)
@@ -190,6 +220,18 @@ public class Player : PlayerController
         mat.SetFloat("_ColorLerp", 0f);
     }
 
+    IEnumerator IComboTimer(float time)
+    {
+        cComboTimer = time;
+        while (cComboTimer > 0)
+        {
+            cComboTimer -= Time.deltaTime;
+            yield return null;
+        }
+        cComboStage = 0;
+        cComboTimer = 0;
+        Debug.Log($"!Combo End");
+    }
 
     protected override void OnEnterGrounded(Vector2 velocity, float fallDamageDelta)
     {

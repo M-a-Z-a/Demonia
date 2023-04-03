@@ -5,6 +5,10 @@ using UnityEngine;
 // Vector utility
 public static partial class Utility
 {
+
+    public static Vector2 SineVector(float t)
+    { return new Vector2((Mathf.Cos((1f-t)*_rad180)+1)/2, Mathf.Sin(t*_rad180)); }
+
     // Vector2 shorthand math
     public static Vector2 Add(this Vector2 vec, float x = 0, float y = 0)
     { return new Vector2(vec.x + x, vec.y + y); }
@@ -92,6 +96,8 @@ public static partial class Utility
     { return new Vector2(-vec.x, vec.y); }
     public static Vector2 FlipY(this Vector2 vec)
     { return new Vector2(vec.x, -vec.y); }
+    public static Vector2 Flip(this Vector2 vec, bool x = true, bool y = true)
+    { return new Vector2(x ? -vec.x : vec.x, y ? -vec.y : vec.y); }
 
     public static Vector2 MoveAndRedirect(this Vector2 vec, float distance, Vector2 redirect, float delta)
     {

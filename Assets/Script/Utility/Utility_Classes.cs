@@ -6,6 +6,19 @@ using UnityEngine;
 // utility classes
 public static partial class Utility
 {
+
+    public class Vector2Dir
+    {
+        public Vector2 point, direction;
+        public Vector2 GetPointAtDistance(float d)
+        { return point + direction * d; }
+        public Vector2Dir(Vector2 point, Vector2 direction)
+        {  
+            this.point = point; 
+            this.direction = direction; 
+        }
+    }
+
     public class Dir4
     {
         public float left, right, up, down;

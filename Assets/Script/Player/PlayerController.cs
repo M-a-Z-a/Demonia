@@ -20,9 +20,6 @@ public class PlayerController : Entity
 
     [SerializeField] LayerMask groundMask;
 
-    [Range(0f, 1f)]
-    [SerializeField] float attackIn, attackOut, releaseIn, releaseOut;
-
     EntityStats.Attribute speed, fallSpeedCap, fallDamageTreshold, speedApexMult, accelSpeed, decelSpeed;
     float xSpeedMult = 1f, gravityMult = 1f;
 
@@ -369,7 +366,7 @@ public class PlayerController : Entity
         StartCoroutine(IJumpBoost(boostForce, holdTime)); 
     }
     protected void JumpRelease()
-    { /*Debug.Log("jump released"); isJumping = false;*/ }
+    { /*Debug.Log("jump released");*/ isJumping = false; }
 
     void UpdateRect()
     { rect = coll.Rect(); rectChanged = true; }

@@ -2,13 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LineDrawer : MonoBehaviour
+public class LineManager : MonoBehaviour
 {
-    static LineDrawer instance;
+    static LineManager instance;
 
     private void Awake()
     {
         instance = this;
+
+        float t;
+        for (int i = 0; i < 5; i++)
+        {
+            t = (float)i / 4;
+            Debug.Log($"[{i}]SineVector({t}) => {Utility.SineVector(t)}");
+        }
     }
 
     public static LineRenderer CreateLineRenderer()
@@ -17,5 +24,6 @@ public class LineDrawer : MonoBehaviour
         go.transform.SetParent(instance.transform);
         return go.AddComponent<LineRenderer>();
     }
+
 
 }
