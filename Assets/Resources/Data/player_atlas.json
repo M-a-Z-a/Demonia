@@ -1,0 +1,26 @@
+{
+	"name": "player_atlas",
+	"textureSize": [ 256, 256 ],
+	"frames": [
+		{
+			"id": "frame00",
+			"position": [ 0, 0 ],
+			"size": [ 32, 32 ]
+		},
+		{
+			"id": "frame01",
+			"position": [ 32, 0 ],
+			"size": [ 32, 32 ]
+		},
+		{
+			"id": "attack_1.0",
+			"position": [ 32, 32 ],
+			"size": [ 32, 32 ]
+		},
+		{
+			"id": "attack_1.1",
+			"position": [ 32, 32 ],
+			"size": [ 32, 32 ]
+		}
+	]
+}

@@ -1,0 +1,34 @@
+[
+	{
+		"name": "player_idle",
+		"loop": true,
+		"frames": [
+			{
+				"id": "player_atlas/frame00",
+				"time": 0.2,
+				"flags": []
+			},
+			{
+				"id": "player_atlas/frame01",
+				"time": 0.2,
+				"flags": [ "sound_footstep" ]
+			}
+		]
+	},
+	{
+		"name": "player_run",
+		"loop": true,
+		"frames": [
+			{
+				"id": "player_atlas/run00",
+				"time": 0.2,
+				"flags": []
+			}
+		]
+	},
+	{
+		"name": "player_atlas/attack_1.0",
+		"time": 0.2,
+		"flags": []
+	}
+]
