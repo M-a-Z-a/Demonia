@@ -21,10 +21,13 @@ public class Player : PlayerController
     float wallYVel = 0f;
 
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
+    int mJumps = 1, cmJumps = 0;
 
-    int cComboStage = 0;
+    int cComboStage = 0; 
     float cComboTimer = 0, cComboLastAttackDelay = 0;
-    
+
+    Rect rect_stand = new Rect(new Vector2(0,0), new Vector2(0.8f, 1.8f));
+    Rect rect_crouch = new Rect(new Vector2(0, -0.45f), new Vector2(0.8f, 0.9f));
 
     protected override void OnValidate()
     {
@@ -45,7 +48,7 @@ public class Player : PlayerController
 
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 8f);
-        airJumpForce = entityStats.GetSetAttribute("airjumpforce", 4f);
+        airJumpForce = entityStats.GetSetAttribute("airjumpforce", 6f);
         
 
         Debug.Log($"jumpforce: {jumpForce.value}");
@@ -69,11 +72,11 @@ public class Player : PlayerController
     }
 
 
-    protected override void Update()
+    protected override void FixedUpdate()
     {
         Vector2 dir = (Vector2)inputVector;
 
-        base.Update();
+        base.FixedUpdate();
 
         Move(dir.x *= dir.x < 0 ? moveMultLeft : moveMultRight);
         if (wasGrounded < coyoteTime)
@@ -83,6 +86,7 @@ public class Player : PlayerController
 
             if (isGrounded)
             {
+                cmJumps = mJumps;
                 if (attackA.down)
                 {
                     if (cComboTimer > 0)
@@ -108,17 +112,16 @@ public class Player : PlayerController
         }
         else
         {
+
             if (ledgeLeft)
             {
-                if (jump.down)
+                cmJumps = mJumps;
+                if (dir.y < 0)
+                { StartCoroutine(IHaltLedgeGrab(0.2f)); }
+                else if (jump.down)
                 { 
-                    if (dir.y < 0)
-                    { StartCoroutine(IHaltLedgeGrab(0.2f)); }
-                    else
-                    { 
-                        JumpInit(AngleToVector2(dir.x < 0 ? 90f : 60f) * jumpForce, jumpForce * 0.5f); 
-                        StartCoroutine(IWaitJumpRelease()); 
-                    }
+                    JumpInit(AngleToVector2(dir.x < 0 ? 90f : 60f) * jumpForce, jumpForce * 0.5f); 
+                    StartCoroutine(IWaitJumpRelease()); 
                 }
             }
             else if (wallLeft)
@@ -133,18 +136,15 @@ public class Player : PlayerController
                     StartCoroutine(IWaitJumpRelease());
                 }
             }
-            
-            if (ledgeRight)
+            else if (ledgeRight)
             {
-                if (jump.down)
+                cmJumps = mJumps;
+                if (dir.y < 0)
+                { StartCoroutine(IHaltLedgeGrab(0.2f)); }
+                else if (jump.down)
                 {
-                    if (dir.y < 0)
-                    { StartCoroutine(IHaltLedgeGrab(0.2f)); }
-                    else
-                    { 
-                        JumpInit(AngleToVector2(dir.x > 0 ? 90f : 105f) * jumpForce, jumpForce * 0.5f);
-                        StartCoroutine(IWaitJumpRelease());
-                    }
+                    JumpInit(AngleToVector2(dir.x > 0 ? 90f : 105f) * jumpForce, jumpForce * 0.5f);
+                    StartCoroutine(IWaitJumpRelease());
                 }
             }
             else if (wallRight)
@@ -158,6 +158,12 @@ public class Player : PlayerController
                     StartCoroutine(IWaitRightWalljump(0.4f));
                     StartCoroutine(IWaitJumpRelease());
                 }
+            }
+            else if(jump.down && cmJumps > 0 && _velocity.y <= 0 && _velocity.y > -10f)
+            {
+                cmJumps--;
+                _velocity.y = 0;
+                JumpInit(new Vector2(0, airJumpForce), airJumpForce); StartCoroutine(IWaitJumpRelease());
             }
         }
     }

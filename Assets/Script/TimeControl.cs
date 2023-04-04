@@ -13,6 +13,8 @@ public class TimeControl : MonoBehaviour
         fixedDeltaTime_default = Time.fixedDeltaTime;
         timeScale_default = Time.timeScale;
         instance = this;
+
+        Application.targetFrameRate = 60;
     }
 
     public static void SetTimescale(float scale = 1f)

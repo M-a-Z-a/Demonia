@@ -29,8 +29,6 @@ public class Entity : MonoBehaviour
         Rename(_entityName);
     }
 
-
-
     public void Rename(string name)
     {
         _entityName = name;
@@ -46,5 +44,10 @@ public class Entity : MonoBehaviour
     public virtual void AddForce(Vector2 force)
     {
         _velocity += force;
+    }
+    public virtual void ApplyDamage(EntityStats.Damage damage, MonoBehaviour origin)
+    {
+        if (entityStats == null) return;
+        entityStats.ApplyDamage(damage, origin);
     }
 }

@@ -17,6 +17,9 @@ public class EntityStats : MonoBehaviour
     public Dictionary<string, Attribute> attributes { get => _attributes; }
     public List<StatusEffect> statusEffects { get => _statusEffects; }
 
+    public delegate void OnDamageDelegate(float value, float percentage);
+
+
     private void Awake()
     {
         GetSetStat("health");

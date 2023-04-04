@@ -15,11 +15,16 @@ public class PlayerController : Entity
     Rigidbody2D rb;
     EntityController entity;
     BoxCollider2D coll;
-    Rect rect; bool rectChanged = false;
     protected bool simulationEnabled = true;
+
+    // rect
+    Rect rect;
+    Vector2 r_sz2;
+    bool rectChanged = false;
 
     [SerializeField] LayerMask groundMask;
 
+    // attributes
     EntityStats.Attribute speed, fallSpeedCap, fallDamageTreshold, speedApexMult, accelSpeed, decelSpeed;
     float xSpeedMult = 1f, gravityMult = 1f;
 
@@ -50,6 +55,7 @@ public class PlayerController : Entity
         rb = GetComponent<Rigidbody2D>();
         coll = GetComponent<BoxCollider2D>();
 
+        UpdateRect();
         SetRayGroups();
 
         speed = entityStats.GetSetAttribute("speed", 10f);
@@ -65,16 +71,32 @@ public class PlayerController : Entity
         base.Start();
     }
 
-
-    void SetRayGroups()
+    protected void SetColliderRect(Rect rect)
+    {
+        if (rect.size == this.rect.size && rect.position == this.rect.position)
+            return;
+        coll.offset = rect.position;
+        coll.size = rect.size;
+        rectChanged = true;
+    }
+    void UpdateRect()
     {
         rect = coll.Rect();
-        Vector2 szhalf = rect.size / 2;
-
-        rgLeft = new RayGroup2D(5, groundMask); rgLeft.baseDistance = szhalf.x;
-        rgRight = new RayGroup2D(5, groundMask); rgRight.baseDistance = szhalf.x;
-        rgUp = new RayGroup2D(3, groundMask); rgUp.baseDistance = 0.25f; rgUp.doffset = szhalf.y - rgUp.baseDistance;
-        rgDown = new RayGroup2D(5, groundMask); rgDown.baseDistance = 0.25f; rgDown.doffset = szhalf.y - rgDown.baseDistance;
+        r_sz2 = rect.size / 2;
+    }
+    void SetRayGroups()
+    {
+        rgLeft = new RayGroup2D(5, groundMask); rgLeft.baseDistance = r_sz2.x;
+        rgRight = new RayGroup2D(5, groundMask); rgRight.baseDistance = r_sz2.x;
+        rgUp = new RayGroup2D(3, groundMask); rgUp.baseDistance = 0.25f; rgUp.doffset = r_sz2.y - rgUp.baseDistance;
+        rgDown = new RayGroup2D(5, groundMask); rgDown.baseDistance = 0.25f; rgDown.doffset = r_sz2.y - rgDown.baseDistance;
+    }
+    void UpdateRayGroups()
+    {
+        rgLeft.baseDistance = r_sz2.x; 
+        rgRight.baseDistance = r_sz2.x; 
+        rgUp.doffset = r_sz2.y - rgUp.baseDistance;
+        rgDown.doffset = r_sz2.y - rgDown.baseDistance;
     }
 
     protected void Move(float x = 0, float y = 0)
@@ -83,9 +105,16 @@ public class PlayerController : Entity
     { targetMove.x = Mathf.Clamp(xy.x, -1, 1); targetMove.y = Mathf.Clamp(xy.y, -1, 1); }
 
 
-    protected virtual void Update()
+
+
+    protected virtual void FixedUpdate()
     {
         if (!simulationEnabled) return;
+        if (rectChanged)
+        {
+            UpdateRect();
+            UpdateRayGroups();
+        }
 
         stunFlag = entityStats.GetFlag("stunned");
 
@@ -104,6 +133,9 @@ public class PlayerController : Entity
         }
 
         HandlePosition();
+
+        targetMove = Vector2.zero;
+        rectChanged = false;
     }
 
 
@@ -123,7 +155,7 @@ public class PlayerController : Entity
             { spd *= 4; }
         }
         
-        cvel.x = TowardsTargetValue(cvel.x, tvel.x, spd * Time.deltaTime);
+        cvel.x = TowardsTargetValue(cvel.x, tvel.x, spd * Time.fixedDeltaTime);
         cvel.y = Mathf.Max(cvel.y, bvel.y);
         _velocity = cvel;
     }
@@ -141,14 +173,13 @@ public class PlayerController : Entity
                 if (targetMove.x != 0)
                 { spd *= 2; }
             }
-            _velocity.x = TowardsTargetValue(_velocity.x, tvel.x, spd * xSpeedMult * Time.deltaTime);
+            _velocity.x = TowardsTargetValue(_velocity.x, tvel.x, spd * xSpeedMult * Time.fixedDeltaTime);
         }
 
         ledgeLeft = false; ledgeRight = false;
 
         if (ledgegrabEnabled && _velocity.y < 0.1f)
         {
-            Vector2 szhalf = rect.size / 2;
             Vector3 tpos = transform.position;
             int tdir = 0;
             if (targetMove.x > 0)
@@ -162,20 +193,20 @@ public class PlayerController : Entity
             else 
             { goto stoppa; } // goto stoppa label, drops out of if loop
 
-            Vector2 p1 = new Vector2(tpos.x, tpos.y + szhalf.y);
-            float cdist = grabPoint.x + 0.05f + szhalf.x;
+            Vector2 p1 = new Vector2(tpos.x, tpos.y + r_sz2.y);
+            float cdist = grabPoint.x + 0.05f + r_sz2.x;
 
             RaycastHit2D rhit = Physics2D.Raycast(p1, tdir > 0 ? Vector2.right : Vector2.left, cdist, groundMask);
             if (!rhit.collider)
             {
                 p1.x += cdist * tdir;
-                cdist = grabPoint.y + 0.05f - Mathf.Min(_velocity.y * Time.deltaTime, 0);
+                cdist = grabPoint.y + 0.05f - Mathf.Min(_velocity.y * Time.fixedDeltaTime, 0);
                 rhit = Physics2D.Raycast(p1, Vector2.down, cdist, groundMask);
                 if (rhit.collider)
                 {
                     if (tdir < 0) ledgeLeft = true;
                     else ledgeRight = true;
-                    tpos.y = rhit.point.y - (szhalf.y - grabPoint.y);
+                    tpos.y = rhit.point.y - (r_sz2.y - grabPoint.y);
                     transform.position = tpos;
                     _velocity.y = 0;
                     stopGravity = true;
@@ -191,22 +222,21 @@ public class PlayerController : Entity
         { stopGravity = false; cGrav = 0; return; }
         gravityMult = _velocity.y < 0 ? 1f : (isJumping ? 0.5f : 2f);
         cGrav = gravity * gravityMult;
-        _velocity.y = Mathf.Max(_velocity.y + cGrav * Time.deltaTime, -fallSpeedCap);
+        _velocity.y = Mathf.Max(_velocity.y + cGrav * Time.fixedDeltaTime, -fallSpeedCap);
     }
 
 
     void HandleCollisions()
     {
-        Vector2 rHalf = rect.GetHalfSize();
         Vector3 tpos = transform.position;
-        Vector2Range vecrang = GetRayRange(transform.position.Add(y:-rgDown.doffset), Vector2.right, rHalf.x, groundMask, -0.05f);
+        Vector2Range vecrang = GetRayRange(transform.position.Add(y:-rgDown.doffset), Vector2.right, r_sz2.x, groundMask, -0.05f);
 
         // ground check
-        if (rgDown.Cast(transform.position, Vector2.down, vecrang, 0.3f + Mathf.Max(-velocity.y * Time.deltaTime * 2, 0)) > 0)
+        if (rgDown.Cast(transform.position, Vector2.down, vecrang, 0.3f + Mathf.Max(-velocity.y * Time.fixedDeltaTime * 2, 0)) > 0)
         {
-            if (rgDown.shortHit.point.y + rHalf.y + 0.01f >= tpos.y)
+            if (rgDown.shortHit.point.y + r_sz2.y + 0.01f >= tpos.y)
             {
-                tpos.y = rgDown.shortHit.point.y + rHalf.y; //Mathf.Max(tpos.y, rgDown.shortHit.point.y + rHalf.y);
+                tpos.y = rgDown.shortHit.point.y + r_sz2.y; //Mathf.Max(tpos.y, rgDown.shortHit.point.y + rHalf.y);
                 transform.position = tpos;
                 if (!isGrounded)
                 {
@@ -229,22 +259,22 @@ public class PlayerController : Entity
         { isGroundedElse(); }
 
 
-        vecrang = GetRayRange(transform.position.Add(y: rgUp.doffset), Vector2.right, rHalf.x, groundMask, -0.05f);
+        vecrang = GetRayRange(transform.position.Add(y: rgUp.doffset), Vector2.right, r_sz2.x, groundMask, -0.05f);
         wallUp = false;
         if (rgUp.Cast(transform.position, Vector2.up, vecrang, 0.3f) > 0)
         {
             if (rgUp.hitCount > 1)
             {
                 wallUp = true;
-                tpos.y = Mathf.Min(tpos.y, rgUp.shortHit.point.y - rHalf.y);
+                tpos.y = Mathf.Min(tpos.y, rgUp.shortHit.point.y - r_sz2.y);
                 transform.position = tpos;
                 _velocity.y = Mathf.Min(_velocity.y, 0);
                 maxMove.up = rgUp.hitBaseDistance;
             }
         }
 
-        vecrang = GetRayRange(transform.position.Add(x: -rgLeft.doffset), Vector2.up, rHalf.y, groundMask, -0.05f);
-        if (rgLeft.Cast(transform.position, Vector2.left, vecrang, rHalf.x + 0.01f) > 0)
+        vecrang = GetRayRange(transform.position.Add(x: -rgLeft.doffset), Vector2.up, r_sz2.y, groundMask, -0.05f);
+        if (rgLeft.Cast(transform.position, Vector2.left, vecrang, r_sz2.x + 0.01f) > 0)
         {
             if (rgLeft.hitCount == 1 && rgLeft.hitIndex == 0)
             {
@@ -260,7 +290,7 @@ public class PlayerController : Entity
                 } 
                 else { WallLeftElse(); }
 
-                tpos.x = rgLeft.shortHit.point.x + rHalf.x;//Mathf.Max(tpos.x, rgLeft.shortHit.point.x + rHalf.x);
+                tpos.x = rgLeft.shortHit.point.x + r_sz2.x;//Mathf.Max(tpos.x, rgLeft.shortHit.point.x + rHalf.x);
                 transform.position = tpos;
                 _velocity.x = Mathf.Max(_velocity.x, 0);
                 maxMove.left = rgLeft.hitBaseDistance;
@@ -269,8 +299,8 @@ public class PlayerController : Entity
         else
         { WallLeftElse(); }
 
-        vecrang = GetRayRange(transform.position.Add(x: rgRight.doffset), Vector2.up, rHalf.y, groundMask, -0.05f);
-        if (rgRight.Cast(transform.position, Vector2.right, vecrang, rHalf.x + 0.01f) > 0)
+        vecrang = GetRayRange(transform.position.Add(x: rgRight.doffset), Vector2.up, r_sz2.y, groundMask, -0.05f);
+        if (rgRight.Cast(transform.position, Vector2.right, vecrang, r_sz2.x + 0.01f) > 0)
         {
             if (rgRight.hitCount == 1 && rgRight.hitIndex == 0)
             {
@@ -286,7 +316,7 @@ public class PlayerController : Entity
                 }
                 else { WallRightElse(); }
 
-                tpos.x = rgRight.shortHit.point.x - rHalf.x;// Mathf.Min(tpos.x, rgRight.shortHit.point.x - rHalf.x);
+                tpos.x = rgRight.shortHit.point.x - r_sz2.x;// Mathf.Min(tpos.x, rgRight.shortHit.point.x - rHalf.x);
                 transform.position = tpos;
                 _velocity.x = Mathf.Min(_velocity.x, 0);
                 maxMove.right = rgRight.hitBaseDistance;
@@ -300,7 +330,7 @@ public class PlayerController : Entity
         {
             if (isGrounded)
             { OnExitGrounded(); }
-            isGrounded = false; wasGrounded += Time.deltaTime;
+            isGrounded = false; wasGrounded += Time.fixedDeltaTime;
         }
 
         void WallLeftElse()
@@ -311,7 +341,7 @@ public class PlayerController : Entity
 
     void HandlePosition()
     {
-        Vector2 nmove = _velocity * Time.deltaTime;
+        Vector2 nmove = _velocity * Time.fixedDeltaTime;
         if (nmove.y < 0)
         { nmove.y = Mathf.Max(nmove.y, -Mathf.Max(maxMove.down, 0)); }
         else if (nmove.y > 0)
@@ -324,14 +354,11 @@ public class PlayerController : Entity
 
         Vector3 tpos = transform.position.Add(nmove.x, nmove.y);
         transform.position = tpos;
-        rectChanged = false;
-        targetMove = Vector2.zero;
 
         // late fix
-        float yhalf = rect.size.y / 2;
-        RaycastHit2D rhit = Physics2D.Raycast(tpos, Vector2.down, yhalf-0.05f, groundMask);
+        RaycastHit2D rhit = Physics2D.Raycast(tpos, Vector2.down, r_sz2 .y- 0.05f, groundMask);
         if (rhit.collider)
-        { transform.position = new Vector3(tpos.x, rhit.point.y + yhalf, tpos.z); }
+        { transform.position = new Vector3(tpos.x, rhit.point.y + r_sz2.y, tpos.z); }
     }
 
 
@@ -368,8 +395,6 @@ public class PlayerController : Entity
     protected void JumpRelease()
     { /*Debug.Log("jump released");*/ isJumping = false; }
 
-    void UpdateRect()
-    { rect = coll.Rect(); rectChanged = true; }
 
     Vector2Range GetRayRange(Vector2 origin, Vector2 dir_from_origin, float dist_from_origin, LayerMask layerMask, float padding = -0.05f)
     {
@@ -391,8 +416,8 @@ public class PlayerController : Entity
         float vel = holdForce;
         while (t < time && isJumping)
         {
-            t += Time.deltaTime;
-            _velocity.y += Mathf.Lerp(vel, 0f, EaseOutCirc01(t / time)) * Time.deltaTime;
+            t += Time.fixedDeltaTime;
+            _velocity.y += Mathf.Lerp(vel, 0f, EaseOutCirc01(t / time)) * Time.fixedDeltaTime;
             yield return null;
         }
         isJumping = false;
@@ -405,7 +430,7 @@ public class PlayerController : Entity
         xSpeedMult = multStart;
         while (t < time)
         {
-            t += Time.deltaTime;
+            t += Time.fixedDeltaTime;
             xSpeedMult = CurveCombination(t / time, EaseInCirc01, EaseOutSine01, 0.25f);
             xSpeedMult = Mathf.Lerp(multStart, multEnd, t / time);
             yield return null;
@@ -430,7 +455,7 @@ public class PlayerController : Entity
         float t = 0;
         while (t < time || !simulationEnabled)
         {
-            t += Time.deltaTime;
+            t += Time.fixedDeltaTime;
             transform.position = Vector2.Lerp(start, end, t / time);
             yield return null;
         }
