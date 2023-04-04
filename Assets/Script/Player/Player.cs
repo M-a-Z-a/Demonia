@@ -7,12 +7,12 @@ using static Utility;
 
 public class Player : PlayerController
 {
-
     public static Player instance { get; protected set; }
     public static Transform pTransform { get; protected set; }
 
     MeshRenderer rend;
     Material mat;
+    MatAnimator animator;
 
     Transform cameraTarget;
     InputVector2 inputVector;
@@ -46,6 +46,8 @@ public class Player : PlayerController
         mat = new Material(rend.material);
         rend.material = mat;
 
+        animator = GetComponent<MatAnimator>();
+
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 8f);
         airJumpForce = entityStats.GetSetAttribute("airjumpforce", 6f);
@@ -69,6 +71,7 @@ public class Player : PlayerController
         attackA = InputManager.SetInputKey("attackA", KeyCode.C);
         attackB = InputManager.SetInputKey("attackB", KeyCode.V);
 
+        animator.FetchAnimationData(atlas_path: "Data/player_atlas");
     }
 
 
@@ -86,6 +89,13 @@ public class Player : PlayerController
 
             if (isGrounded)
             {
+                if (dir.x > 0)
+                { animator.SetState("run"); animator.FlipX(false); }
+                else if (dir.x < 0)
+                { animator.SetState("run"); animator.FlipX(true); }
+                else
+                { animator.SetState("idle"); }
+
                 cmJumps = mJumps;
                 if (attackA.down)
                 {
@@ -115,6 +125,8 @@ public class Player : PlayerController
 
             if (ledgeLeft)
             {
+                animator.SetState("ledge_grab");
+                animator.FlipX(true);
                 cmJumps = mJumps;
                 if (dir.y < 0)
                 { StartCoroutine(IHaltLedgeGrab(0.2f)); }
@@ -127,6 +139,8 @@ public class Player : PlayerController
             else if (wallLeft)
             {
                 //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
+                animator.SetState("ledge_grab");
+                animator.FlipX(true);
                 if (_velocity.y < 0)
                 { _velocity.y = TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x < 0 ? currentGravity * 1f : currentGravity * 0.8f)) * Time.deltaTime); }
                 if (jump.down && !ledgeLeft)
@@ -138,6 +152,8 @@ public class Player : PlayerController
             }
             else if (ledgeRight)
             {
+                animator.SetState("ledge_grab");
+                animator.FlipX(false);
                 cmJumps = mJumps;
                 if (dir.y < 0)
                 { StartCoroutine(IHaltLedgeGrab(0.2f)); }
@@ -149,6 +165,8 @@ public class Player : PlayerController
             }
             else if (wallRight)
             {
+                animator.SetState("ledge_grab");
+                animator.FlipX(false);
                 //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
                 if (_velocity.y < 0)
                 { _velocity.y = TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x > 0 ? currentGravity * 1.2f : currentGravity * 0.8f)) * Time.deltaTime); }

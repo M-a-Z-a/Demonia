@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MatAnimJson
+public partial class MatAnimExtras
 {
 
+    
 
 
 }

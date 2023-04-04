@@ -1,0 +1,65 @@
+{
+  "id": "player_atlas",
+  "sample_size": [ 512, 512 ],
+  "frames": [
+    {
+      "id": "idle_0",
+      "position": [ 0, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "idle_1",
+      "position": [ 64, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+    {
+      "id": "idle_crouch_0",
+      "position": [ 0, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "idle_crouch_1",
+      "position": [ 64, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+    {
+      "id": "run_1",
+      "position": [ 64, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "run_2",
+      "position": [ 0, 0 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+    {
+      "id": "ledge_0",
+      "position": [ 192, 384 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+    {
+      "id": "melee_0.0",
+      "position": [ 0, 0 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "melee_0.1",
+      "position": [ 0, 0 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    }
+  ]
+
+}

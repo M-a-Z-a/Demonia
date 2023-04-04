@@ -10,4 +10,23 @@ public static partial class Utility
     { rect.position = coll.offset; rect.size = coll.size; }
     public static Vector2 GetHalfSize(this Rect rect)
     { return new Vector2(rect.width / 2, rect.height / 2); }
+
+    public static float[] Add(this float[] arr, float add)
+    {
+        for (int i = 0; i < arr.Length; i++)
+        { arr[i] += add; }
+        return arr;
+    }
+    public static float[] Mult(this float[] arr, float mult)
+    {
+        for (int i = 0; i < arr.Length; i++)
+        { arr[i] *= mult; }
+        return arr;
+    }
+    public static float[] Div(this float[] arr, float div)
+    {
+        for (int i = 0; i < arr.Length; i++)
+        { arr[i] /= div; }
+        return arr;
+    }
 }

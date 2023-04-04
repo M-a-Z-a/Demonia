@@ -1,0 +1,70 @@
+{
+  "id": "player_anims",
+  "animations": [
+    {
+      "id": "idle",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/idle_0",
+          "time": 0.5,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_1",
+          "time": 1,
+          "flags": [ "exhale" ]
+        }
+      ]
+    },
+
+    {
+      "id": "run",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/run_0",
+          "time": 0.2,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/run_1",
+          "time": 0.2,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/run_2",
+          "time": 0.2,
+          "flags": [ "step" ]
+        },
+        {
+          "id": "player_atlas/run_3",
+          "time": 0.2,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/run_4",
+          "time": 0.2,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/run_5",
+          "time": 0.2,
+          "flags": [ "step" ]
+        }
+      ]
+    },
+
+    {
+      "id": "ledge_grab",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/ledge_0",
+          "time": 1,
+          "flags": []
+        }
+      ]
+    }
+  ]
+}

@@ -12,7 +12,7 @@ public static partial class Utility
     // Vector2 shorthand math
     public static Vector2 Add(this Vector2 vec, float x = 0, float y = 0)
     { return new Vector2(vec.x + x, vec.y + y); }
-    public static Vector2 Mult(this Vector3 vec, float x = 1, float y = 1)
+    public static Vector2 Mult(this Vector2 vec, float x = 1, float y = 1)
     { return new Vector2(vec.x * x, vec.y * y); }
     public static Vector2 Div(this Vector2 vec, float x = 1, float y = 1)
     { return new Vector2(vec.x / x, vec.y / y); }

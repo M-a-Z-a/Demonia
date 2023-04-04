@@ -51,11 +51,11 @@ MonoBehaviour:
   layerMask:
     serializedVersion: 2
     m_Bits: 1024
-  initVelocity: {x: 1, y: 0.9}
+  initVelocity: {x: 1, y: -0.2}
   centerRadius: 0.25
   shockRadius: 2
   shockCount: 12
-  shockMaterial: {fileID: 0}
+  shockMaterial: {fileID: 2100000, guid: 19ab29c69ca430347b48de40a6a3ba68, type: 2}
 --- !u!58 &1081643781292828252
 CircleCollider2D:
   m_ObjectHideFlags: 0
