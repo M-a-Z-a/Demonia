@@ -11,18 +11,21 @@ public partial class MatAnimExtras
         [SerializeField] float duration;
         [SerializeField] Dictionary<string, MatFrame> frames;
         [SerializeField] List<string> frameNames = new();
+        [SerializeField] bool loop;
 
         public string ID { get => id; }
         public float Duration { get => duration; }
         public int FrameCount { get => frames.Count; }
         public List<string> FrameNames { get => frameNames; }
+        public bool Loop { get => loop; }
 
 
 
-        public MatAnimation(string id, params MatFrame[] frames)
+        public MatAnimation(string id, bool loop, params MatFrame[] frames)
         {
             this.id = id;
             this.frames = new();
+            this.loop = loop;
             duration = 0;
             foreach (MatFrame f in frames)
             {
@@ -42,7 +45,7 @@ public partial class MatAnimExtras
                 { frms.Add(tmp); }
             }
 
-            matAnim = new(json_anim.id, frms.ToArray());
+            matAnim = new(json_anim.id, json_anim.loop, frms.ToArray());
             return true;
         }
 

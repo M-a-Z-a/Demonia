@@ -56,12 +56,129 @@
     },
 
     {
+      "id": "jump_ascend",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/idle_0",
+          "time": 0.5,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_1",
+          "time": 0.5,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "jump_float",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/idle_0",
+          "time": 0.5,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_1",
+          "time": 0.5,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "jump_descend",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/idle_0",
+          "time": 0.5,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_1",
+          "time": 0.5,
+          "flags": []
+        }
+      ]
+    },
+
+    {
       "id": "ledge_grab",
       "loop": false,
       "frames": [
         {
           "id": "player_atlas/ledge_0",
           "time": 1,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "melee.g.n.init",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.0.0.0",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.0.0.1",
+          "time": 0.2,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "id": "melee.g.n.release",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.0.1.0",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.0.1.1",
+          "time": 0.2,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "id": "melee.g.n.charge",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.0.2.0",
+          "time": 0.2,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.0.2.1",
+          "time": 0.2,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "melee.g.n.charge.release",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.0.3.0",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.0.3.1",
+          "time": 0.2,
           "flags": []
         }
       ]

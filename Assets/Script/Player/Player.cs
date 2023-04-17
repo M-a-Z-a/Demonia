@@ -1,14 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 using static InputManagerClasses;
+using static UnityEngine.Rendering.DebugUI;
 using static Utility;
 
 public class Player : PlayerController
 {
     public static Player instance { get; protected set; }
     public static Transform pTransform { get; protected set; }
+    public Dictionary<string, Hitbox> melee_hbs;
 
     MeshRenderer rend;
     Material mat;
@@ -19,6 +22,7 @@ public class Player : PlayerController
     InputKey left, right, up, down, jump, attackA, attackB;
     float moveMultLeft = 1f, moveMultRight = 1f;
     float wallYVel = 0f;
+    int facing = 1;
 
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
     int mJumps = 1, cmJumps = 0;
@@ -72,6 +76,8 @@ public class Player : PlayerController
         attackB = InputManager.SetInputKey("attackB", KeyCode.V);
 
         animator.FetchAnimationData(atlas_path: "Data/player_atlas");
+
+        GetMeleeHitboxes();
     }
 
 
@@ -90,9 +96,9 @@ public class Player : PlayerController
             if (isGrounded)
             {
                 if (dir.x > 0)
-                { animator.SetState("run"); animator.FlipX(false); }
+                { animator.SetState("run"); animator.FlipX(false); facing = 1; }
                 else if (dir.x < 0)
-                { animator.SetState("run"); animator.FlipX(true); }
+                { animator.SetState("run"); animator.FlipX(true); facing = -1; }
                 else
                 { animator.SetState("idle"); }
 
@@ -103,6 +109,7 @@ public class Player : PlayerController
                     {
                         if (cComboTimer < cComboLastAttackDelay)
                         {
+                            Attack(dir);
                             cComboStage++;
                             Debug.Log($"!Combo+ [{cComboStage}]");
                             cComboTimer = 1f;
@@ -111,6 +118,7 @@ public class Player : PlayerController
                     }
                     else
                     {
+                        Attack(dir);
                         cComboStage = 1;
                         Debug.Log($"!Combo Init [{cComboStage}]");
                         cComboTimer = 1f;
@@ -183,6 +191,52 @@ public class Player : PlayerController
                 _velocity.y = 0;
                 JumpInit(new Vector2(0, airJumpForce), airJumpForce); StartCoroutine(IWaitJumpRelease());
             }
+            else
+            {
+                if (velocity.y > 0.5f) animator.SetState("jump_ascend");
+                else if (velocity.y < -0.5f) animator.SetState("jump_descend");
+                else animator.SetState("jump_float");
+            }
+        }
+    }
+
+    void Attack(Vector2 dir)
+    {
+        if (dir.y > 0) { Attack_Up(); return; }
+        if (dir.y < 0) { Attack_Down(); return; }
+        Attack_Neutral();
+    }
+
+    Hitbox _chbox;
+    void Attack_Neutral()
+    {
+        _chbox = melee_hbs["melee_grounded_neutral"];
+        _chbox.xflip = facing < 0;
+        _chbox.Enable();
+    }
+    void Attack_Up()
+    {
+        _chbox = melee_hbs["melee_grounded_up"];
+        _chbox.xflip = facing < 0;
+        _chbox.Enable();
+    }
+    void Attack_Down()
+    {
+        _chbox = melee_hbs["melee_grounded_down"];
+        _chbox.xflip = facing < 0;
+        _chbox.Enable();
+    }
+
+    
+    void GetMeleeHitboxes()
+    {
+        melee_hbs = new();
+        Hitbox[] hboxes = transform.Find("MeleeHitboxes")?.GetComponentsInChildren<Hitbox>();
+        foreach (Hitbox hbox in hboxes)
+        {
+            hbox.origin = this;
+            hbox.Disable();
+            melee_hbs.Add(hbox.gameObject.name, hbox);
         }
     }
 
@@ -191,6 +245,7 @@ public class Player : PlayerController
         float t = 0;
         while (t < time || !wallRight)
         {
+            animator.FlipX(false);
             t += Time.deltaTime;
             moveMultLeft = Mathf.Lerp(0f, 1f, t / time);
             yield return null;
@@ -202,6 +257,7 @@ public class Player : PlayerController
         float t = 0;
         while (t < time || !wallLeft)
         {
+            animator.FlipX(true);
             t += Time.deltaTime;
             moveMultRight = Mathf.Lerp(0f, 1f, t / time);
             yield return null;
@@ -275,6 +331,11 @@ public class Player : PlayerController
     protected override void OnTouchWallRight(Vector2 velocity)
     {
         base.OnTouchWallRight(velocity);
+
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
 
     }
 

@@ -49,13 +49,20 @@
     },
 
     {
-      "id": "melee_0.0",
+      "id": "melee.g.n.0",
       "position": [ 0, 0 ],
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]
     },
     {
-      "id": "melee_0.1",
+      "id": "melee.g.n.1",
+      "position": [ 0, 0 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+    {
+      "id": "melee.g.n.1",
       "position": [ 0, 0 ],
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]

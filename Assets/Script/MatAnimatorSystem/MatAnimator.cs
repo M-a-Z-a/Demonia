@@ -19,6 +19,7 @@ public class MatAnimator : MonoBehaviour
     [SerializeField] string defaultState = "";
     Vector3 rtransOffset, rtransScale;
     [SerializeField] bool autoFetchOnStart = false;
+    public float animSpeed = 1f;
 
     Coroutine playAnimCoroutine;
     bool flipX = false;
@@ -85,12 +86,27 @@ public class MatAnimator : MonoBehaviour
         if (curAnim == state && t == null) return;
         curAnim = state;
         if (t != null) currentAnimTime = (float)t;
+        else t = 0;
         NextFrame();
     }
+
     void NextFrame()
     {
-        currentAnimTime %= anims[curAnim].Duration;
-        curFrame = anims[curAnim].GetFrame(currentAnimTime % anims[curAnim].Duration);
+        MatAnimation canim;
+        MatFrame mframe;
+        canim = anims[curAnim];
+        if (canim.Loop)
+        {
+            currentAnimTime %= canim.Duration;
+            mframe = canim.GetFrame(currentAnimTime);// % anims[curAnim].Duration);
+        }
+        else
+        {
+            currentAnimTime = Mathf.Clamp(currentAnimTime, 0, canim.Duration);
+            mframe = canim.GetFrame(currentAnimTime);
+        }
+        if (mframe != null)
+        { curFrame = mframe; }
         mat.SetVector("_Offset", curFrame.rect.position);
         mat.SetVector("_Tiling", curFrame.rect.size);
         float diff = curFrame.rect.size.x / curFrame.rect.size.x;
@@ -104,7 +120,7 @@ public class MatAnimator : MonoBehaviour
         float t = 0;
         while (t < time)
         {
-            t += Time.deltaTime;
+            t += Time.deltaTime * animSpeed;
             yield return null; 
         }
         currentAnimTime += t;
