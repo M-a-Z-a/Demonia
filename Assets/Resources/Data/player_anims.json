@@ -7,13 +7,38 @@
       "frames": [
         {
           "id": "player_atlas/idle_0",
-          "time": 0.5,
+          "time": 0.4,
           "flags": []
         },
         {
           "id": "player_atlas/idle_1",
-          "time": 1,
-          "flags": [ "exhale" ]
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_2",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_3",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_4",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_5",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/idle_6",
+          "time": 0.1,
+          "flags": []
         }
       ]
     },
@@ -24,83 +49,125 @@
       "frames": [
         {
           "id": "player_atlas/run_0",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         },
         {
           "id": "player_atlas/run_1",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         },
         {
           "id": "player_atlas/run_2",
-          "time": 0.2,
+          "time": 0.1,
           "flags": [ "step" ]
         },
         {
           "id": "player_atlas/run_3",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         },
         {
           "id": "player_atlas/run_4",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         },
         {
           "id": "player_atlas/run_5",
-          "time": 0.2,
+          "time": 0.1,
           "flags": [ "step" ]
         }
       ]
     },
 
     {
-      "id": "jump_ascend",
+      "id": "break",
       "loop": true,
       "frames": [
         {
-          "id": "player_atlas/idle_0",
+          "id": "player_atlas/break_0",
           "time": 0.5,
+          "flags": [ "break" ]
+        }
+      ]
+    },
+
+    {
+      "id": "air_ascend",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/air_ascend_0",
+          "time": 0.1,
           "flags": []
         },
         {
-          "id": "player_atlas/idle_1",
-          "time": 0.5,
+          "id": "player_atlas/air_ascend_1",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/air_ascend_2",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/air_ascend_3",
+          "time": 0.1,
           "flags": []
         }
       ]
     },
 
     {
-      "id": "jump_float",
+      "id": "air_float",
       "loop": true,
       "frames": [
         {
-          "id": "player_atlas/idle_0",
-          "time": 0.5,
+          "id": "player_atlas/air_float_0",
+          "time": 0.1,
           "flags": []
         },
         {
-          "id": "player_atlas/idle_1",
-          "time": 0.5,
+          "id": "player_atlas/air_float_1",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/air_float_2",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/air_float_3",
+          "time": 0.1,
           "flags": []
         }
       ]
     },
 
     {
-      "id": "jump_descend",
+      "id": "air_descend",
       "loop": true,
       "frames": [
         {
-          "id": "player_atlas/idle_0",
-          "time": 0.5,
+          "id": "player_atlas/air_descend_0",
+          "time": 0.1,
           "flags": []
         },
         {
-          "id": "player_atlas/idle_1",
-          "time": 0.5,
+          "id": "player_atlas/air_descend_1",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/air_descend_2",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/air_descend_3",
+          "time": 0.1,
           "flags": []
         }
       ]
@@ -108,7 +175,7 @@
 
     {
       "id": "ledge_grab",
-      "loop": false,
+      "loop": true,
       "frames": [
         {
           "id": "player_atlas/ledge_0",
@@ -129,7 +196,7 @@
         },
         {
           "id": "player_atlas/melee.g.0.0.1",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         }
       ]
@@ -145,7 +212,7 @@
         },
         {
           "id": "player_atlas/melee.g.0.1.1",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         }
       ]
@@ -156,12 +223,12 @@
       "frames": [
         {
           "id": "player_atlas/melee.g.0.2.0",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         },
         {
           "id": "player_atlas/melee.g.0.2.1",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         }
       ]
@@ -178,7 +245,7 @@
         },
         {
           "id": "player_atlas/melee.g.0.3.1",
-          "time": 0.2,
+          "time": 0.1,
           "flags": []
         }
       ]

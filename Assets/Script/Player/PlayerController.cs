@@ -273,6 +273,7 @@ public class PlayerController : Entity
             }
         }
 
+        wallLeft = false;
         vecrang = GetRayRange(transform.position.Add(x: -rgLeft.doffset), Vector2.up, r_sz2.y, groundMask, -0.05f);
         if (rgLeft.Cast(transform.position, Vector2.left, vecrang, r_sz2.x + 0.01f) > 0)
         {
@@ -282,7 +283,7 @@ public class PlayerController : Entity
             }
             else
             {
-                if (rgLeft.hitCount > 1)
+                if (rgLeft.raycastHits[2].collider && rgLeft.raycastHits[3].collider)//rgLeft.hitCount > 1)
                 { 
                     if (!wallLeft) 
                     { OnTouchWallLeft(_velocity); }; 
@@ -299,6 +300,7 @@ public class PlayerController : Entity
         else
         { WallLeftElse(); }
 
+        wallRight = false;
         vecrang = GetRayRange(transform.position.Add(x: rgRight.doffset), Vector2.up, r_sz2.y, groundMask, -0.05f);
         if (rgRight.Cast(transform.position, Vector2.right, vecrang, r_sz2.x + 0.01f) > 0)
         {
@@ -308,7 +310,7 @@ public class PlayerController : Entity
             }
             else
             {
-                if (rgRight.hitCount > 1)
+                if (rgRight.raycastHits[2].collider && rgRight.raycastHits[3].collider)//  rgRight.hitCount > 1)
                 { 
                     if (!wallRight) 
                     { OnTouchWallRight(_velocity); }; 

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using static MatAnimExtras;
 using static Utility;
 
@@ -21,12 +22,15 @@ public class MatAnimator : MonoBehaviour
     [SerializeField] bool autoFetchOnStart = false;
     public float animSpeed = 1f;
 
+    public Dictionary<string, UnityAction> flagActions;
+
     Coroutine playAnimCoroutine;
-    bool flipX = false;
+    public bool flipX = false;
 
     private void Awake()
     {
         FetchRenderer();
+        flagActions = new();
         anims = new();
     }
 
@@ -42,7 +46,7 @@ public class MatAnimator : MonoBehaviour
             if (MatAnimation.FromJsonAnim(anim, out MatAnimation manim))
             {
                 if (anims.ContainsKey(anim.id))
-                { anims[anim.id] = manim; continue; }
+                { anims[anim.id] = manim;  continue; }
                 anims.Add(anim.id, manim); 
             }
         }
@@ -85,6 +89,7 @@ public class MatAnimator : MonoBehaviour
     {
         if (curAnim == state && t == null) return;
         curAnim = state;
+        //Debug.Log($"AnimState set to: {curAnim}");
         if (t != null) currentAnimTime = (float)t;
         else t = 0;
         NextFrame();
@@ -96,15 +101,10 @@ public class MatAnimator : MonoBehaviour
         MatFrame mframe;
         canim = anims[curAnim];
         if (canim.Loop)
-        {
-            currentAnimTime %= canim.Duration;
-            mframe = canim.GetFrame(currentAnimTime);// % anims[curAnim].Duration);
-        }
+        { currentAnimTime %= canim.Duration; }
         else
-        {
-            currentAnimTime = Mathf.Clamp(currentAnimTime, 0, canim.Duration);
-            mframe = canim.GetFrame(currentAnimTime);
-        }
+        { currentAnimTime = Mathf.Clamp(currentAnimTime, 0, canim.Duration); }
+        mframe = canim.GetFrame(currentAnimTime, out float atime);
         if (mframe != null)
         { curFrame = mframe; }
         mat.SetVector("_Offset", curFrame.rect.position);
@@ -112,18 +112,34 @@ public class MatAnimator : MonoBehaviour
         float diff = curFrame.rect.size.x / curFrame.rect.size.x;
         Vector3 vec = rendererTransform.localScale;
         rendererTransform.localPosition = rtransOffset.Add(curFrame.pivot.x * rendererTransform.localScale.x, curFrame.pivot.y * rendererTransform.localScale.y);
-        playAnimCoroutine = StartCoroutine(IWaitNextFrame(curFrame.Time));
+        foreach (string f in curFrame.Flags)
+        {
+            if (flagActions.TryGetValue(f, out UnityAction act))
+            { act.Invoke(); }
+        }
+        float ctime = currentAnimTime - atime;
+        ctime = curFrame.Time - ctime;
+        if (playAnimCoroutine != null) StopCoroutine(playAnimCoroutine);
+        //playAnimCoroutine = StartCoroutine(IWaitNextFrameAtTime(Time.time + ctime));
+        playAnimCoroutine = StartCoroutine(IWaitNextFrame(curFrame.Time, atime));// - ctime));
     }
 
-    IEnumerator IWaitNextFrame(float time)
+    IEnumerator IWaitNextFrameAtTime(float time)
+    {
+        float t = Time.time;
+        while (Time.time < time) { yield return null; }
+        currentAnimTime += Time.time - t;
+        NextFrame();
+    }
+    IEnumerator IWaitNextFrame(float time, float frameTime)
     {
         float t = 0;
         while (t < time)
         {
             t += Time.deltaTime * animSpeed;
-            yield return null; 
+            yield return null;
         }
-        currentAnimTime += t;
+        currentAnimTime = frameTime + time;
         NextFrame();
     }
 }

@@ -30,6 +30,8 @@ public class Player : PlayerController
     int cComboStage = 0; 
     float cComboTimer = 0, cComboLastAttackDelay = 0;
 
+    float anim_run_speed = 32f / 16f * 0.3f * 10f;
+
     Rect rect_stand = new Rect(new Vector2(0,0), new Vector2(0.8f, 1.8f));
     Rect rect_crouch = new Rect(new Vector2(0, -0.45f), new Vector2(0.8f, 0.9f));
 
@@ -52,15 +54,18 @@ public class Player : PlayerController
 
         animator = GetComponent<MatAnimator>();
 
+        entityStats.SetAttribute("speed", 6f);
+        entityStats.SetAttribute("accelSpeed", 30f);
+        entityStats.SetAttribute("decelSpeed", 15f);
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 8f);
         airJumpForce = entityStats.GetSetAttribute("airjumpforce", 6f);
-        
-
-        Debug.Log($"jumpforce: {jumpForce.value}");
     }
 
-
+    public void PlayStepSound()
+    {
+        //Debug.Log("step");
+    }
 
     protected override void Start()
     {
@@ -76,31 +81,78 @@ public class Player : PlayerController
         attackB = InputManager.SetInputKey("attackB", KeyCode.V);
 
         animator.FetchAnimationData(atlas_path: "Data/player_atlas");
+        animator.flagActions.Add("step", PlayStepSound);
 
         GetMeleeHitboxes();
+
+        if (Checkpoint.activeCheckpoint != null)
+        { transform.position = Checkpoint.activeCheckpoint.transform.position; }
     }
 
-
+    float aspeed = 1f;
     protected override void FixedUpdate()
+    { base.FixedUpdate(); }
+    protected void Update()
     {
         Vector2 dir = (Vector2)inputVector;
 
-        base.FixedUpdate();
-
         Move(dir.x *= dir.x < 0 ? moveMultLeft : moveMultRight);
-        if (wasGrounded < coyoteTime)
+        aspeed = 1f;
+        if (wasGrounded < coyoteTime && !isJumping)
         {
             if (jump.down)
             { JumpInit(new Vector2(0, jumpForce), jumpForce); StartCoroutine(IWaitJumpRelease()); }
 
             if (isGrounded)
             {
+
                 if (dir.x > 0)
-                { animator.SetState("run"); animator.FlipX(false); facing = 1; }
+                {
+                    if (velocity.x < 0)
+                    { 
+                        animator.SetState("break");
+                        animator.FlipX(true);
+                    }
+                    else
+                    {
+                        animator.SetState("run");
+                        animator.FlipX(false);
+                        aspeed = Mathf.Clamp(Mathf.Abs(velocity.x) / anim_run_speed, 0.5f, 2f);
+                        facing = 1;
+                    }
+                }
                 else if (dir.x < 0)
-                { animator.SetState("run"); animator.FlipX(true); facing = -1; }
+                { 
+                    if (velocity.x > 0)
+                    {
+                        animator.SetState("break");
+                        animator.FlipX(false);
+                    }
+                    else
+                    {
+                        animator.SetState("run");
+                        animator.FlipX(true);
+                        aspeed = Mathf.Clamp(Mathf.Abs(velocity.x) / anim_run_speed, 0.5f, 2f);
+                        facing = -1;
+                    }
+                }
                 else
-                { animator.SetState("idle"); }
+                { 
+                    if (velocity.x > 0.5f)
+                    {
+                        animator.SetState("break");
+                        animator.FlipX(false);
+                    }
+                    else if (velocity.x < -0.5f)
+                    {
+                        animator.SetState("break");
+                        animator.FlipX(true);
+                    }
+                    else
+                    {
+                        animator.SetState("idle");
+                    }
+                }
 
                 cmJumps = mJumps;
                 if (attackA.down)
@@ -133,22 +185,26 @@ public class Player : PlayerController
 
             if (ledgeLeft)
             {
-                animator.SetState("ledge_grab");
-                animator.FlipX(true);
+                //if (velocity.y <= 0) { 
+                    animator.SetState("ledge_grab"); animator.FlipX(false); 
+                //}
                 cmJumps = mJumps;
                 if (dir.y < 0)
                 { StartCoroutine(IHaltLedgeGrab(0.2f)); }
                 else if (jump.down)
-                { 
-                    JumpInit(AngleToVector2(dir.x < 0 ? 90f : 60f) * jumpForce, jumpForce * 0.5f); 
-                    StartCoroutine(IWaitJumpRelease()); 
+                {
+                    //if (dir.x < 0) animator.FlipX(true);
+                    JumpInit(AngleToVector2(dir.x < 0 ? 90f : 60f) * jumpForce, jumpForce * 0.5f);
+                    StartCoroutine(IWaitJumpRelease());
                 }
             }
             else if (wallLeft)
             {
                 //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
-                animator.SetState("ledge_grab");
-                animator.FlipX(true);
+                //if (velocity.y <= 0) { 
+                    animator.SetState("ledge_grab"); animator.FlipX(false); 
+                //}
+
                 if (_velocity.y < 0)
                 { _velocity.y = TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x < 0 ? currentGravity * 1f : currentGravity * 0.8f)) * Time.deltaTime); }
                 if (jump.down && !ledgeLeft)
@@ -160,21 +216,24 @@ public class Player : PlayerController
             }
             else if (ledgeRight)
             {
-                animator.SetState("ledge_grab");
-                animator.FlipX(false);
+                //if (velocity.y <= 0) { 
+                    animator.SetState("ledge_grab"); animator.FlipX(true); 
+                //}
                 cmJumps = mJumps;
                 if (dir.y < 0)
                 { StartCoroutine(IHaltLedgeGrab(0.2f)); }
                 else if (jump.down)
                 {
+                    //if (dir.x > 0) animator.FlipX(false);
                     JumpInit(AngleToVector2(dir.x > 0 ? 90f : 105f) * jumpForce, jumpForce * 0.5f);
                     StartCoroutine(IWaitJumpRelease());
                 }
             }
             else if (wallRight)
             {
-                animator.SetState("ledge_grab");
-                animator.FlipX(false);
+                //if (velocity.y <= 0) { 
+                    animator.SetState("ledge_grab"); animator.FlipX(true); 
+                //}
                 //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
                 if (_velocity.y < 0)
                 { _velocity.y = TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x > 0 ? currentGravity * 1.2f : currentGravity * 0.8f)) * Time.deltaTime); }
@@ -193,11 +252,13 @@ public class Player : PlayerController
             }
             else
             {
-                if (velocity.y > 0.5f) animator.SetState("jump_ascend");
-                else if (velocity.y < -0.5f) animator.SetState("jump_descend");
-                else animator.SetState("jump_float");
+                aspeed = Mathf.Clamp(velocity.y * 0.5f, 0.5f, 2f);
+                if (velocity.y > 2f) animator.SetState("air_ascend");
+                else if (velocity.y < -2f) animator.SetState("air_descend");
+                else animator.SetState("air_float");
             }
         }
+        animator.animSpeed = aspeed;
     }
 
     void Attack(Vector2 dir)
@@ -245,7 +306,6 @@ public class Player : PlayerController
         float t = 0;
         while (t < time || !wallRight)
         {
-            animator.FlipX(false);
             t += Time.deltaTime;
             moveMultLeft = Mathf.Lerp(0f, 1f, t / time);
             yield return null;
@@ -257,7 +317,6 @@ public class Player : PlayerController
         float t = 0;
         while (t < time || !wallLeft)
         {
-            animator.FlipX(true);
             t += Time.deltaTime;
             moveMultRight = Mathf.Lerp(0f, 1f, t / time);
             yield return null;
@@ -336,7 +395,16 @@ public class Player : PlayerController
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-
+        switch (collision.gameObject.tag)
+        {
+            case "Hazard":
+                GameManager.Reset_Game_Fade();
+                break;
+            case "Checkpoint":
+                if (collision.gameObject.TryGetComponent<Checkpoint>(out Checkpoint c))
+                { c.SetActiveCheckpoint(); }
+                break;
+        }
     }
 
 }

@@ -44,9 +44,10 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         ScreenFader.GetScreenFader("main fader", out mainFader);
-        SceneManager.LoadScene(sceneIndexes["MainMenu"]);
+        //SceneManager.LoadScene(sceneIndexes["MainMenu"]);
+        SceneManager.LoadScene(3);
 
-        TimeControl.SetTimeScaleFadeForTime(0.25f, 1f, 1f, 4f);
+        //TimeControl.SetTimeScaleFadeForTime(0.25f, 1f, 1f, 4f);
     }
 
 
@@ -54,9 +55,21 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         InputManager.UpdateInputs();
+        if (Input.GetKeyDown(KeyCode.F4))
+        { Reset_Game_Fade(); }
+        if (Input.GetKeyDown(KeyCode.F5))
+        { Checkpoint.activeCheckpoint = null; Reset_Game_Fade(); }
     }
 
-
+    public static void Reset_Game()
+    {
+        SceneManager.LoadScene(3);
+    }
+    public static void Reset_Game_Fade()
+    {
+        instance.StartCoroutine(instance.IResetFade());
+    }
+    
 
 
     public static Coroutine LoadSceneAsync(int index)
@@ -79,6 +92,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
+
+    IEnumerator IResetFade()
+    {
+        TimeControl.SetTimeScaleFade(0f,0.5f);
+        ScreenFader.GetScreenFader("main fader", out mainFader);
+        yield return mainFader.FadeTo(Color.white, 0.25f);
+        Reset_Game();
+        TimeControl.SetTimeScaleFade(1f, 0.5f);
+        yield return mainFader.FadeTo(new Color(1f, 1f, 1f, 0f), 0.5f);
+    }
 
 }
 

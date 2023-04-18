@@ -40,7 +40,7 @@ public class CameraControl : MonoBehaviour
         Vector2 tpos = transform.position;
         Vector2 moveTo = CameraTarget.activeTarget != null ? CameraTarget.targetTransform.position : targetPos;
 
-        if (Room.activeRoom?.roomBounds != null) moveTo = ClampInRect(moveTo, GetCamClampRect(), padding);
+        if (Room.ActiveRoom?.roomBounds != null) moveTo = ClampInRect(moveTo, GetCamClampRect(), padding);
 
         Vector2 dist = moveTo - tpos; 
         Vector2 dir = dist.normalized;
@@ -57,7 +57,7 @@ public class CameraControl : MonoBehaviour
     {
         float y = _cam.orthographicSize * 2;
         Vector2 s = new Vector2(y * _cam.aspect, y);
-        return new Rect(Room.activeRoom.roomBounds.position + s / 2, Room.activeRoom.roomBounds.size - s); 
+        return new Rect(Room.ActiveRoom.roomWorldBounds.position + s / 2, Room.ActiveRoom.roomWorldBounds.size - s); 
     }
 
 

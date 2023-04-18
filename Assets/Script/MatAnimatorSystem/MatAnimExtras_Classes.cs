@@ -42,7 +42,10 @@ public partial class MatAnimExtras
             for (int i = 0; i < json_anim.frames.Length; i++)
             {
                 if (MatFrame.FromJsonAnimFrame(json_anim.frames[i], out tmp))
-                { frms.Add(tmp); }
+                {
+                    tmp.SetFlags(json_anim.frames[i].flags);
+                    frms.Add(tmp); 
+                }
             }
 
             matAnim = new(json_anim.id, json_anim.loop, frms.ToArray());
@@ -59,12 +62,14 @@ public partial class MatAnimExtras
             return mfram;
         }
 
-        public MatFrame GetFrame(float time)
+        public MatFrame GetFrame(float time, out float total_time)
         {
+            total_time = 0;
             float t = 0;
             for (int i = 0; i < frameNames.Count; i++)
             {
                 MatFrame f = frames[frameNames[i]];
+                total_time = t;
                 t += f.Time;
                 if (time < t)
                 { return f; }
@@ -182,8 +187,10 @@ public partial class MatAnimExtras
         [SerializeField] float time;
         [SerializeField] Rect _rect;
         [SerializeField] Vector2 _pivot;
+        [SerializeField] List<string> flags;
         public string ID { get => id; set => SetID(value); }
         public float Time { get => time; set => SetTime(value); }
+        public List<string> Flags { get => flags; }
         public Rect rect { get => _rect; set => SetRect(value); }
         public Vector2 pivot { get => _pivot; set => SetPivot(value); }
         public Vector2 topleft { get => new Vector2(_rect.xMin, _rect.yMax); }
@@ -199,13 +206,16 @@ public partial class MatAnimExtras
         { time = Mathf.Max(value, 0); }
         void SetPivot(Vector2 value)
         { _pivot = value; }
+        public void SetFlags(params string[] flags)
+        { this.flags = new(flags); }
 
-        public MatFrame(string name, float time, Rect rect, Vector2 pivot)
+        public MatFrame(string name, float time, Rect rect, Vector2 pivot, params string[] flags)
         {
             SetID(name);
             SetTime(time);
             SetRect(rect);
             SetPivot(pivot);
+            SetFlags(flags);
         }
 
         public static bool FromJsonAnimFrame(JsonAnim.Frame frame, out MatFrame matFrame)
@@ -222,6 +232,9 @@ public partial class MatAnimExtras
             }
             return false;
         }
+
+        public bool HasFlag(string flag)
+        { return flags.Contains(flag); }
 
 
     }

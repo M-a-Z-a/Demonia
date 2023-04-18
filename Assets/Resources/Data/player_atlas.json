@@ -14,6 +14,37 @@
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]
     },
+    {
+      "id": "idle_2",
+      "position": [ 128, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "idle_3",
+      "position": [ 192, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "idle_4",
+      "position": [ 256, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "idle_5",
+      "position": [ 320, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "idle_6",
+      "position": [ 384, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
 
     {
       "id": "idle_crouch_0",
@@ -28,22 +59,132 @@
       "pivot": [ 32, 32 ]
     },
 
+
+    {
+      "id": "run_0",
+      "position": [ 0, 128 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
     {
       "id": "run_1",
-      "position": [ 64, 64 ],
+      "position": [ 64, 128 ],
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]
     },
     {
       "id": "run_2",
-      "position": [ 0, 0 ],
+      "position": [ 128, 128 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "run_3",
+      "position": [ 192, 128 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "run_4",
+      "position": [ 256, 128 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "run_5",
+      "position": [ 320, 128 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+
+    {
+      "id": "break_0",
+      "position": [ 384, 128 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+
+    {
+      "id": "air_ascend_0",
+      "position": [ 0, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_ascend_1",
+      "position": [ 64, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_ascend_2",
+      "position": [ 128, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_ascend_3",
+      "position": [ 192, 256 ],
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]
     },
 
     {
-      "id": "ledge_0",
+      "id": "air_float_0",
+      "position": [ 0, 320 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_float_1",
+      "position": [ 64, 320 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_float_2",
+      "position": [ 128, 320 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_float_3",
+      "position": [ 192, 320 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+    {
+      "id": "air_descend_0",
+      "position": [ 0, 384 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_descend_1",
+      "position": [ 64, 384 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_descend_2",
+      "position": [ 128, 384 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "air_descend_3",
       "position": [ 192, 384 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+
+    {
+      "id": "ledge_0",
+      "position": [ 256, 192 ],
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]
     },

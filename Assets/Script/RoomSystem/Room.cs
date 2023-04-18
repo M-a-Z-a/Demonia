@@ -6,37 +6,40 @@ using UnityEngine;
 
 public class Room : MonoBehaviour
 {
-    public enum RoomState { Disabled = 0, Enabled = 1, Active = 2 };
-    public static Room activeRoom { get; protected set; }
+    public enum RoomState { Disabled = 0, Enabled, Active };
+    public static Room ActiveRoom { get; protected set; }
 
-    public static Dictionary<string, int> conditionValues;
-    [SerializeField] protected List<Room> connectedRooms;
-    [SerializeField] protected Rect _roomBounds;
-    protected Rect _roomWorldBounds;
+    [SerializeField] public List<Room> connectedRooms;
+    [SerializeField] public Rect roomBounds;
+    public Rect roomWorldBounds;
 
     public bool firstLoad = true;
 
-    protected RoomState _roomState = RoomState.Disabled;
-    public bool isActive { get => _roomState == RoomState.Active; }
-    public bool isEnabled { get => _roomState >= RoomState.Enabled; }
-    public RoomState roomState { get => _roomState; }
-    public Rect roomLocalBounds { get => _roomBounds; }
-    public Rect roomBounds { get => _roomWorldBounds; }
+    public RoomState roomState = RoomState.Disabled;
+    
+    public Transform objects;
+    public List<Entity> entities = new();
 
-    protected Transform objects;
-    protected List<Entity> entities = new();
-
-
+    public void SetActiveRoom()
+    { ActiveRoom = this; }
 
     protected virtual void OnDrawGizmos()
     {
-        Vector3 rposmin = transform.position + (Vector3)_roomBounds.min;
-        Vector3 rposmax = transform.position + (Vector3)_roomBounds.max;
+        Vector3 rposmin = transform.position + (Vector3)roomBounds.min;
+        Vector3 rposmax = transform.position + (Vector3)roomBounds.max;
         Gizmos.color = Color.yellow;
-        Gizmos.DrawRay(rposmin, new Vector3(_roomBounds.width, 0, 0));
-        Gizmos.DrawRay(rposmin, new Vector3(0, _roomBounds.height, 0));
-        Gizmos.DrawRay(rposmax, new Vector3(-_roomBounds.width, 0, 0));
-        Gizmos.DrawRay(rposmax, new Vector3(0, -_roomBounds.height, 0));
+        Gizmos.DrawRay(rposmin, new Vector3(roomBounds.width, 0, 0));
+        Gizmos.DrawRay(rposmin, new Vector3(0, roomBounds.height, 0));
+        Gizmos.DrawRay(rposmax, new Vector3(-roomBounds.width, 0, 0));
+        Gizmos.DrawRay(rposmax, new Vector3(0, -roomBounds.height, 0));
+
+        Vector2 rpos = roomWorldBounds.center;
+        Vector2 dist;
+        foreach (Room r in connectedRooms)
+        {
+            dist = r.roomWorldBounds.center - roomWorldBounds.center;
+            Utility.DrawGizmoArrow(rpos, dist*0.6f, 1f);
+        }
     }
 
     protected virtual void Awake()
@@ -44,16 +47,22 @@ public class Room : MonoBehaviour
         GetRoomWorldBounds();
         FetchEntities();
     }
-    protected virtual void Start()
+
+    private void OnValidate()
     {
-        if (activeRoom == null)
-        { 
-            activeRoom = this;
-        }
+        GetRoomWorldBounds();
+    }
+
+
+
+    public virtual void SetEntityStates(bool state)
+    {
+        for (int i = 0; i < entities.Count; i++)
+        { entities[i].gameObject.SetActive(state); }
     }
 
     protected virtual void GetRoomWorldBounds()
-    { _roomWorldBounds = new Rect(_roomBounds.position + (Vector2)transform.position, _roomBounds.size); }
+    { roomWorldBounds = new Rect(roomBounds.position + (Vector2)transform.position, roomBounds.size); }
 
     public virtual void GetObjectsContainer()
     {
@@ -72,56 +81,87 @@ public class Room : MonoBehaviour
         entities = new(objects.GetComponentsInChildren<Entity>());
     }
 
-    public void LoadAdjacentRooms()
-    {
+    public bool PointInRoom(Vector2 point)
+    { return roomWorldBounds.Contains(point); }
 
-    }
 
-    public virtual void SetState(RoomState state)
-    {
-        switch (state)
-        {
-            case RoomState.Active:
-                Activate();
-                break;
-            case RoomState.Enabled:
-                Deactivate();
-                break;
-            default: //RoomState.Disabled;
-                Unload();
-                break;
-        }
-    }
+
     public virtual bool Activate()
     {
-        if (_roomState == RoomState.Disabled) return false;
-        _roomState = RoomState.Active;
+        roomState = RoomState.Active;
         firstLoad = false;
-        activeRoom = this;
+        if (ActiveRoom)
+        {
+            List<Room> rlist = new(connectedRooms);
+            rlist.Add(this);
+            ActiveRoom.UnloadAdjacentRooms(rlist); 
+        }
+        ActiveRoom = this;
+        Debug.Log($"Room: {gameObject.name} activated");
+        Load();
+        LoadAdjacentRooms();
+        SetEntityStates(true);
         return true;
     }
+
     public virtual bool Deactivate()
     {
-        if (_roomState == RoomState.Disabled) return false;
-        _roomState = RoomState.Enabled;
+        roomState = RoomState.Enabled;
+        Debug.Log($"Room: {gameObject.name} deactivated");
+        SetEntityStates(false);
         return true;
     }
 
     public virtual bool Load()
     {
-        if (_roomState == RoomState.Disabled)
-        { _roomState = RoomState.Enabled; return true; }
-        return false;
+        roomState = RoomState.Enabled;
+        gameObject.SetActive(true);
+        Debug.Log($"Room: {gameObject.name} loaded");
+        return true;
     }
 
     public virtual bool Unload()
     {
+        roomState = RoomState.Disabled;
+        Debug.Log($"Room: {gameObject.name} unloaded");
         Deactivate();
-        if (_roomState == RoomState.Disabled) return false;
-        _roomState = RoomState.Disabled;
+        gameObject.SetActive(false);
         return true;
     }
 
 
-    
+    public void LoadAdjacentRooms()
+    {
+        for (int i = 0; i < connectedRooms.Count; i++)
+        {
+            if (connectedRooms[i] == ActiveRoom) continue;
+            connectedRooms[i].Load();
+        }
+    }
+    public void LoadAdjacentRooms(List<Room> exclude)
+    {
+        for (int i = 0; i < connectedRooms.Count; i++)
+        {
+            if (connectedRooms[i] == ActiveRoom || exclude.Contains(connectedRooms[i])) continue;
+            connectedRooms[i].Load();
+        }
+    }
+
+    public void UnloadAdjacentRooms()
+    {
+        for (int i = 0; i < connectedRooms.Count; i++)
+        {
+            if (connectedRooms[i] == ActiveRoom) continue;
+            connectedRooms[i].Unload();
+        }
+    }
+    public void UnloadAdjacentRooms(List<Room> exclude)
+    {
+        for (int i = 0; i < connectedRooms.Count; i++)
+        {
+            if (connectedRooms[i] == ActiveRoom || exclude.Contains(connectedRooms[i])) continue;
+            connectedRooms[i].Unload();
+        }
+    }
+
 }

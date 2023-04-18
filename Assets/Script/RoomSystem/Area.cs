@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Room;
 
 public class Area : MonoBehaviour
 {
@@ -13,11 +14,39 @@ public class Area : MonoBehaviour
     }
     private void Start()
     {
-        rooms = new();
-        foreach (Transform t in transform)
+        rooms = new(gameObject.GetComponentsInChildren<Room>(true));
+        Debug.Log($"room count: {rooms.Count}");
+        if (rooms.Count > 0)
+        { 
+            foreach (Room r in rooms)
+            { r.Unload(); }
+            rooms[0].Activate(); 
+        }
+    }
+
+    public void Update()
+    {
+        if (Player.instance != null)
         {
-            if (t.TryGetComponent<Room>(out Room r))
-            { rooms.Add(r); }
+            if (ActiveRoom && !ActiveRoom.PointInRoom(Player.pTransform.position))
+            {
+                bool pfound = false;
+                for (int i = 0; i < ActiveRoom.connectedRooms.Count; i++)
+                {
+                    if (ActiveRoom.connectedRooms[i].roomWorldBounds.Contains(Player.pTransform.position))
+                    { ActiveRoom.connectedRooms[i].Activate(); pfound = true; break; }
+                }
+                Room proom = ActiveRoom;
+                if (pfound == false)
+                {
+                    if (FindPlayerRoom(out proom))
+                    {
+                        proom.Activate();
+                        pfound = true;
+                    }
+                }
+                Debug.Log(pfound ? $"player in room: {proom.gameObject.name}" : "player lost?");
+            }
         }
     }
 
@@ -25,11 +54,12 @@ public class Area : MonoBehaviour
     {
         room = null;
         Vector2 ppos = Player.pTransform.position;
-        foreach (Room r in activeArea.rooms)
+        for (int i = 0; i < activeArea.rooms.Count; i++)
         {
-            if (r.roomBounds.Contains(ppos))
-            { room = r; return true; }
+            if (activeArea.rooms[i].roomWorldBounds.Contains(ppos))
+            { room = activeArea.rooms[i]; return true; }
         }
         return false;
     }
+
 }
