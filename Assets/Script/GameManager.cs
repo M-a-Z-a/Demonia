@@ -95,9 +95,9 @@ public class GameManager : MonoBehaviour
 
     IEnumerator IResetFade()
     {
-        TimeControl.SetTimeScaleFade(0f,0.5f);
+        TimeControl.SetTimeScaleFade(0.1f, 0.1f);
         ScreenFader.GetScreenFader("main fader", out mainFader);
-        yield return mainFader.FadeTo(Color.white, 0.25f);
+        yield return mainFader.FadeTo(Color.white, 0.15f);
         Reset_Game();
         TimeControl.SetTimeScaleFade(1f, 0.5f);
         yield return mainFader.FadeTo(new Color(1f, 1f, 1f, 0f), 0.5f);

@@ -2,10 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Laser : MonoBehaviour
+public class Laser : Entity
 {
-
-    public Transform origin;
     public float distance;
     LineRenderer lrend;
     public bool isActive;
@@ -13,16 +11,35 @@ public class Laser : MonoBehaviour
     BoxCollider2D bcoll;
     public LayerMask stopLayer;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         lrend = GetComponent<LineRenderer>();
-        lrend.widthMultiplier = 2f;
+        lrend.widthMultiplier = 3f;
         bcoll = GetComponent<BoxCollider2D>();
         bcoll.size = new Vector2(0.2f, 1f);
     }
 
-    private void Start()
+    private void OnDrawGizmosSelected()
     {
+        Gizmos.color = Color.red;
+        Gizmos.DrawRay(transform.position, transform.up * distance); 
+    }
+
+
+    private void OnEnable()
+    {
+        fireCoroutine = StartCoroutine(IFire());
+    }
+    private void OnDisable()
+    {
+        if (fireCoroutine != null) StopCoroutine(fireCoroutine);
+    }
+
+    
+    protected override void Start()
+    {
+        base.Start();
         if (isActive) Activate();
     }
 
@@ -45,19 +62,19 @@ public class Laser : MonoBehaviour
     {
         while(true)
         {
-            rhit = Physics2D.Raycast(origin.position, origin.up, distance, stopLayer);
-            lrend.SetPosition(0, origin.position);
+            rhit = Physics2D.Raycast(transform.position, transform.up, distance, stopLayer);
+            lrend.SetPosition(0, transform.position);
             if (rhit.collider)
             {
-                Debug.DrawLine(origin.position, rhit.point, Color.red);
+                Debug.DrawLine(transform.position, rhit.point, Color.red);
                 lrend.SetPosition(1, rhit.point);
                 bcoll.offset = new Vector2(0, rhit.distance / 2f);
                 bcoll.size = new Vector2(bcoll.size.x, rhit.distance);
             }
             else
             {
-                Debug.DrawRay(origin.position, origin.up * distance, Color.red);
-                lrend.SetPosition(1, origin.position + origin.up*distance);
+                Debug.DrawRay(transform.position, transform.up * distance, Color.red);
+                lrend.SetPosition(1, transform.position + transform.up*distance);
                 bcoll.offset = new Vector2(0, distance / 2f);
                 bcoll.size = new Vector2(bcoll.size.x, distance);
             }
@@ -65,9 +82,5 @@ public class Laser : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        
-    }
 
 }

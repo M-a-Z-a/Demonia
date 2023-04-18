@@ -46,6 +46,10 @@ public class Room : MonoBehaviour
     {
         GetRoomWorldBounds();
         FetchEntities();
+        //FetchEntities();
+    }
+    protected virtual void Start()
+    {
     }
 
     private void OnValidate()
@@ -94,9 +98,11 @@ public class Room : MonoBehaviour
         {
             List<Room> rlist = new(connectedRooms);
             rlist.Add(this);
-            ActiveRoom.UnloadAdjacentRooms(rlist); 
+            ActiveRoom.UnloadAdjacentRooms(rlist);
+            ActiveRoom.Deactivate();
         }
         ActiveRoom = this;
+        
         Debug.Log($"Room: {gameObject.name} activated");
         Load();
         LoadAdjacentRooms();
@@ -122,9 +128,9 @@ public class Room : MonoBehaviour
 
     public virtual bool Unload()
     {
-        roomState = RoomState.Disabled;
         Debug.Log($"Room: {gameObject.name} unloaded");
         Deactivate();
+        roomState = RoomState.Disabled;
         gameObject.SetActive(false);
         return true;
     }

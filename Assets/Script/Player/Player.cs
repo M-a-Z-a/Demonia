@@ -49,8 +49,7 @@ public class Player : PlayerController
         cameraTarget = transform.Find("CameraTarget");
 
         rend = GetComponentInChildren<MeshRenderer>();
-        mat = new Material(rend.material);
-        rend.material = mat;
+        mat = rend.material;
 
         animator = GetComponent<MatAnimator>();
 
@@ -393,17 +392,46 @@ public class Player : PlayerController
 
     }
 
+    void DIEEE()
+    {
+        StartCoroutine(IDeathFade(0.1f, 0.2f));
+        GameManager.Reset_Game_Fade();
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         switch (collision.gameObject.tag)
         {
             case "Hazard":
-                GameManager.Reset_Game_Fade();
+                DIEEE();
                 break;
             case "Checkpoint":
                 if (collision.gameObject.TryGetComponent<Checkpoint>(out Checkpoint c))
                 { c.SetActiveCheckpoint(); }
                 break;
+        }
+    }
+
+    IEnumerator IDeathFade(float t_a, float t_b)
+    {
+        float t = 0;
+        float d;
+        Color cs = mat.color;
+        while (t < t_a)
+        {
+            t += Time.unscaledDeltaTime;
+            d = t / t_a;
+            mat.SetFloat("_ColorLerp", d);
+            mat.color = Color.Lerp(cs, Color.white, d);
+            yield return null;
+        }
+        t = 0;
+        while (t < t_b)
+        {
+            d = t / t_b;
+            t += Time.unscaledDeltaTime;
+            mat.SetFloat("_Transparency", 1f - d);
+            yield return null;
         }
     }
 
