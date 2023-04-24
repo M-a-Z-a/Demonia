@@ -73,7 +73,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e9b67e92f5e75a4ea2bca035fdfb919, type: 3}
   m_Name: BlitOverlay
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     Event: 500
     blitMaterial: {fileID: -876546973899608171, guid: 475e809595a6937459d05a3d971aaf45, type: 3}

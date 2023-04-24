@@ -161,6 +161,12 @@ public class Room : MonoBehaviour
         Load();
         LoadAdjacentRooms();
         SetEntityStates(true);
+
+        Vector3 ppos = Player.pTransform.position;
+        ppos.x = Mathf.Clamp(ppos.x, roomWorldBounds.xMin + 2, roomWorldBounds.xMax - 2);
+        ppos.y = Mathf.Clamp(ppos.y, roomWorldBounds.yMin + 2, roomWorldBounds.yMax - 2);
+        GameManager.Checkpoint.position = ppos;
+
         return true;
     }
 

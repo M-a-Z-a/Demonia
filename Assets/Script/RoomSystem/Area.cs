@@ -20,7 +20,7 @@ public class Area : MonoBehaviour
     private void OnValidate()
     {
         if (ambientLight || TryGetComponent<Light2D>(out ambientLight))
-        { Debug.Log("wat"); UpdateAmbient(); }
+        { UpdateAmbient(); }
     }
 
     private void OnDrawGizmos()
@@ -50,6 +50,7 @@ public class Area : MonoBehaviour
             foreach (Room r in rooms)
             { r.Init(); r.Unload(); }
             //rooms[0].Activate(); 
+            Player.pTransform.position = GameManager.Checkpoint.position;
             if (FindPlayerRoom(out Room rm))
             { rm.Activate(); }
         }

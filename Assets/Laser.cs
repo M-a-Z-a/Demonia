@@ -9,6 +9,8 @@ using UnityEditor;
 
 public class Laser : Entity
 {
+    public enum ToggleState { Toggle = 0, Enable, Disable }
+
     public float distance;
     LineRenderer lrend;
     [SerializeField] bool _isActive = true;
@@ -18,8 +20,9 @@ public class Laser : Entity
     public LayerMask stopLayer;
     Light2D l2d;
     [SerializeField] int queStartIndex = 0;
-    [SerializeField] List<float> toggleQue = new();
-
+    //[SerializeField] List<float> toggleQue = new();
+    [SerializeField] List<StateTimePair> toggleQue = new();
+    [SerializeField] float startTime = 0f;
 
     protected override void Awake()
     {
@@ -99,11 +102,11 @@ public class Laser : Entity
     int NextQueIndex(int i)
     { return i++ % toggleQue.Count; }
     float NextQueDelay(int i)
-    { return toggleQue[i++ % toggleQue.Count]; }
+    { return toggleQue[i++ % toggleQue.Count].time; }
     float NextQueTime(int i, out int new_i, float? lastQueTime = null)
     {
         new_i = (i+1) % toggleQue.Count;
-        return (lastQueTime != null ? (float)lastQueTime:Time.time) + toggleQue[new_i];
+        return (lastQueTime != null ? (float)lastQueTime:Time.time) + toggleQue[new_i].time;
     }
 
 
@@ -139,17 +142,33 @@ public class Laser : Entity
     IEnumerator IToggler()
     {
         //if (toggleQue.Count == 0) yield break;
-        int t_ind = queStartIndex % toggleQue.Count;
+        int t_ind = queStartIndex % toggleQue.Count, l_ind = 0;
         float next_t = toggleQue.Count > 0 ? NextQueTime(t_ind, out t_ind) : 0;
         while (true)
         {
             if (Time.time >= next_t)
             {
                 if (toggleQue.Count == 0) yield break;
+                switch(toggleQue[t_ind].state)
+                {
+                    case ToggleState.Enable: Activate(); break;
+                    case ToggleState.Disable: Deactivate(); break;
+                    default: isActive = !isActive; break;
+                }
                 next_t = NextQueTime(t_ind, out t_ind, next_t);
-                isActive = !isActive;
             }
             yield return new WaitForEndOfFrame();
+        }
+    }
+
+    [System.Serializable]
+    class StateTimePair
+    { 
+        public ToggleState state; public float time; 
+        public StateTimePair(float time, ToggleState state = default)
+        {
+            this.time = time;
+            this.state = state;
         }
     }
 
@@ -158,7 +177,7 @@ public class Laser : Entity
 
 
 #if UNITY_EDITOR
-
+/*
 [CustomEditor(typeof(Laser))]
 [CanEditMultipleObjects]
 public class LaserEditor : Editor
@@ -175,11 +194,12 @@ public class LaserEditor : Editor
         //EditorApplication.update -= Update;
     }
 
+    
     public override void OnInspectorGUI()
     {
         //base.OnInspectorGUI();
         DrawDefaultInspector();
-        /*
+        
         GUILayout.Label($"Run in Edit mode ({(instance.runInEditMode?"Enabled":"Disabled")})");
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Enable"))
@@ -195,18 +215,15 @@ public class LaserEditor : Editor
             instance.runInEditMode = !instance.runInEditMode;
         }
         EditorGUILayout.EndHorizontal();
-        */
+        
     }
 
-    /*
     void Update()
     {
         if (instance.runInEditMode)
         { EditorApplication.QueuePlayerLoopUpdate(); }
     }
-    */
-
 }
-
+*/
 
 #endif

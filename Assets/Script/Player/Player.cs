@@ -89,6 +89,9 @@ public class Player : PlayerController
 
         deathShockwave = transform.Find("Shockwave").GetComponent<Shockwave>();
         deathShockwave.Deactivate();
+
+        //transform.position = GameManager.Checkpoint.position;
+        //SetVelocity(Vector2.zero);
     }
 
     float aspeed = 1f;

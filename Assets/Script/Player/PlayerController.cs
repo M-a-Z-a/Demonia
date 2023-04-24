@@ -105,6 +105,10 @@ public class PlayerController : Entity
     protected void Move(Vector2 xy)
     { targetMove.x = Mathf.Clamp(xy.x, -1, 1); targetMove.y = Mathf.Clamp(xy.y, -1, 1); }
 
+    protected void SetVelocity(Vector2 v)
+    {
+        _velocity = v;
+    }
 
 
 

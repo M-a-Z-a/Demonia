@@ -11,6 +11,9 @@ public class GameManager : MonoBehaviour
     public InputManager.InputKeyCode left, right, up, down;
     InputManager.InputDirection directionX, directionY;
     public InputManager.InputVector2 inputVector;
+    Transform checkpoint;
+    Vector3 orig_cpPos;
+    public static Transform Checkpoint { get => instance.checkpoint; } 
 
     static ScreenFader mainFader;
     public static float loadingProgress { get; protected set; }
@@ -44,11 +47,12 @@ public class GameManager : MonoBehaviour
     }
     void Start()
     {
+        checkpoint = transform.Find("Checkpoint");
+        orig_cpPos = checkpoint.position;
         ScreenFader.GetScreenFader("main fader", out mainFader);
         //SceneManager.LoadScene(sceneIndexes["MainMenu"]);
         SceneManager.LoadScene(1);
-
-        //TimeControl.SetTimeScaleFadeForTime(0.25f, 1f, 1f, 4f);
+        //TimeControl.SetTimeScaleFadeForTime(0f, 2f, 0f, 1f);
     }
 
 
@@ -58,13 +62,20 @@ public class GameManager : MonoBehaviour
         InputManager.UpdateInputs();
         if (Input.GetKeyDown(KeyCode.Escape))
         { Exit_Game(); }
+        if (Input.GetKeyDown(KeyCode.F4))
+        { Reset_Checkpoint(); Reset_Game_Fade(); }
         if (Input.GetKeyDown(KeyCode.F5))
         { Reset_Game_Fade(); }
     }
-
+    public static void Reset_Checkpoint()
+    {
+        instance.checkpoint.position = instance.orig_cpPos;
+    }
     public static void Reset_Game()
     {
         SceneManager.LoadScene(1);
+        //TimeControl.SetTimeScaleFadeForTime(0f, 2f, 0, 1f);
+        //TimeControl.SetTimeScaleFade(0f, 1f);
     }
     public static void Reset_Game_Fade()
     {

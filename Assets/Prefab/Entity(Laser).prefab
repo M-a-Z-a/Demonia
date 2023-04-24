@@ -160,6 +160,7 @@ MonoBehaviour:
     m_Bits: 1024
   queStartIndex: 0
   toggleQue: []
+  startTime: 0
 --- !u!61 &5594263135012983889
 BoxCollider2D:
   m_ObjectHideFlags: 0
