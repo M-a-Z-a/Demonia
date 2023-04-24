@@ -40,6 +40,7 @@ public class LaserOrb : Entity
         {
             Vector2 pos = new Vector2(Mathf.Cos(a_one * i * Mathf.Deg2Rad), Mathf.Sin(a_one * i * Mathf.Deg2Rad)) * 0.8f;
             go = Instantiate(laser_prefab, laser_base.position.Add(x: pos.x, y: pos.y), Quaternion.Euler(0, 0, a_one * i + -90), laser_base);
+            go.transform.parent = laser_base;
         }
     }
 }

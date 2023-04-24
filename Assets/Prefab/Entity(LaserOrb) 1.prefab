@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9200683128437650582}
   - component: {fileID: 3221162296701912347}
   - component: {fileID: 3410551030357882897}
+  - component: {fileID: 2966998751518599618}
   m_Layer: 0
   m_Name: Entity(LaserOrb)
   m_TagString: Untagged
@@ -32,7 +33,7 @@ Transform:
   m_Children:
   - {fileID: 2014658235424747419}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3221162296701912347
 SpriteRenderer:
@@ -54,7 +55,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 3724937cf3790d14a872864e405a0c39, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -100,8 +101,46 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _entityName: LaserOrb
   laser_prefab: {fileID: 3822040306275497104, guid: b8046d9ddf8021e488c7f7fc898c80c8, type: 3}
-  rotationSpeed: 45
-  lasers: 3
+  rotationSpeed: 15
+  lasers: 5
+--- !u!114 &2966998751518599618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4892552684324016849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7db70e0ea77f5ac47a8f4565a9406397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShadowGroup: 0
+  m_ComponentVersion: 1
+  m_HasRenderer: 1
+  m_UseRendererSilhouette: 1
+  m_CastsShadows: 1
+  m_SelfShadows: 0
+  m_ApplyToSortingLayers: 6bd30eba000000005d09ba8ae13d41f1
+  m_ShapePath:
+  - {x: -0.50655746, y: -0.50330544, z: 0}
+  - {x: -0.6608887, y: -0.20174408, z: 0}
+  - {x: -0.6617813, y: 0.21679306, z: 0}
+  - {x: -0.5000458, y: 0.49915695, z: 0}
+  - {x: -0.19921494, y: 0.6678066, z: 0}
+  - {x: 0.21823502, y: 0.66059875, z: 0}
+  - {x: 0.48396683, y: 0.49407578, z: 0}
+  - {x: 0.66262054, y: 0.22819138, z: 0}
+  - {x: 0.6672745, y: -0.21131516, z: 0}
+  - {x: 0.49915695, y: -0.49609566, z: 0}
+  - {x: 0.21804047, y: -0.65314484, z: 0}
+  - {x: -0.21274185, y: -0.6603546, z: 0}
+  m_ShapePathHash: -191727755
+  m_Mesh: {fileID: 0}
+  m_InstanceId: -10785022
+  m_LocalBounds:
+    m_Center: {x: 0.002746582, y: 0.0037260056, z: 0}
+    m_Extent: {x: 0.6645279, y: 0.6640806, z: 0}
 --- !u!1 &6929764695248045933
 GameObject:
   m_ObjectHideFlags: 0

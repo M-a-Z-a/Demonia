@@ -50,4 +50,19 @@ public class Entity : MonoBehaviour
         if (entityStats == null) return;
         entityStats.ApplyDamage(damage, origin);
     }
+
+    public bool HasParentEntity(int lookoutDepth = 20, Transform stop_at = null)
+    {
+        if (stop_at == null) stop_at = transform.root;
+        Transform pt = transform.parent;
+        for (int i = 0; i < lookoutDepth; i++)
+        {
+            if (pt == stop_at || pt == transform.root)
+            { return false; }
+            if (pt.GetComponent<Entity>())
+            { return true; }
+            pt = pt.parent;
+        }
+        return false;
+    }
 }

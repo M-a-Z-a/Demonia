@@ -107,8 +107,15 @@ public class MatAnimator : MonoBehaviour
         mframe = canim.GetFrame(currentAnimTime, out float atime);
         if (mframe != null)
         { curFrame = mframe; }
-        mat.SetVector("_Offset", curFrame.rect.position);
-        mat.SetVector("_Tiling", curFrame.rect.size);
+
+        //mat.mainTextureOffset = curFrame.rect.position;
+        //mat.mainTextureScale = curFrame.rect.size;
+        mat.SetTextureOffset("_MainTex", curFrame.rect.position);
+        mat.SetTextureScale("_MainTex", curFrame.rect.size);
+        mat.SetTextureOffset("_NormalMap", curFrame.rect.position);
+        mat.SetTextureScale("_NormalMap", curFrame.rect.size);
+        //mat.SetVector("_Offset", curFrame.rect.position);
+        //mat.SetVector("_Tiling", curFrame.rect.size);
         float diff = curFrame.rect.size.x / curFrame.rect.size.x;
         Vector3 vec = rendererTransform.localScale;
         rendererTransform.localPosition = rtransOffset.Add(curFrame.pivot.x * rendererTransform.localScale.x, curFrame.pivot.y * rendererTransform.localScale.y);

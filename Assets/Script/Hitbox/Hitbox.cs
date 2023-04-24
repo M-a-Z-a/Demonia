@@ -14,13 +14,14 @@ public class Hitbox : MonoBehaviour
     public float hitRate = 0;
     public float t = 0, time = 0.1f;
     [SerializeField] Vector3 ePoint;
-    Vector3 sPoint;
+    Vector3 sPoint, origscale;
     public bool xflip = false;
     public bool Active { get => gameObject.activeSelf; set => SetState(value); }
 
     private void Awake()
     {
         sPoint = transform.localPosition;
+        origscale = transform.localScale;
     }
 
     public void SetState(bool state)
@@ -56,8 +57,8 @@ public class Hitbox : MonoBehaviour
         {
             if (!ents.Contains(ent))
             { 
-          ents.Add(ent);
-                ent.ApplyDamage(damage, origin);
+                ents.Add(ent);
+                if (damage != null) ent.ApplyDamage(damage, origin);
             }
         }
     }
@@ -72,6 +73,7 @@ public class Hitbox : MonoBehaviour
     {
         int m = xflip ? -1 : 1;
         t = 0;
+        transform.localScale = origscale.Mult(x: m);
         Vector3 sp = sPoint.Mult(x: m);
         Vector3 ep = sp + ePoint.Mult(x:m);
         while (t < time)

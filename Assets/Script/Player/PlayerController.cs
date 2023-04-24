@@ -38,11 +38,12 @@ public class PlayerController : Entity
 
     protected bool ledgegrabEnabled = true;
 
-    Vector2 targetMove = Vector2.zero, groundVelocity = Vector2.zero;
+    Vector2 targetMove = Vector2.zero, groundVelocity = Vector2.zero, _relativeVelocity = Vector2.zero;
     protected bool isJumping = false;
     bool stopGravity = false;
     float cGrav = 0f;
     protected float currentGravity { get => cGrav; }
+    public Vector2 relativeVelocity { get => _relativeVelocity; }
 
     Dir4 maxMove = new Dir4();
 
@@ -134,6 +135,7 @@ public class PlayerController : Entity
 
         HandlePosition();
 
+        _relativeVelocity = _velocity - groundVelocity;
         targetMove = Vector2.zero;
         rectChanged = false;
     }
@@ -156,7 +158,7 @@ public class PlayerController : Entity
         }
         
         cvel.x = TowardsTargetValue(cvel.x, tvel.x, spd * Time.fixedDeltaTime);
-        cvel.y = Mathf.Max(cvel.y, bvel.y);
+        cvel.y = cvel.y > 0 ? Mathf.Max(cvel.y, bvel.y) : bvel.y;
         _velocity = cvel;
     }
 
@@ -164,6 +166,14 @@ public class PlayerController : Entity
     {
         if (targetMove.x != 0)
         {
+            /*
+            float xspd = 0;
+            if (CompareVals(_velocity.x, targetMove.x, 0) == 0)
+            {
+                if (targetMove.x < 0) xspd = Mathf.Min(_velocity.x, targetMove.x);
+                else xspd = Mathf.Max(_velocity.x, targetMove.x);
+            }
+            */
             Vector2 tvel = new Vector2(targetMove.x * speed * xSpeedMult + groundVelocity.x, groundVelocity.y);
             int p = CompareVals(tvel.x, _velocity.x, groundVelocity.x);
             float spd = accelSpeed * 0.75f;
@@ -231,11 +241,19 @@ public class PlayerController : Entity
         Vector3 tpos = transform.position;
         Vector2Range vecrang = GetRayRange(transform.position.Add(y:-rgDown.doffset), Vector2.right, r_sz2.x, groundMask, -0.05f);
 
+        groundVelocity = Vector2.zero;
         // ground check
         if (rgDown.Cast(transform.position, Vector2.down, vecrang, 0.3f + Mathf.Max(-velocity.y * Time.fixedDeltaTime * 2, 0)) > 0)
         {
             if (rgDown.shortHit.point.y + r_sz2.y + 0.01f >= tpos.y)
             {
+                //groundVelocity = Vector2.zero;
+                foreach (RaycastHit2D rhit in rgDown.raycastHits)
+                {
+                    if (rhit.collider && rhit.collider.gameObject.TryGetComponent(out Entity e))
+                    { groundVelocity.x += e.velocity.x; groundVelocity.y = Mathf.Max(groundVelocity.y, e.velocity.y); }
+                }
+                groundVelocity.x /= rgDown.hitCount;
                 tpos.y = rgDown.shortHit.point.y + r_sz2.y; //Mathf.Max(tpos.y, rgDown.shortHit.point.y + rHalf.y);
                 transform.position = tpos;
                 if (!isGrounded)
@@ -249,6 +267,7 @@ public class PlayerController : Entity
                     else
                     { OnEnterGrounded(_velocity, 0f); }
                 }
+                //if (!isJumping) _velocity.y = groundVelocity.y;
                 isGrounded = true; wasGrounded = 0f;
             }
             else
@@ -386,16 +405,20 @@ public class PlayerController : Entity
         return 0;
     }
 
+    bool jumpwaitdelay = false;
     protected void JumpInit(Vector2 force, float boostForce, float holdTime = 0.5f)
     {
+        if (jumpwaitdelay) return;
         //Debug.Log("jump init");
         if (isJumping) return; 
-        isJumping = true; 
-        _velocity += force; 
+        isJumping = true;
+        _velocity += force;
+        StartCoroutine(IJumpDelay(0.1f));
         StartCoroutine(IJumpBoost(boostForce, holdTime)); 
     }
+
     protected void JumpRelease()
-    { /*Debug.Log("jump released");*/ isJumping = false; }
+    { isJumping = false; }
 
 
     Vector2Range GetRayRange(Vector2 origin, Vector2 dir_from_origin, float dist_from_origin, LayerMask layerMask, float padding = -0.05f)
@@ -411,6 +434,12 @@ public class PlayerController : Entity
         }
     }
 
+    IEnumerator IJumpDelay(float t)
+    {
+        jumpwaitdelay = true;
+        yield return new WaitForSeconds(t);
+        jumpwaitdelay = false;
+    }
 
     IEnumerator IJumpBoost(float holdForce, float time)
     {
@@ -420,7 +449,7 @@ public class PlayerController : Entity
         {
             t += Time.fixedDeltaTime;
             _velocity.y += Mathf.Lerp(vel, 0f, EaseOutCirc01(t / time)) * Time.fixedDeltaTime;
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
         isJumping = false;
         StartCoroutine(IWaitJumpApex(speedApexMult, 1f, 0.5f));
@@ -435,7 +464,7 @@ public class PlayerController : Entity
             t += Time.fixedDeltaTime;
             xSpeedMult = CurveCombination(t / time, EaseInCirc01, EaseOutSine01, 0.25f);
             xSpeedMult = Mathf.Lerp(multStart, multEnd, t / time);
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
         xSpeedMult = multEnd;
     }
@@ -445,7 +474,7 @@ public class PlayerController : Entity
         while (_velocity.y > 0)
         {
             if (isGrounded) yield break;
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
         StartCoroutine(IJumpApexBoost(multStart, multEnd, time));
     }
@@ -459,7 +488,7 @@ public class PlayerController : Entity
         {
             t += Time.fixedDeltaTime;
             transform.position = Vector2.Lerp(start, end, t / time);
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
         simulationEnabled = true;
     }

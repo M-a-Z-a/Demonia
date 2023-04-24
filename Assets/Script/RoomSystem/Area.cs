@@ -1,27 +1,59 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using static Room;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class Area : MonoBehaviour
 {
     public static Area activeArea { get; protected set; }
     List<Room> rooms;
+    [SerializeField] Color ambientColor = Color.white;
+    [SerializeField] float ambientIntensity = 1;
+    Transform objects, entities;
+    Light2D ambientLight;
+
+    private void OnValidate()
+    {
+        if (ambientLight || TryGetComponent<Light2D>(out ambientLight))
+        { Debug.Log("wat"); UpdateAmbient(); }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Vector2 rdist = new Vector2(100f, 100f);
+        Vector2 tpos = transform.position;
+        Gizmos.color = Color.red;
+        Gizmos.DrawRay(tpos, transform.right * rdist);
+        Gizmos.DrawRay(tpos, -transform.right * rdist);
+        Gizmos.color = Color.green;
+        Gizmos.DrawRay(tpos, transform.up * rdist);
+        Gizmos.DrawRay(tpos, -transform.up * rdist);
+    }
 
     private void Awake()
     {
         activeArea = this;
+        ambientLight = GetComponent<Light2D>();
     }
     private void Start()
     {
-        rooms = new(gameObject.GetComponentsInChildren<Room>(true));
+        SortEntities();
+        //rooms = new(gameObject.GetComponentsInChildren<Room>(true));
         Debug.Log($"room count: {rooms.Count}");
         if (rooms.Count > 0)
         { 
             foreach (Room r in rooms)
-            { r.Unload(); }
-            rooms[0].Activate(); 
+            { r.Init(); r.Unload(); }
+            //rooms[0].Activate(); 
+            if (FindPlayerRoom(out Room rm))
+            { rm.Activate(); }
         }
+        UpdateAmbient();
     }
 
     public void Update()
@@ -62,4 +94,85 @@ public class Area : MonoBehaviour
         return false;
     }
 
+    public virtual void FetchContainers()
+    {
+        if (entities == null)
+        {
+            entities = transform.Find("Entities");
+            if (entities == null)
+            {
+                GameObject go = new GameObject("Entities");
+                entities = go.transform; //Instantiate(new GameObject("Entities"), Vector3.zero, Quaternion.identity, transform).transform;
+                entities.parent = transform;
+            }
+        }
+        if (objects == null)
+        {
+            objects = transform.Find("Objects");
+            if (objects == null)
+            {
+                GameObject go = new GameObject("Objects");
+                objects = go.transform;//Instantiate(new GameObject("Entities"), Vector3.zero, Quaternion.identity, transform).transform;
+                objects.parent = transform;
+            }
+        }
+    }
+
+    void UpdateAmbient()
+    {
+        ambientLight.color = ambientColor;
+        ambientLight.intensity = ambientIntensity;
+        //RenderSettings.ambientLight = ambientColor;
+        //RenderSettings.ambientIntensity = ambientIntensity;
+    }
+
+    public void SortEntities()
+    {
+        FetchContainers();
+        rooms = new(GetComponentsInChildren<Room>());
+        List<Entity> ents = new(GetComponentsInChildren<Entity>());
+        Entity ent;
+        int ent_count;
+        foreach (Room r in rooms)
+        {
+            r.FetchContainers();
+            ent_count = ents.Count;
+            for (int i = ent_count-1; i >= 0; i--)
+            {
+                ent = ents[i];
+                if (ent.HasParentEntity())
+                { ents.RemoveAt(i); continue; }
+                if (r.PointInRoom(ent.transform.position))
+                {
+                    ent.transform.parent = r.entities;
+                    ents.RemoveAt(i);
+                    continue;
+                }
+                ent.transform.parent = entities;
+            }
+        }
+    }
 }
+
+
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(Area))]
+public class AreaEditor : Editor
+{
+    Area instance;
+    private void OnEnable()
+    {
+        instance = (Area)target;
+    }
+
+    public override void OnInspectorGUI()
+    {
+        //base.OnInspectorGUI();
+        DrawDefaultInspector();
+
+        if (GUILayout.Button("Sort Entities"))
+        { instance.SortEntities(); }
+    }
+}
+#endif

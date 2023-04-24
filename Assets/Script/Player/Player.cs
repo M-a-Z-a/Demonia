@@ -35,6 +35,8 @@ public class Player : PlayerController
     Rect rect_stand = new Rect(new Vector2(0,0), new Vector2(0.8f, 1.8f));
     Rect rect_crouch = new Rect(new Vector2(0, -0.45f), new Vector2(0.8f, 0.9f));
 
+    Shockwave deathShockwave;
+
     protected override void OnValidate()
     {
         base.OnValidate();
@@ -59,6 +61,7 @@ public class Player : PlayerController
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 8f);
         airJumpForce = entityStats.GetSetAttribute("airjumpforce", 6f);
+
     }
 
     public void PlayStepSound()
@@ -84,13 +87,15 @@ public class Player : PlayerController
 
         GetMeleeHitboxes();
 
-        if (Checkpoint.activeCheckpoint != null)
-        { transform.position = Checkpoint.activeCheckpoint.transform.position; }
+        deathShockwave = transform.Find("Shockwave").GetComponent<Shockwave>();
+        deathShockwave.Deactivate();
     }
 
     float aspeed = 1f;
+    /*
     protected override void FixedUpdate()
     { base.FixedUpdate(); }
+    */
     protected void Update()
     {
         Vector2 dir = (Vector2)inputVector;
@@ -104,10 +109,9 @@ public class Player : PlayerController
 
             if (isGrounded)
             {
-
                 if (dir.x > 0)
                 {
-                    if (velocity.x < 0)
+                    if (relativeVelocity.x < 0)
                     { 
                         animator.SetState("break");
                         animator.FlipX(true);
@@ -122,7 +126,7 @@ public class Player : PlayerController
                 }
                 else if (dir.x < 0)
                 { 
-                    if (velocity.x > 0)
+                    if (relativeVelocity.x > 0)
                     {
                         animator.SetState("break");
                         animator.FlipX(false);
@@ -137,12 +141,12 @@ public class Player : PlayerController
                 }
                 else
                 { 
-                    if (velocity.x > 0.5f)
+                    if (relativeVelocity.x > 0.5f)
                     {
                         animator.SetState("break");
                         animator.FlipX(false);
                     }
-                    else if (velocity.x < -0.5f)
+                    else if (relativeVelocity.x < -0.5f)
                     {
                         animator.SetState("break");
                         animator.FlipX(true);
@@ -200,15 +204,21 @@ public class Player : PlayerController
             else if (wallLeft)
             {
                 //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
-                //if (velocity.y <= 0) { 
+                if (velocity.y <= 0) { 
                     animator.SetState("ledge_grab"); animator.FlipX(false); 
-                //}
+                } 
+                else 
+                { animator.SetState("air_ascend"); }
 
                 if (_velocity.y < 0)
                 { _velocity.y = TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x < 0 ? currentGravity * 1f : currentGravity * 0.8f)) * Time.deltaTime); }
                 if (jump.down && !ledgeLeft)
                 {
-                    JumpInit(AngleToVector2(dir.x > 0 ? 75f : 45f) * jumpForce, jumpForce * 0.5f);
+                    animator.FlipX(false);
+                    Vector2 jforce = AngleToVector2(dir.x > 0 ? 75f : 45f) * jumpForce;
+                    if (velocity.y > 0)
+                    { jforce.y = Mathf.Min(velocity.y + jforce.y, jforce.y * 1.5f) - velocity.y; }
+                    JumpInit(jforce, jumpForce * 0.5f);
                     StartCoroutine(IWaitLeftWalljump(0.4f));
                     StartCoroutine(IWaitJumpRelease());
                 }
@@ -230,15 +240,22 @@ public class Player : PlayerController
             }
             else if (wallRight)
             {
-                //if (velocity.y <= 0) { 
-                    animator.SetState("ledge_grab"); animator.FlipX(true); 
-                //}
+                if (velocity.y <= 0) { 
+                    animator.SetState("ledge_grab"); animator.FlipX(true);
+                }
+                else
+                { animator.SetState("air_ascend"); }
                 //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
                 if (_velocity.y < 0)
                 { _velocity.y = TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x > 0 ? currentGravity * 1.2f : currentGravity * 0.8f)) * Time.deltaTime); }
                 if (jump.down && !ledgeRight)
                 {
-                    JumpInit(AngleToVector2(dir.x < 0 ? 105f : 135f) * jumpForce, jumpForce * 0.5f);
+                    animator.FlipX(true);
+                    Vector2 jforce = AngleToVector2(dir.x < 0 ? 105f : 135f) * jumpForce;
+                    if (velocity.y > 0)
+                    { jforce.y = Mathf.Min(velocity.y + jforce.y, jforce.y * 1.5f) - velocity.y; }
+                    
+                    JumpInit(jforce, jumpForce * 0.5f);
                     StartCoroutine(IWaitRightWalljump(0.4f));
                     StartCoroutine(IWaitJumpRelease());
                 }
@@ -307,7 +324,7 @@ public class Player : PlayerController
         {
             t += Time.deltaTime;
             moveMultLeft = Mathf.Lerp(0f, 1f, t / time);
-            yield return null;
+            yield return new WaitForEndOfFrame();
         }
         moveMultLeft = 1f;
     }
@@ -318,7 +335,7 @@ public class Player : PlayerController
         {
             t += Time.deltaTime;
             moveMultRight = Mathf.Lerp(0f, 1f, t / time);
-            yield return null;
+            yield return new WaitForEndOfFrame();
         }
         moveMultRight = 1f;
     }
@@ -328,7 +345,7 @@ public class Player : PlayerController
         while (jump.hold && t < max_wait)
         {
             t += Time.deltaTime;
-            yield return null; 
+            yield return new WaitForEndOfFrame();
         }
         JumpRelease();
     }
@@ -394,6 +411,7 @@ public class Player : PlayerController
 
     void DIEEE()
     {
+        deathShockwave.Activate();
         StartCoroutine(IDeathFade(0.1f, 0.2f));
         GameManager.Reset_Game_Fade();
     }

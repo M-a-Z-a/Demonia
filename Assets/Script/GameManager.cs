@@ -40,12 +40,13 @@ public class GameManager : MonoBehaviour
         directionY = InputManager.SetInputDirection("y", up, down);
 
         inputVector = InputManager.SetInputVector2("direction", directionX, directionY);
+
     }
     void Start()
     {
         ScreenFader.GetScreenFader("main fader", out mainFader);
         //SceneManager.LoadScene(sceneIndexes["MainMenu"]);
-        SceneManager.LoadScene(3);
+        SceneManager.LoadScene(1);
 
         //TimeControl.SetTimeScaleFadeForTime(0.25f, 1f, 1f, 4f);
     }
@@ -55,20 +56,22 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         InputManager.UpdateInputs();
-        if (Input.GetKeyDown(KeyCode.F4))
-        { Reset_Game_Fade(); }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        { Exit_Game(); }
         if (Input.GetKeyDown(KeyCode.F5))
-        { Checkpoint.activeCheckpoint = null; Reset_Game_Fade(); }
+        { Reset_Game_Fade(); }
     }
 
     public static void Reset_Game()
     {
-        SceneManager.LoadScene(3);
+        SceneManager.LoadScene(1);
     }
     public static void Reset_Game_Fade()
     {
         instance.StartCoroutine(instance.IResetFade());
     }
+    public static void Exit_Game()
+    { Application.Quit(); }
     
 
 
