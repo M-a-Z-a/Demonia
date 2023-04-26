@@ -55,7 +55,7 @@ public class Player : PlayerController
 
         animator = GetComponent<MatAnimator>();
 
-        entityStats.SetAttribute("speed", 6f);
+        entityStats.SetAttribute("speed", 8f);
         entityStats.SetAttribute("accelSpeed", 30f);
         entityStats.SetAttribute("decelSpeed", 15f);
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
@@ -63,7 +63,7 @@ public class Player : PlayerController
         airJumpForce = entityStats.GetSetAttribute("airjumpforce", 6f);
 
     }
-
+    
     public void PlayStepSound()
     {
         //Debug.Log("step");
@@ -397,7 +397,8 @@ public class Player : PlayerController
         if (fallDamageDelta > 0.1f)
         {
             float fdelta = Mathf.Clamp(fallDamageDelta*2, 0f, 1f);
-            DamageSlowdown(fdelta * 1f, fdelta * 0.5f);
+            CameraControl.instance.Nudge(Vector2.down, 0.05f, 0.2f, 2);
+            //DamageSlowdown(fdelta * 1f, fdelta * 0.5f);
             _velocity.y = -velocity.y* EaseInOutCirc01( fdelta * 0.2f);
         }
     }

@@ -4,6 +4,7 @@
     {
       "id": "idle",
       "loop": true,
+      "flags": [],
       "frames": [
         {
           "id": "player_atlas/idle_0",

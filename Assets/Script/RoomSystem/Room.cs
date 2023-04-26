@@ -99,6 +99,10 @@ public class Room : MonoBehaviour
         for (int i = 0; i < entList.Count; i++)
         { entList[i].gameObject.SetActive(state); }
     }
+    public virtual void SetObjectStates(bool state)
+    {
+        objects.gameObject.SetActive(state);
+    }
 
     protected virtual void GetRoomWorldBounds()
     { roomWorldBounds = new Rect(roomBounds.position + (Vector2)transform.position, roomBounds.size); }
@@ -160,6 +164,7 @@ public class Room : MonoBehaviour
         Debug.Log($"Room: {gameObject.name} activated");
         Load();
         LoadAdjacentRooms();
+        SetObjectStates(true);
         SetEntityStates(true);
 
         Vector3 ppos = Player.pTransform.position;
@@ -174,6 +179,7 @@ public class Room : MonoBehaviour
     {
         roomState = RoomState.Enabled;
         Debug.Log($"Room: {gameObject.name} deactivated");
+        SetObjectStates(false);
         SetEntityStates(false);
         return true;
     }
@@ -182,6 +188,7 @@ public class Room : MonoBehaviour
     {
         roomState = RoomState.Enabled;
         gameObject.SetActive(true);
+        SetObjectStates(false);
         SetEntityStates(false);
         Debug.Log($"Room: {gameObject.name} loaded");
         return true;

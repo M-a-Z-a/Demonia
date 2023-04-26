@@ -10,7 +10,7 @@ public partial class MatAnimExtras
         [SerializeField] string id;
         [SerializeField] float duration;
         [SerializeField] Dictionary<string, MatFrame> frames;
-        [SerializeField] List<string> frameNames = new();
+        [SerializeField] List<string> frameNames = new(), flags = new();
         [SerializeField] bool loop;
 
         public string ID { get => id; }
@@ -18,6 +18,7 @@ public partial class MatAnimExtras
         public int FrameCount { get => frames.Count; }
         public List<string> FrameNames { get => frameNames; }
         public bool Loop { get => loop; }
+        public List<string> Flags { get => flags; }
 
 
 
@@ -49,8 +50,13 @@ public partial class MatAnimExtras
             }
 
             matAnim = new(json_anim.id, json_anim.loop, frms.ToArray());
+            if (json_anim.flags != null) matAnim.SetFlags(json_anim.flags);
             return true;
         }
+        public void SetFlags(params string[] flags)
+        { this.flags = new(flags); }
+        public bool HasFlag(string flag)
+        { return flags.Contains(flag); }
 
         public bool TryGetFrame(string id, out MatFrame frame_out)
         {

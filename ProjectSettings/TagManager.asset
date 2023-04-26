@@ -16,18 +16,18 @@ TagManager:
   - 
   - VisionLayer
   - DistortLayer
-  - NoRender
+  - ShadowLayer
   - Ground
+  - Platform
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   - Player
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
   - 
   - 
   - 
@@ -42,6 +42,9 @@ TagManager:
   m_SortingLayers:
   - name: Background
     uniqueID: 3121533803
+    locked: 0
+  - name: VisionLayer
+    uniqueID: 852168863
     locked: 0
   - name: Default
     uniqueID: 0

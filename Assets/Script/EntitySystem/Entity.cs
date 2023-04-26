@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class Entity : MonoBehaviour
 {
+    static string _groundMaskDefaultName = "Ground", _platformMaskDefaultName = "Platform";
+
+    public static int groundMaskDefault { get => Utility.GetLayerMaskByNames(_groundMaskDefaultName); }
+    public static int platformMaskDefault { get => Utility.GetLayerMaskByNames(_platformMaskDefaultName); }
+
 
     public string entityName { get => _entityName; set => Rename(value); }
     [SerializeField] string _entityName = "Entity";
@@ -14,6 +19,7 @@ public class Entity : MonoBehaviour
 
     public Vector2 velocity { get => _velocity; }
     protected Vector2 _velocity = Vector2.zero;
+
 
     protected virtual void Awake()
     {

@@ -99,20 +99,20 @@ public class Area : MonoBehaviour
     {
         if (entities == null)
         {
-            entities = transform.Find("Entities");
+            entities = transform.Find("AreaEntities");
             if (entities == null)
             {
-                GameObject go = new GameObject("Entities");
+                GameObject go = new GameObject("AreaEntities");
                 entities = go.transform; //Instantiate(new GameObject("Entities"), Vector3.zero, Quaternion.identity, transform).transform;
                 entities.parent = transform;
             }
         }
         if (objects == null)
         {
-            objects = transform.Find("Objects");
+            objects = transform.Find("AreaObjects");
             if (objects == null)
             {
-                GameObject go = new GameObject("Objects");
+                GameObject go = new GameObject("AreaObjects");
                 objects = go.transform;//Instantiate(new GameObject("Entities"), Vector3.zero, Quaternion.identity, transform).transform;
                 objects.parent = transform;
             }
@@ -149,9 +149,40 @@ public class Area : MonoBehaviour
                     ents.RemoveAt(i);
                     continue;
                 }
-                ent.transform.parent = entities;
+                //ent.transform.parent = entities;
             }
         }
+        foreach (Entity e in ents)
+        { e.transform.parent = entities; }
+    }
+    public void SortObjects()
+    {
+        rooms = new(GetComponentsInChildren<Room>());
+        List<Transform> tlist = new();
+        foreach (Room r in rooms)
+        {
+            r.FetchContainers();
+            foreach (Transform t in r.objects)
+            {
+                if (!r.PointInRoom(t.position))
+                { tlist.Add(t); }
+            }
+        }
+        int t_count = tlist.Count;
+        foreach (Room r in rooms)
+        {
+            for (int i = t_count - 1; i >= 0; i--)
+            {
+                if (r.PointInRoom(tlist[i].position))
+                {
+                    tlist[i].parent = r.objects;
+                    tlist.RemoveAt(i);
+                    continue;
+                }
+            }
+        }
+        foreach (Transform t in tlist)
+        { t.parent = objects; }
     }
 }
 
@@ -172,8 +203,12 @@ public class AreaEditor : Editor
         //base.OnInspectorGUI();
         DrawDefaultInspector();
 
+        EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Sort Entities"))
         { instance.SortEntities(); }
+        if (GUILayout.Button("Sort Objects"))
+        { instance.SortObjects(); }
+        EditorGUILayout.EndHorizontal();
     }
 }
 #endif

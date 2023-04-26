@@ -11,6 +11,8 @@ public class ShadowCaster2DCreator : MonoBehaviour
 {
 	[SerializeField]
 	private bool selfShadows = true;
+	//[SerializeField]
+	//private string shadowLayerName = "ShadowLayer";
 
 	private CompositeCollider2D tilemapCollider;
 
@@ -27,6 +29,8 @@ public class ShadowCaster2DCreator : MonoBehaviour
 		DestroyOldShadowCasters();
 		tilemapCollider = GetComponent<CompositeCollider2D>();
 
+		//int shadowLayer = LayerMask.NameToLayer(shadowLayerName);
+
 		Vector2 tmanchor = GetComponent<Tilemap>().tileAnchor;
 		Vector2 tpos = (Vector2)transform.position + tmanchor;
 
@@ -35,6 +39,7 @@ public class ShadowCaster2DCreator : MonoBehaviour
 			Vector2[] pathVertices = new Vector2[tilemapCollider.GetPathPointCount(i)];
 			tilemapCollider.GetPath(i, pathVertices);
 			GameObject shadowCaster = new GameObject("shadow_caster_" + i);
+			//shadowCaster.layer = shadowLayer;
 			shadowCaster.transform.parent = gameObject.transform;
 			ShadowCaster2D shadowCasterComponent = shadowCaster.AddComponent<ShadowCaster2D>();
 			shadowCasterComponent.selfShadows = this.selfShadows;

@@ -105,6 +105,7 @@ public partial class MatAnimExtras
         public string id;
         public Frame[] frames;
         public bool loop;
+        public string[] flags;
         [System.Serializable]
         public class Frame
         {

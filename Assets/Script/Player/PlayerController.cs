@@ -22,7 +22,7 @@ public class PlayerController : Entity
     Vector2 r_sz2;
     bool rectChanged = false;
 
-    [SerializeField] LayerMask groundMask;
+    LayerMask groundMask, platformMask, gpMask;
 
     // attributes
     EntityStats.Attribute speed, fallSpeedCap, fallDamageTreshold, speedApexMult, accelSpeed, decelSpeed;
@@ -33,7 +33,7 @@ public class PlayerController : Entity
     Vector2 grabPoint = new Vector2(0.1f, 0.1f);
 
     protected bool stunFlag;
-    protected bool isGrounded, wallLeft, wallRight, wallUp, ledgeLeft, ledgeRight;
+    protected bool isGrounded, isPlatform, wallLeft, wallRight, wallUp, ledgeLeft, ledgeRight;
     protected float wasGrounded = 0;
 
     protected bool ledgegrabEnabled = true;
@@ -52,6 +52,10 @@ public class PlayerController : Entity
     protected override void Awake()
     {
         base.Awake();
+
+        groundMask = groundMaskDefault;
+        platformMask = platformMaskDefault;
+        gpMask = groundMask | platformMask;
 
         rb = GetComponent<Rigidbody2D>();
         coll = GetComponent<BoxCollider2D>();
@@ -247,6 +251,7 @@ public class PlayerController : Entity
 
         groundVelocity = Vector2.zero;
         // ground check
+        rgDown.layerMask = (isGrounded || _velocity.y <= 0) ? gpMask : groundMask;
         if (rgDown.Cast(transform.position, Vector2.down, vecrang, 0.3f + Mathf.Max(-velocity.y * Time.fixedDeltaTime * 2, 0)) > 0)
         {
             if (rgDown.shortHit.point.y + r_sz2.y + 0.01f >= tpos.y)
@@ -255,7 +260,9 @@ public class PlayerController : Entity
                 foreach (RaycastHit2D rhit in rgDown.raycastHits)
                 {
                     if (rhit.collider && rhit.collider.gameObject.TryGetComponent(out Entity e))
-                    { groundVelocity.x += e.velocity.x; groundVelocity.y = Mathf.Max(groundVelocity.y, e.velocity.y); }
+                    { 
+                        groundVelocity.x += e.velocity.x; groundVelocity.y = Mathf.Max(groundVelocity.y, e.velocity.y); 
+                    }
                 }
                 groundVelocity.x /= rgDown.hitCount;
                 tpos.y = rgDown.shortHit.point.y + r_sz2.y; //Mathf.Max(tpos.y, rgDown.shortHit.point.y + rHalf.y);
@@ -273,6 +280,7 @@ public class PlayerController : Entity
                 }
                 //if (!isJumping) _velocity.y = groundVelocity.y;
                 isGrounded = true; wasGrounded = 0f;
+                isPlatform = rgDown.shortHit.collider.gameObject.layer == platformMask;
             }
             else
             { isGroundedElse(); }
@@ -356,6 +364,7 @@ public class PlayerController : Entity
             if (isGrounded)
             { OnExitGrounded(); }
             isGrounded = false; wasGrounded += Time.fixedDeltaTime;
+            isPlatform = false;
         }
 
         void WallLeftElse()
@@ -513,6 +522,7 @@ public class PlayerController : Entity
         protected float _hitDist, _hitBDist, _castDist, _baseDist = 0;
         protected int _hitIndex, _hitCount, _castCount, _rayCount;
         private int _rDiv;
+
 
         public LayerMask layerMask;
 

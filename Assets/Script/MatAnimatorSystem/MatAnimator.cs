@@ -87,19 +87,32 @@ public class MatAnimator : MonoBehaviour
     }
     public void SetState(string state, float? t = null)
     {
-        if (curAnim == state && t == null) return;
+        bool tflags = false;
+        if (curAnim == state)
+        { if (t == null) return; }
+        else
+        { tflags = true; }
+        //if (curAnim == state && t == null) return;
         curAnim = state;
         //Debug.Log($"AnimState set to: {curAnim}");
         if (t != null) currentAnimTime = (float)t;
         else t = 0;
-        NextFrame();
+        NextFrame(tflags);
     }
 
-    void NextFrame()
+    void NextFrame(bool init_flags = false)
     {
         MatAnimation canim;
         MatFrame mframe;
         canim = anims[curAnim];
+        if (init_flags)
+        { 
+            foreach (string f in canim.Flags)
+            { 
+                if (flagActions.TryGetValue(f, out UnityAction act))
+                { act.Invoke(); } 
+            }
+        }
         if (canim.Loop)
         { currentAnimTime %= canim.Duration; }
         else

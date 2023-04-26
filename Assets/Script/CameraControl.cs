@@ -4,14 +4,19 @@ using UnityEngine;
 using UnityEngine.U2D;
 using System;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+
 [RequireComponent(typeof(Camera))]
 public class CameraControl : MonoBehaviour
 {
     public static CameraControl instance { get; protected set; }
     public static Camera cam { get => instance._cam; }
     Camera _cam;
-    [SerializeField] List<Camera>subCameras = new List<Camera>();
-    PixelPerfectCamera pixcam;
+    [SerializeField] List<Camera> subCameras = new();
+    UnityEngine.Experimental.Rendering.Universal.PixelPerfectCamera pixcam;
 
     public float cameraSpeed = 16;
     public Transform followTarget;
@@ -23,7 +28,7 @@ public class CameraControl : MonoBehaviour
     {
         instance = this;
         _cam = GetComponent<Camera>();
-        pixcam = GetComponent<PixelPerfectCamera>();
+        pixcam = GetComponent<UnityEngine.Experimental.Rendering.Universal.PixelPerfectCamera>();
     }
     
     private void OnValidate()
@@ -35,7 +40,11 @@ public class CameraControl : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        //pixcam = GetComponent<PixelPerfectCamera>();
+        Application.targetFrameRate = 60;
+        Debug.Log($"pixcam: {pixcam != null}");
+        Debug.Log($"({pixcam.refResolutionX}, {pixcam.refResolutionY})");
+        Screen.SetResolution(pixcam.refResolutionX, pixcam.refResolutionY, FullScreenMode.Windowed);
     }
 
     void OnCameraChanged()
@@ -48,13 +57,25 @@ public class CameraControl : MonoBehaviour
         }
     }
 
+
+
+#if UNITY_EDITOR 
+    public void GetChildCamerasEditor()
+    { GetChildCameras(); }
+#endif
+
+    void GetChildCameras()
+    {
+        subCameras = new(GetComponentsInChildren<Camera>());
+    }
+
     public void SetCameraSize(int width, int height)
     {
         OnCameraChanged();
     }
 
     // Update is called once per frame
-    void Update()
+    void LateUpdate()
     {
         FollowTarget();
     }
@@ -165,3 +186,25 @@ public class CameraControl : MonoBehaviour
     }
 
 }
+
+#if UNITY_EDITOR
+
+[CustomEditor(typeof(CameraControl))]
+public class CameraControlEditor : Editor
+{
+
+    CameraControl instance;
+    private void OnEnable()
+    { instance = (CameraControl)target; }
+
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        //DrawDefaultInspector()
+        if (GUILayout.Button("Get child cameras"))
+        { instance.GetChildCamerasEditor(); }
+    }
+}
+
+
+#endif

@@ -87,6 +87,65 @@ public static partial class Utility
         return go.AddComponent<T>();
     }
 
+    public static int CombineLayerMasks(params int[] layers)
+    {
+        List<int> l_check = new();
+        int mask_out = 0;
+        foreach (int i in layers)
+        {
+            if (l_check.Contains(i)) continue;
+            l_check.Add(i);
+            if (i < 1) continue;
+            mask_out = mask_out | 1 << i;
+        }
+        return mask_out;
+    }
+    public static bool TryCombineLayerMasks(out int mask_out, params int[] layers)
+    {
+        List<int> l_check = new();
+        mask_out = 0;
+        foreach (int i in layers)
+        {
+            if (l_check.Contains(i)) continue;
+            l_check.Add(i);
+            if (i < 0) 
+            { mask_out = 0; return false; }
+            mask_out = mask_out | 1 << i;
+        }
+        return true;
+    }
+
+    public static int GetLayerMaskByNames(params string[] layers)
+    {
+        List<string> l_check = new(); 
+        int _int, mask_out = 0;
+        foreach (string n in layers)
+        {
+            if (l_check.Contains(n)) continue;
+            l_check.Add(n);
+            _int = LayerMask.NameToLayer(n);
+            if (_int < 0) continue;
+            mask_out = mask_out | 1 << _int;
+        }
+        return mask_out;
+    }
+    public static bool TryGetLayerMaskByNames(out int mask_out, params string[] layers)
+    {
+        List<string> l_check = new();
+        mask_out = 0;
+        int _int;
+        foreach (string n in layers)
+        {
+            if (l_check.Contains(n)) continue;
+            l_check.Add(n);
+            _int = LayerMask.NameToLayer(n);
+            if (_int < 0)
+            { mask_out = 0; return false; }
+            mask_out = mask_out | 1 << _int;
+        }
+        return true;
+    }
+
 }
 
 
