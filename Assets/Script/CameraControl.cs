@@ -42,9 +42,9 @@ public class CameraControl : MonoBehaviour
     {
         //pixcam = GetComponent<PixelPerfectCamera>();
         Application.targetFrameRate = 60;
-        Debug.Log($"pixcam: {pixcam != null}");
-        Debug.Log($"({pixcam.refResolutionX}, {pixcam.refResolutionY})");
-        Screen.SetResolution(pixcam.refResolutionX, pixcam.refResolutionY, FullScreenMode.Windowed);
+        //Debug.Log($"pixcam: {pixcam != null}");
+        //Debug.Log($"({pixcam.refResolutionX}, {pixcam.refResolutionY})");
+        //Screen.SetResolution(pixcam.refResolutionX, pixcam.refResolutionY, FullScreenMode.Windowed);
     }
 
     void OnCameraChanged()

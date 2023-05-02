@@ -12,12 +12,14 @@ public class Entity : MonoBehaviour
 
     public string entityName { get => _entityName; set => Rename(value); }
     [SerializeField] string _entityName = "Entity";
+    [SerializeField] protected List<string> entityTags = new();
+    public List<string> EntityTags { get => entityTags; }
     public EntityStats entityStats { get => _entityStats; }
     protected EntityStats _entityStats;
 
     public static float gravity = -9.81f * 2;
 
-    public Vector2 velocity { get => _velocity; }
+    public Vector2 velocity { get => _velocity; set => _velocity = value; }
     protected Vector2 _velocity = Vector2.zero;
 
 
@@ -47,12 +49,37 @@ public class Entity : MonoBehaviour
         { _entityStats = gameObject.AddComponent<EntityStats>(); }
     }
 
+    public bool HasTag(string tag)
+    { return entityTags.Contains(tag); }
+    public bool HasTags(params string[] tags)
+    {
+        int c = 0;
+        foreach (string t in tags)
+        { if (entityTags.Contains(t)) c++; }
+        return c == tags.Length;
+    }
+    public bool HasTags(int min_count, params string[] tags)
+    {
+        int c = 0;
+        foreach (string t in tags)
+        { if (entityTags.Contains(t)) c++; }
+        return c >= min_count;
+    }
+    public int CountTags(params string[] tags)
+    {
+        int c = 0;
+        foreach (string t in tags)
+        { if (entityTags.Contains(t)) c++; }
+        return c;
+    }
+
     public virtual void AddForce(Vector2 force)
     {
         _velocity += force;
     }
     public virtual void ApplyDamage(EntityStats.Damage damage, MonoBehaviour origin)
     {
+        Debug.Log("Entity: ApplyDamage()");
         if (entityStats == null) return;
         entityStats.ApplyDamage(damage, origin);
     }

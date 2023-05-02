@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [RequireComponent(typeof(Renderer))]
 public class Shockwave : MonoBehaviour
 {
@@ -20,15 +19,11 @@ public class Shockwave : MonoBehaviour
     private void OnValidate()
     {
         rend = GetComponent<Renderer>();
-        //rend.materials = new Material[1];
-        if (rend.sharedMaterial == null) return;
-        mat = new Material(rend.sharedMaterial);
-        rend.material = mat;
     }
     private void Awake()
     {
         rend = GetComponent<Renderer>();
-        mat = rend.sharedMaterial;
+        mat = rend.material;
         Reset();
     }
     private void OnEnable()
@@ -45,14 +40,14 @@ public class Shockwave : MonoBehaviour
 
     public void Activate()
     {
-        Debug.Log("Activate()");
+        //Debug.Log("Activate()");
         gameObject.SetActive(true);
         rend.enabled = true;
         enabled = true;
     }
     public void Deactivate()
     {
-        Debug.Log("Deactivate()");
+        //Debug.Log("Deactivate()");
         //gameObject.SetActive(false);
         rend.enabled = false;
         enabled = false;
@@ -82,7 +77,7 @@ public class Shockwave : MonoBehaviour
         }
         else
         {
-            switch (!Application.isEditor ? finishAction : FinishAction.Loop)
+            switch (finishAction)
             {
                 case FinishAction.Disable:
                     Deactivate(); break;

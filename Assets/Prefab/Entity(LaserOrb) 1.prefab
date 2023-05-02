@@ -100,6 +100,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: LaserOrb
+  entityTags: []
   laser_prefab: {fileID: 3822040306275497104, guid: b8046d9ddf8021e488c7f7fc898c80c8, type: 3}
   rotationSpeed: 15
   lasers: 5

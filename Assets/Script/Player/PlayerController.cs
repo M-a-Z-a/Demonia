@@ -27,12 +27,13 @@ public class PlayerController : Entity
     // attributes
     EntityStats.Attribute speed, fallSpeedCap, fallDamageTreshold, speedApexMult, accelSpeed, decelSpeed;
     float xSpeedMult = 1f, gravityMult = 1f;
+    protected float gravityMultiplier = 1f;
 
     RayGroup2D rgLeft, rgRight, rgUp, rgDown;
 
     Vector2 grabPoint = new Vector2(0.1f, 0.1f);
 
-    protected bool stunFlag;
+    protected bool stunFlag, ignorePlatform = false;
     protected bool isGrounded, isPlatform, wallLeft, wallRight, wallUp, ledgeLeft, ledgeRight;
     protected float wasGrounded = 0;
 
@@ -239,7 +240,7 @@ public class PlayerController : Entity
         if (stopGravity)
         { stopGravity = false; cGrav = 0; return; }
         gravityMult = _velocity.y < 0 ? 1f : (isJumping ? 0.5f : 2f);
-        cGrav = gravity * gravityMult;
+        cGrav = gravity * gravityMultiplier * gravityMult;
         _velocity.y = Mathf.Max(_velocity.y + cGrav * Time.fixedDeltaTime, -fallSpeedCap);
     }
 
@@ -251,7 +252,7 @@ public class PlayerController : Entity
 
         groundVelocity = Vector2.zero;
         // ground check
-        rgDown.layerMask = (isGrounded || _velocity.y <= 0) ? gpMask : groundMask;
+        rgDown.layerMask = !ignorePlatform? ((isGrounded || _velocity.y <= 0) ? gpMask : groundMask) : groundMask;
         if (rgDown.Cast(transform.position, Vector2.down, vecrang, 0.3f + Mathf.Max(-velocity.y * Time.fixedDeltaTime * 2, 0)) > 0)
         {
             if (rgDown.shortHit.point.y + r_sz2.y + 0.01f >= tpos.y)
@@ -280,7 +281,7 @@ public class PlayerController : Entity
                 }
                 //if (!isJumping) _velocity.y = groundVelocity.y;
                 isGrounded = true; wasGrounded = 0f;
-                isPlatform = rgDown.shortHit.collider.gameObject.layer == platformMask;
+                isPlatform = LayerInMask(rgDown.shortHit.collider.gameObject.layer, platformMask);
             }
             else
             { isGroundedElse(); }
@@ -465,7 +466,7 @@ public class PlayerController : Entity
             yield return new WaitForFixedUpdate();
         }
         isJumping = false;
-        StartCoroutine(IWaitJumpApex(speedApexMult, 1f, 0.5f));
+        //StartCoroutine(IWaitJumpApex(speedApexMult, 1f, 0.5f));
     }
 
     IEnumerator IJumpApexBoost(float multStart, float multEnd, float time)

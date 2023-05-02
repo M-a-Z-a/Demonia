@@ -16,7 +16,9 @@ public class Room : MonoBehaviour
     public static Room ActiveRoom { get; protected set; }
 
     [SerializeField] public List<Room> connectedRooms;
+    //[SerializeField] public List<RoomConnection> roomConnections;
     [SerializeField] public Rect roomBounds;
+    [SerializeField] Color overrideRoomLight;
     public Rect roomWorldBounds;
 
     public bool firstLoad = true;
@@ -31,6 +33,7 @@ public class Room : MonoBehaviour
     public void SetActiveRoom()
     { ActiveRoom = this; }
 
+#if UNITY_EDITOR
     protected virtual void OnDrawGizmos()
     {
         Vector3 rposmin = transform.position + (Vector3)roomBounds.min;
@@ -48,6 +51,9 @@ public class Room : MonoBehaviour
             dist = r.roomWorldBounds.center - roomWorldBounds.center;
             Utility.DrawGizmoArrow(rpos, dist*0.6f, 1f);
         }
+
+        Handles.Label(new Vector3(rposmin.x + 1, rposmax.y + 1.5f, 0), $"{name}");
+
     }
     protected virtual void OnDrawGizmosSelected()
     {
@@ -67,6 +73,7 @@ public class Room : MonoBehaviour
             Utility.DrawGizmoArrow(rpos, dist * 0.6f, 1f);
         }
     }
+#endif
 
     protected virtual void Awake()
     {
@@ -93,6 +100,39 @@ public class Room : MonoBehaviour
         FetchContents();
     }
 
+    /*
+    bool HasConnectionToRoom(Room room, out RoomConnection connection_out)
+    {
+        foreach (RoomConnection rc in roomConnections)
+        {
+            if (rc.room == room)
+            { connection_out = rc; return true; }
+        }
+        connection_out = null;
+        return false;
+    }
+    */
+
+    public static int ConnectRooms(Room a, Room b, bool a2b_enabled = true, bool b2a_enabled = true)
+    {
+        /*
+        if (!a.HasConnectionToRoom(b, out RoomConnection rc)) { a.roomConnections.Add(new RoomConnection(b, a2b_enabled)); }
+        else { rc.enabled = a2b_enabled; }
+        if (!b.HasConnectionToRoom(a, out rc)) { b.roomConnections.Add(new RoomConnection(a, b2a_enabled)); }
+        else { rc.enabled = b2a_enabled; }
+        */
+        int rcon = 0;
+        if (!a.connectedRooms.Contains(b)) { a.connectedRooms.Add(b); rcon += 1; }
+        if (!b.connectedRooms.Contains(a)) { b.connectedRooms.Add(a); rcon += 2; }
+        return rcon;
+    }
+    public static int DisconnectRooms(Room a, Room b)
+    {
+        int rcon = 0;
+        if (a.connectedRooms.Remove(b)) rcon += 1;
+        if (b.connectedRooms.Remove(a)) rcon += 2;
+        return rcon;
+    }
 
     public virtual void SetEntityStates(bool state)
     {
@@ -238,14 +278,25 @@ public class Room : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public class RoomConnection
+    {
+        public Room room;
+        public bool enabled;
+        public RoomConnection(Room room, bool enabled = true)
+        { this.room = room; this.enabled = enabled; }
+    }
+
 }
 
 
 
 #if UNITY_EDITOR
 [CustomEditor(typeof(Room))]
+[CanEditMultipleObjects]
 public class RoomEditor : Editor
 {
+
     Room instance;
     static Vector2 snapOffset = new Vector2(0.5f, 0.5f);
     static bool isOffset = true;
@@ -260,9 +311,41 @@ public class RoomEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        //base.OnInspectorGUI();
-        DrawDefaultInspector();
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Rename:", GUILayout.Width(64));
+        instance.name = EditorGUILayout.DelayedTextField(instance.name);
+        EditorGUILayout.EndHorizontal();
 
+        base.OnInspectorGUI();
+        //DrawDefaultInspector();
+
+        int s_count;
+        if ((s_count = GetSelection(out Room[] s_rooms)) > 1)
+        {
+            List<string> rnames = new();
+            foreach (Room r in s_rooms)
+            { rnames.Add(r.name); }
+            EditorGUILayout.LabelField($"Selected rooms [{s_count}]:");
+            EditorGUILayout.LabelField($"{string.Join(',', rnames)}", EditorStyles.toolbarTextField);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Connect"))
+            { 
+                int rcon = ConnectRooms(s_rooms);
+                Debug.Log($"New Room connections: {rcon}");
+                SceneView.RepaintAll();
+            }
+            if (GUILayout.Button("Disconnect"))
+            { 
+                int rcon = DisconnectRooms(s_rooms);
+                Debug.Log($"Removed Room connections: {rcon}");
+                SceneView.RepaintAll();
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Area tools", EditorStyles.boldLabel);
 
         snapOffset = EditorGUILayout.Vector2Field("Snap offset", snapOffset);
 
@@ -305,6 +388,53 @@ public class RoomEditor : Editor
         EditorGUILayout.EndVertical();
 
         EditorGUILayout.EndHorizontal();
+    }
+
+    int ConnectRooms(Room[] rooms) 
+    {
+        int rconnections = 0;
+        List<Room> rms = new(rooms);
+        for (int i = rms.Count-1; i >= 0; i--)
+        {
+            if (i == 0) break;
+            for (int r = i-1; r >= 0; r--)
+            {
+                int rcon = Room.ConnectRooms(rms[i], rms[r]);
+                switch (rcon)
+                {
+                    case 1: case 2: rconnections++; break;
+                    case 3: rconnections += 2; break;
+                }
+            }
+            rms.RemoveAt(i);
+        }
+        return rconnections;
+    }
+    int DisconnectRooms(Room[] rooms)
+    {
+        int rconnections = 0;
+        List<Room> rms = new(rooms);
+        for (int i = rms.Count - 1; i >= 0; i--)
+        {
+            if (i == 0) break;
+            for (int r = i - 1; r >= 0; r--)
+            {
+                int rcon = Room.DisconnectRooms(rms[i], rms[r]); switch (rcon)
+                {
+                    case 1: case 2: rconnections++; break;
+                    case 3: rconnections += 2; break;
+                }
+            }
+            rms.RemoveAt(i);
+        }
+        return rconnections;
+    }
+
+
+    int GetSelection(out Room[] rooms_out)
+    {
+        rooms_out = Selection.GetFiltered<Room>(SelectionMode.TopLevel);
+        return rooms_out.Length;
     }
 
     void Snap()

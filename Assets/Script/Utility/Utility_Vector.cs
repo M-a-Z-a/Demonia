@@ -28,7 +28,7 @@ public static partial class Utility
 
     public static bool GetIntersection(Vector2 p1, Vector2 p2, Vector2 d1, Vector2 d2, out Vector2 intersection)
     {
-        float d = CrossProduct(d1, d2); // denominator
+        float d = DotProduct(d1, d2); // denominator
         //Vector2 t1 = ((p2 - p1) * d2) / (d1 * d2);
         //Vector2 t2 = ((p1 - p2) * d1) / (d2 * d1);
 
@@ -36,8 +36,8 @@ public static partial class Utility
         if (Mathf.Abs(d) > 0)
         {
             Vector2 diff = p2 - p1;
-            float t1 = CrossProduct(diff, d2) / d;
-            float t2 = CrossProduct(diff, d1) / -d;
+            float t1 = DotProduct(diff, d2) / d;
+            float t2 = DotProduct(diff, d1) / -d;
             intersection = p1 + d1 * t1;
             return true;
         }
@@ -46,8 +46,8 @@ public static partial class Utility
         return false;
     }
 
-    public static float CrossProduct(Vector2 a, Vector2 b)
-    { return (a.x * b.y) - (a.y * b.x); }
+    public static float DotProduct(Vector2 a, Vector2 b)
+    { return (a.x * b.x) + (a.y * b.y); }
 
     public static float Angle(this Vector2 vec)
     { return Vector2.Angle(vec, Vector2.right); }
@@ -91,6 +91,21 @@ public static partial class Utility
     { float mag = vec.magnitude; return dir * mag; }
     public static Vector2 Redirect(this Vector2 vec, Vector2 dir, float delta)
     { float mag = vec.magnitude * delta; return dir * mag; }
+
+    /*
+    public static Vector2 RotateTowards(Vector2 a, Vector2 b, float t = 1f, float? max_turn = null)
+    {
+        float angle = Vector2.SignedAngle(a, b);
+        if (max_turn != null)
+        {
+            float mt = (float)max_turn;
+            angle = Mathf.LerpAngle(angle, angle + Mathf.Clamp(angle * t, -mt, mt), t);
+        }
+        else
+        { angle = Mathf.LerpAngle(angle, angle + angle * t, t); }
+        return AngleToVector2(angle);
+    }
+    */
 
     public static Vector2 FlipX(this Vector2 vec)
     { return new Vector2(-vec.x, vec.y); }

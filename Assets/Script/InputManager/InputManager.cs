@@ -5,6 +5,14 @@ using UnityEngine;
 
 public class InputManager : InputManagerClasses
 {
+    /*
+    public static InputManager instance { get; protected set; }
+
+    private void Awake()
+    { instance = this; }
+    */
+    
+
 
     static Dictionary<string, InputKey> _inputKeys = new();
     static Dictionary<string, InputDirection> _inputDirections = new();

@@ -186,17 +186,82 @@
       ]
     },
 
+
+
     {
-      "id": "melee.g.n.init",
+      "id": "melee.a.d.init",
       "loop": false,
       "frames": [
         {
-          "id": "player_atlas/melee.g.0.0.0",
+          "id": "player_atlas/melee.a.d.0",
           "time": 0.1,
           "flags": []
         },
         {
-          "id": "player_atlas/melee.g.0.0.1",
+          "id": "player_atlas/melee.a.d.1",
+          "time": 0.1,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "melee.a.d.release",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.a.d.6",
+          "time": 0.1,
+          "flags": [ "attack" ]
+        },
+        {
+          "id": "player_atlas/melee.a.d.7",
+          "time": 0.1,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "melee.a.d.ground",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.a.d.2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.a.d.3",
+          "time": 0.1,
+          "flags": [ "attack" ]
+        },
+        {
+          "id": "player_atlas/melee.a.d.4",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.a.d.5",
+          "time": 0.1,
+          "flags": []
+        }
+      ]
+    },
+
+
+
+    {
+      "id": "melee.g.init",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.init.0",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.init.1",
           "time": 0.1,
           "flags": []
         }
@@ -207,28 +272,76 @@
       "loop": false,
       "frames": [
         {
-          "id": "player_atlas/melee.g.0.1.0",
+          "id": "player_atlas/melee.c.g.0.1.0",
           "time": 0.1,
           "flags": []
         },
         {
-          "id": "player_atlas/melee.g.0.1.1",
+          "id": "player_atlas/melee.c.g.0.1.1",
           "time": 0.1,
           "flags": []
         }
       ]
     },
     {
-      "id": "melee.g.n.charge",
-      "loop": true,
+      "id": "charge.n",
+      "loop": false,
       "frames": [
         {
-          "id": "player_atlas/melee.g.0.2.0",
+          "id": "player_atlas/charge.n",
+          "time": 0.1,
+          "flags": [ "charging" ]
+        }
+      ]
+    },
+
+    {
+      "id": "melee.g.n.c",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/charge.n",
+          "time": 0.1,
+          "flags": [ "charging" ]
+        }
+      ]
+    },
+    {
+      "id": "melee.g.n.c.release",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.u.c.0",
           "time": 0.1,
           "flags": []
         },
         {
-          "id": "player_atlas/melee.g.0.2.1",
+          "id": "player_atlas/melee.g.u.c.1",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.u.c.2",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.n.c.3",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.n.c.4",
+          "time": 0.1,
+          "flags": [ "attack" ]
+        },
+        {
+          "id": "player_atlas/melee.g.n.c.5",
+          "time": 0.1,
+          "flags": [ "attack" ]
+        },
+        {
+          "id": "player_atlas/charge.n",
           "time": 0.1,
           "flags": []
         }
@@ -236,16 +349,106 @@
     },
 
     {
-      "id": "melee.g.n.charge.release",
+      "id": "melee.g.u.c",
       "loop": false,
       "frames": [
         {
-          "id": "player_atlas/melee.g.0.3.0",
+          "id": "player_atlas/charge.n",
+          "time": 0.1,
+          "flags": [ "charging" ]
+        }
+      ]
+    },
+    {
+      "id": "melee.g.u.c.release",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.u.c.0",
           "time": 0.1,
           "flags": []
         },
         {
-          "id": "player_atlas/melee.g.0.3.1",
+          "id": "player_atlas/melee.g.u.c.1",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.u.c.2",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.u.c.3",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.u.c.4",
+          "time": 0.1,
+          "flags": [ "attack" ]
+        },
+        {
+          "id": "player_atlas/melee.g.u.c.5",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.u.c.6",
+          "time": 0.1,
+          "flags": [ "attack" ]
+        },
+        {
+          "id": "player_atlas/melee.g.u.c.7",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "melee.g.d.c",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.d.c.0",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.d.c.1",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.d.c.2",
+          "time": 0.1,
+          "flags": [ "charging" ]
+        }
+      ]
+    },
+
+    {
+      "id": "melee.g.d.c.release",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.g.d.c.3",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.d.c.4",
+          "time": 0.1,
+          "flags": [ "attack" ]
+        },
+        {
+          "id": "player_atlas/melee.g.d.c.5",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.g.d.c.6",
           "time": 0.1,
           "flags": []
         }

@@ -87,6 +87,10 @@ public static partial class Utility
         return go.AddComponent<T>();
     }
 
+
+    public static bool LayerInMask(int layer, LayerMask mask)
+    { return mask == (mask | 1 << layer); }
+
     public static int CombineLayerMasks(params int[] layers)
     {
         List<int> l_check = new();

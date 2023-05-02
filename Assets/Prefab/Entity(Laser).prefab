@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5738125750094026807}
   - component: {fileID: 2085167694410208245}
   - component: {fileID: 455601191952742479}
+  - component: {fileID: 8777172353534575404}
   - component: {fileID: 5594263135012983889}
   - component: {fileID: -8322762299741120082}
   - component: {fileID: 3984418546143416009}
@@ -153,6 +154,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: Laser
+  entityTags: []
   distance: 100
   _isActive: 1
   stopLayer:
@@ -161,6 +163,33 @@ MonoBehaviour:
   queStartIndex: 0
   toggleQue: []
   startTime: 0
+--- !u!50 &8777172353534575404
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3822040306275497104}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 1
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!61 &5594263135012983889
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,7 +23,7 @@ public class EntityStats : MonoBehaviour
 
     private void Awake()
     {
-        GetSetStat("health");
+        //GetSetStat("health");
     }
 
     private void Start()
@@ -60,6 +61,8 @@ public class EntityStats : MonoBehaviour
 
     public void ApplyDamage(Damage damage, MonoBehaviour origin, bool applyEffects = true)
     {
+        Debug.Log("EntityStats: ApplyDamage()");
+        bool isUniversal = false;
         for (int i = 0; i < damage.flags.Count; i++)
         {
             switch (damage.flags[i])
@@ -70,12 +73,18 @@ public class EntityStats : MonoBehaviour
                 case "neutral":
                     break;
 
+                case "universal":
+                    isUniversal = true;
+                    break;
+
                 case "negative":
                 default:
                     break;
             }
         }
+        Debug.Log(_stats["health"].value);
         _stats["health"].value -= damage.damage;
+        Debug.Log(_stats["health"].value);
 
         if (!applyEffects) return;
         for (int i = 0; i < damage.effects.Count; i++)
@@ -163,20 +172,35 @@ public class EntityStats : MonoBehaviour
     public class Stat
     {
         string _name;
-        [SerializeField] float _value, _max;
+        [SerializeField] float _value = 0, _max, _vlast = 0;
         public string name { get => _name; }
         public float value { get => _value; set => SetValue(value); }
         public float max { get => _max; set => SetMax(value); }
         public float delta { get => _max > 0 ? _value / _max : 0; }
 
+        List<Action<float, float>> onValueChanged = new ();
+
         public Stat(string name, float value = 100, float max = 100)
-        { _name = name; SetValue(value); SetMax(max); }
+        { _name = name; SetMax(max); SetValue(value); }
 
         void SetValue(float value)
-        { _value = Mathf.Clamp(value, 0, _max); }
+        {
+            _value = Mathf.Clamp(value, 0, _max);
+            if (_value == _vlast) return;
+            _vlast = _value;
+            for (int i = 0; i < onValueChanged.Count; i++)
+            { onValueChanged[i].Invoke(_value, _vlast); }
+        }
         void SetMax(float value)
-        { _max = Mathf.Max(_max, 0); SetValue(value); }
+        { _max = Mathf.Max(value, 0); SetValue(_value); }
 
+        public bool AddListener(Action<float, float> action)
+        { 
+            if (onValueChanged.Contains(action)) return false; 
+            onValueChanged.Add(action); return true;
+        }
+        public bool RemoveListener(Action<float, float> action)
+        { return onValueChanged.Remove(action); }
 
         public static implicit operator float(Stat stat)
         { return stat.value; }
@@ -189,14 +213,31 @@ public class EntityStats : MonoBehaviour
     public class Attribute
     {
         string _name;
-        public float value;
+        float _value, _vlast = 0;
+        public float value { get => _value; set => SetValue(value); }
         public string name { get => _name; }
+        List<Action<float, float>> onValueChanged = new();
 
         public Attribute(string name, float value = 0)
         {
             _name = name;
             this.value = value;
         }
+        void SetValue(float v)
+        { 
+            _value = v;
+            if (_value == _vlast) return;
+            _vlast = _value;
+            for (int i = 0; i < onValueChanged.Count; i++)
+            { onValueChanged[i].Invoke(_value, _vlast); }
+        }
+        public bool AddListener(Action<float, float> action)
+        {
+            if (onValueChanged.Contains(action)) return false;
+            onValueChanged.Add(action); return true;
+        }
+        public bool RemoveListener(Action<float, float> action)
+        { return onValueChanged.Remove(action); }
 
         public static implicit operator float(Attribute attr)
         { return attr.value; }

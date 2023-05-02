@@ -255,10 +255,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _entityName: Laser
   distance: 100
-  isActive: 1
+  _isActive: 1
   stopLayer:
     serializedVersion: 2
     m_Bits: 1024
+  queStartIndex: 0
+  toggleQue: []
+  startTime: 0
 --- !u!61 &6733674253482703445
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -542,10 +545,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _entityName: Laser
   distance: 100
-  isActive: 1
+  _isActive: 1
   stopLayer:
     serializedVersion: 2
     m_Bits: 1024
+  queStartIndex: 0
+  toggleQue: []
+  startTime: 0
 --- !u!61 &52019226338960847
 BoxCollider2D:
   m_ObjectHideFlags: 0

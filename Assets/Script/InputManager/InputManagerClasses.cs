@@ -158,15 +158,21 @@ public class InputManagerClasses : MonoBehaviour
             return btn != "";
         }
 
-        
+    }
+
+    public class InputAxis : INPUT
+    {
+        string axis_name = "";
+
     }
 
     public class InputDirection : INPUT
     {
         static Regex parse_regex = new Regex(@"^\s*InputDirection:\s*(?<name>)\s*,\s*(?<positive>\w+)\s*-\s*(?<negative>\w+)\s*$");
 
-        InputKey _positive, _negative;
-        public int value { get => GetIntValue(); }
+        protected InputKey _positive, _negative;
+        public int valueInt { get => GetIntValue(); }
+        public float value { get => GetIntValue(); }
         public InputKey positive { get => _positive; }
         public InputKey negative { get => _negative; }
 
@@ -175,17 +181,17 @@ public class InputManagerClasses : MonoBehaviour
         public InputDirection(string name, InputKey positive, InputKey negative) : base(name)
         { _positive = positive; _negative = negative; }
 
-        int GetIntValue()
+        protected int GetIntValue()
         { return _positive.holdInt - _negative.holdInt; }
 
         public static explicit operator string(InputDirection v)
-        { return $"{v.value}"; }
+        { return $"{v.valueInt}"; }
         public static implicit operator int(InputDirection v)
-        { return v.value; }
+        { return v.valueInt; }
         public static implicit operator float(InputDirection v)
-        { return v.value; }
+        { return v.valueInt; }
         public static implicit operator bool(InputDirection v)
-        { return v.value != 0; }
+        { return v.valueInt != 0; }
 
         public override string ToSaveData()
         { return $"InputDirection:{name},{_negative.name}-{_positive.name}"; }

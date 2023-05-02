@@ -27,8 +27,10 @@ public class TimeControl : MonoBehaviour
 
     public static Coroutine SetTimeScaleFade(float scale, float fade)
     { return instance.StartCoroutine(instance.IFadeTimeScale(scale, fade)); }
-    public static Coroutine SetTimeScaleFadeForTime(float scale, float time, float fade_in_t = 0, float fade_out_t = 0)
-    { return instance.StartCoroutine(instance.ISetTimeScaleForTime(scale, time, fade_in_t, fade_out_t)); }
+    public static Coroutine SetTimeScaleFadeForTime(float scale, float time, float fade_in_t = 0, float fade_out_t = 0, float? new_timescale = null)
+    {
+        return instance.StartCoroutine(instance.ISetTimeScaleForTime(scale, time, fade_in_t, fade_out_t, new_timescale)); 
+    }
 
 
     IEnumerator IFadeTimeScale(float scale, float fade)
@@ -39,15 +41,16 @@ public class TimeControl : MonoBehaviour
         {
             t += Time.unscaledDeltaTime;
             SetTimescale(Mathf.Lerp(init_timescale, scale, t / fade));
-            yield return null;
+            yield return new WaitForEndOfFrame();
         }
 
         SetTimescale(scale);
     }
 
-    IEnumerator ISetTimeScaleForTime(float scale, float time, float fade_in_t, float fade_out_t)
+    IEnumerator ISetTimeScaleForTime(float scale, float time, float fade_in_t, float fade_out_t, float? new_timescale = null)
     {
         float init_timescale = Time.timeScale;
+        float tscale_out = new_timescale != null ? (float)new_timescale : init_timescale;
 
         yield return StartCoroutine(IFadeTimeScale(scale, fade_in_t));
 
@@ -55,10 +58,10 @@ public class TimeControl : MonoBehaviour
         while (t < time)
         {
             t += Time.unscaledDeltaTime;
-            yield return null;
+            yield return new WaitForEndOfFrame();
         }
 
-        yield return StartCoroutine(IFadeTimeScale(init_timescale, fade_out_t));
+        yield return StartCoroutine(IFadeTimeScale(tscale_out, fade_out_t));
     }
 
     

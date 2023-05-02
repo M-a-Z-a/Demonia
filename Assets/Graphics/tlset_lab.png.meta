@@ -757,6 +757,27 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: tlset_lab_platform
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 122
+        width: 16
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: be2ea95ee4fcf4c4992353ad383e1fe9
+      internalID: 1344613031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -801,6 +822,7 @@ TextureImporter:
       tlset_lab_7: 107362952
       tlset_lab_8: -952678229
       tlset_lab_9: 1401393271
+      tlset_lab_platform: 1344613031
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
