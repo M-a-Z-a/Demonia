@@ -50,7 +50,7 @@ MonoBehaviour:
   m_TransparencySortMode: 0
   m_TransparencySortAxis: {x: 0, y: 1, z: 0}
   m_HDREmulationScale: 1
-  m_LightRenderTextureScale: 0.5
+  m_LightRenderTextureScale: 1
   m_LightBlendStyles:
   - name: Multiply
     maskTextureChannel: 0
@@ -66,7 +66,7 @@ MonoBehaviour:
     blendMode: 0
   m_UseDepthStencilBuffer: 1
   m_UseCameraSortingLayersTexture: 1
-  m_CameraSortingLayersTextureBound: -1967519395
+  m_CameraSortingLayersTextureBound: -1173433493
   m_CameraSortingLayerDownsamplingMethod: 0
   m_MaxLightRenderTextureCount: 16
   m_MaxShadowRenderTextureCount: 1
@@ -104,7 +104,7 @@ MonoBehaviour:
   m_Active: 0
   settings:
     Event: 500
-    blitMaterial: {fileID: -876546973899608171, guid: 475e809595a6937459d05a3d971aaf45, type: 3}
+    blitMaterial: {fileID: 2100000, guid: cb61dc7ed14073249ae6f0ffe07cbda4, type: 2}
     blitMaterialPassIndex: 0
     setInverseViewMatrix: 0
     requireDepthNormals: 0

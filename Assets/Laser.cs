@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Rendering.Universal;
 
 #if UNITY_EDITOR
@@ -23,6 +24,8 @@ public class Laser : Entity
     //[SerializeField] List<float> toggleQue = new();
     [SerializeField] List<StateTimePair> toggleQue = new();
     [SerializeField] float startTime = 0f;
+
+    public UnityEvent<Laser, Collider2D> onLaserHit;
 
     protected override void Awake()
     {
@@ -172,7 +175,10 @@ public class Laser : Entity
         }
     }
 
-
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        onLaserHit.Invoke(this, collision);
+    }
 }
 
 

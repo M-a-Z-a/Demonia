@@ -139,7 +139,7 @@ public class MatAnimator : MonoBehaviour
         {
             foreach (string f in curFrame.Flags)
             {
-                Debug.Log($"{curFrame.ID} flag: {f}");
+                //Debug.Log($"{curFrame.ID} flag: {f}");
                 if (f == "flipX") { frameflip.x = -1; }
                 else if (f == "flipY") { frameflip.y = -1; }
                 if (flagActions.TryGetValue(f, out UnityAction act))

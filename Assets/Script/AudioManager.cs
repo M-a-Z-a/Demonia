@@ -15,7 +15,7 @@ public class AudioManager : MonoBehaviour
 
     public static MixerGroup mixerMaster, mixerUI, mixerMusic, mixerAmbient, mixerEffects;
     public static IEnumerable<MixerGroup> MixerGroups { get => IMixerGroups(); }
-
+    public static AudioMixer mixer { get => instance._mixer; }
 
     private void Awake()
     {
@@ -49,13 +49,22 @@ public class AudioManager : MonoBehaviour
 
     public static void SetScaledVolume(float value)
     {
-        mixerUI["volume"].value = value;
-        mixerMusic["volume"].value = value;
-        mixerAmbient["volume"].value = value;
-        mixerEffects["volume"].value = value;
+        float v = (1f - value) * -80f;
+        //mixer.SetFloat("UI_volume", v);
+        //mixer.SetFloat("Music_volume", v);
+        //mixer.SetFloat("Ambient_volume", v);
+        //mixer.SetFloat("Effects_volume", v);
+        mixerUI["volume"].value = v;
+        mixerMusic["volume"].value = v;
+        mixerAmbient["volume"].value = v;
+        mixerEffects["volume"].value = v;
     }
     public static void SetScaledPitch(float value)
     {
+        //mixer.SetFloat("UI_pitch", value);
+        //mixer.SetFloat("Music_pitch", value);
+        //mixer.SetFloat("Ambient_pitch", value);
+        //mixer.SetFloat("Effects_pitch", value);
         mixerUI["pitch"].value = value;
         mixerMusic["pitch"].value = value;
         mixerAmbient["pitch"].value = value;
@@ -99,7 +108,7 @@ public class AudioManager : MonoBehaviour
             if (_aMixer.GetFloat(exposed_name, out _))
             {
                 _values.Add(name, new MixerValue(exposed_name));
-                Debug.Log($"Value {name}({exposed_name}) added to {_name}");
+                //Debug.Log($"Value {name}({exposed_name}) added to {_name}");
                 return true; 
             }
             return false;
@@ -122,9 +131,24 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-
+    public static Coroutine FadeMixerValue(string mxValue, float value, float time)
+    { return instance.StartCoroutine(instance.IFadeMixerValue(mxValue, value, time)); }
     public static Coroutine FadeValue(MixerValue mxValue, float value, float time)
     { return instance.StartCoroutine(instance.IFadeValue(mxValue, value, time)); }
+
+    IEnumerator IFadeMixerValue(string mxValue, float value, float time)
+    {
+        float init_val;
+        if (!mixer.GetFloat(mxValue, out init_val)) yield break;
+        float t = 0;
+        while (t < time)
+        {
+            t += Time.deltaTime;
+            mixer.SetFloat(mxValue, Mathf.Lerp(init_val, value, t / time));
+            yield return new WaitForEndOfFrame();
+        }
+        mixer.SetFloat(mxValue, value);
+    }
 
     IEnumerator IFadeValue(MixerValue mxValue, float target_val, float time)
     {
@@ -134,7 +158,7 @@ public class AudioManager : MonoBehaviour
         {
             t += Time.deltaTime;
             mxValue.value = Mathf.Lerp(init_val, target_val, t / time);
-            yield return null;
+            yield return new WaitForEndOfFrame();
         }
         mxValue.value = target_val;
     }

@@ -10,22 +10,20 @@ using static Utility;
 public class PlayerController : Entity
 {
 
-    CurveSlider velAttack = new CurveSlider(1, 0), velRelease = new CurveSlider(-1f, -1f);
-
     Rigidbody2D rb;
-    EntityController entity;
-    BoxCollider2D coll;
+    protected BoxCollider2D coll;
     protected bool simulationEnabled = true;
 
     // rect
     Rect rect;
     Vector2 r_sz2;
+    float groundDist, roofDist;
     bool rectChanged = false;
 
-    LayerMask groundMask, platformMask, gpMask;
+    protected LayerMask groundMask, platformMask, gpMask;
 
     // attributes
-    EntityStats.Attribute speed, fallSpeedCap, fallDamageTreshold, speedApexMult, accelSpeed, decelSpeed;
+    EntityStats.Attribute speed, fallSpeedCap, fallDamageTreshold, accelSpeed, decelSpeed;
     float xSpeedMult = 1f, gravityMult = 1f;
     protected float gravityMultiplier = 1f;
 
@@ -43,6 +41,7 @@ public class PlayerController : Entity
     protected bool isJumping = false;
     bool stopGravity = false;
     float cGrav = 0f;
+    protected float tempGravityMult = 1f;
     protected float currentGravity { get => cGrav; }
     public Vector2 relativeVelocity { get => _relativeVelocity; }
 
@@ -65,7 +64,6 @@ public class PlayerController : Entity
         SetRayGroups();
 
         speed = entityStats.GetSetAttribute("speed", 10f);
-        speedApexMult = entityStats.GetSetAttribute("speedapexmult", 1.5f);
         fallSpeedCap = entityStats.GetSetAttribute("fallSpeedCap", 60f);
         fallDamageTreshold = entityStats.GetSetAttribute("fallDamageTreshold", 20f);
         accelSpeed = entityStats.GetSetAttribute("accelSpeed", 20f);
@@ -94,15 +92,27 @@ public class PlayerController : Entity
     {
         rgLeft = new RayGroup2D(5, groundMask); rgLeft.baseDistance = r_sz2.x;
         rgRight = new RayGroup2D(5, groundMask); rgRight.baseDistance = r_sz2.x;
-        rgUp = new RayGroup2D(3, groundMask); rgUp.baseDistance = 0.25f; rgUp.doffset = r_sz2.y - rgUp.baseDistance;
-        rgDown = new RayGroup2D(5, groundMask); rgDown.baseDistance = 0.25f; rgDown.doffset = r_sz2.y - rgDown.baseDistance;
+
+        rgDown = new RayGroup2D(5, groundMask); 
+        rgDown.baseDistance = 0.25f; 
+        rgDown.doffset = r_sz2.y - rgDown.baseDistance - rect.position.y;
+        groundDist = r_sz2.y - rect.position.y;
+
+        rgUp = new RayGroup2D(3, groundMask); 
+        rgUp.baseDistance = r_sz2.y; 
+        rgUp.doffset = r_sz2.y - rgUp.baseDistance + rect.position.y;
+        roofDist = r_sz2.y + rect.position.y;
     }
     void UpdateRayGroups()
     {
-        rgLeft.baseDistance = r_sz2.x; 
-        rgRight.baseDistance = r_sz2.x; 
-        rgUp.doffset = r_sz2.y - rgUp.baseDistance;
-        rgDown.doffset = r_sz2.y - rgDown.baseDistance;
+        rgLeft.baseDistance = r_sz2.x;
+        rgRight.baseDistance = r_sz2.x;
+
+        rgDown.doffset = r_sz2.y - rgDown.baseDistance - rect.position.y; 
+        groundDist = r_sz2.y - rect.position.y;
+
+        rgUp.doffset = r_sz2.y - rgUp.baseDistance + rect.position.y;
+        roofDist = r_sz2.y + rect.position.y;
     }
 
     protected void Move(float x = 0, float y = 0)
@@ -115,7 +125,7 @@ public class PlayerController : Entity
         _velocity = v;
     }
 
-
+    protected bool positionLerping = false;
 
     protected virtual void FixedUpdate()
     {
@@ -124,6 +134,7 @@ public class PlayerController : Entity
         {
             UpdateRect();
             UpdateRayGroups();
+            rectChanged = false;
         }
 
         stunFlag = entityStats.GetFlag("stunned");
@@ -146,7 +157,7 @@ public class PlayerController : Entity
 
         _relativeVelocity = _velocity - groundVelocity;
         targetMove = Vector2.zero;
-        rectChanged = false;
+        tempGravityMult = 1f;
     }
 
 
@@ -156,7 +167,8 @@ public class PlayerController : Entity
         Vector2 clampMove = Vector2.zero;
         Vector2 bvel = groundVelocity;
         Vector2 cvel = _velocity;
-        Vector2 tvel = new Vector2(targetMove.x * speed + bvel.x, bvel.y);
+        Vector2 gnorm = rgDown.shortHit.normal, gangle = gnorm.Turn90CW();
+        Vector2 tvel = new Vector2(targetMove.x * speed * gangle.x + bvel.x, targetMove.x * speed * gangle.y + bvel.y);
         int p = CompareVals(tvel.x, cvel.x, bvel.x);
         float spd = accelSpeed;
         if (p != 0)
@@ -175,14 +187,6 @@ public class PlayerController : Entity
     {
         if (targetMove.x != 0)
         {
-            /*
-            float xspd = 0;
-            if (CompareVals(_velocity.x, targetMove.x, 0) == 0)
-            {
-                if (targetMove.x < 0) xspd = Mathf.Min(_velocity.x, targetMove.x);
-                else xspd = Mathf.Max(_velocity.x, targetMove.x);
-            }
-            */
             Vector2 tvel = new Vector2(targetMove.x * speed * xSpeedMult + groundVelocity.x, groundVelocity.y);
             int p = CompareVals(tvel.x, _velocity.x, groundVelocity.x);
             float spd = accelSpeed * 0.75f;
@@ -201,6 +205,7 @@ public class PlayerController : Entity
         {
             Vector3 tpos = transform.position;
             int tdir = 0;
+            if (wallUp) goto stoppa;
             if (targetMove.x > 0)
             { tdir = 1; }
             else if (targetMove.x < 0)
@@ -212,7 +217,7 @@ public class PlayerController : Entity
             else 
             { goto stoppa; } // goto stoppa label, drops out of if loop
 
-            Vector2 p1 = new Vector2(tpos.x, tpos.y + r_sz2.y);
+            Vector2 p1 = new Vector2(tpos.x, tpos.y + roofDist);
             float cdist = grabPoint.x + 0.05f + r_sz2.x;
 
             RaycastHit2D rhit = Physics2D.Raycast(p1, tdir > 0 ? Vector2.right : Vector2.left, cdist, groundMask);
@@ -225,7 +230,7 @@ public class PlayerController : Entity
                 {
                     if (tdir < 0) ledgeLeft = true;
                     else ledgeRight = true;
-                    tpos.y = rhit.point.y - (r_sz2.y - grabPoint.y);
+                    tpos.y = rhit.point.y - (roofDist - grabPoint.y);
                     transform.position = tpos;
                     _velocity.y = 0;
                     stopGravity = true;
@@ -241,8 +246,9 @@ public class PlayerController : Entity
         { stopGravity = false; cGrav = 0; return; }
         gravityMult = _velocity.y < 0 ? 1f : (isJumping ? 0.5f : 2f);
         cGrav = gravity * gravityMultiplier * gravityMult;
-        _velocity.y = Mathf.Max(_velocity.y + cGrav * Time.fixedDeltaTime, -fallSpeedCap);
+        _velocity.y = Mathf.Max(_velocity.y + cGrav * Time.fixedDeltaTime * tempGravityMult, -fallSpeedCap);
     }
+
 
 
     void HandleCollisions()
@@ -253,9 +259,9 @@ public class PlayerController : Entity
         groundVelocity = Vector2.zero;
         // ground check
         rgDown.layerMask = !ignorePlatform? ((isGrounded || _velocity.y <= 0) ? gpMask : groundMask) : groundMask;
-        if (rgDown.Cast(transform.position, Vector2.down, vecrang, 0.3f + Mathf.Max(-velocity.y * Time.fixedDeltaTime * 2, 0)) > 0)
+        if (rgDown.Cast(transform.position, Vector2.down, vecrang, rgDown.baseDistance + 0.05f + Mathf.Max(-velocity.y * Time.fixedDeltaTime * 2, 0)) > 0)
         {
-            if (rgDown.shortHit.point.y + r_sz2.y + 0.01f >= tpos.y)
+            if (rgDown.shortHit.point.y + groundDist + 0.01f >= tpos.y)
             {
                 //groundVelocity = Vector2.zero;
                 foreach (RaycastHit2D rhit in rgDown.raycastHits)
@@ -266,7 +272,7 @@ public class PlayerController : Entity
                     }
                 }
                 groundVelocity.x /= rgDown.hitCount;
-                tpos.y = rgDown.shortHit.point.y + r_sz2.y; //Mathf.Max(tpos.y, rgDown.shortHit.point.y + rHalf.y);
+                tpos.y = rgDown.shortHit.point.y + groundDist;//r_sz2.y; //Mathf.Max(tpos.y, rgDown.shortHit.point.y + rHalf.y);
                 transform.position = tpos;
                 if (!isGrounded)
                 {
@@ -293,12 +299,12 @@ public class PlayerController : Entity
 
         vecrang = GetRayRange(transform.position.Add(y: rgUp.doffset), Vector2.right, r_sz2.x, groundMask, -0.05f);
         wallUp = false;
-        if (rgUp.Cast(transform.position, Vector2.up, vecrang, 0.3f) > 0)
+        if (rgUp.Cast(transform.position, Vector2.up, vecrang, rgUp.baseDistance + Mathf.Max(velocity.y * Time.fixedDeltaTime * 2, 0)) > 0)
         {
-            if (rgUp.hitCount > 1)
+            if (rgUp.hitCount > 1 && rgUp.shortHit.point.y - roofDist - 0.01f <= tpos.y)
             {
                 wallUp = true;
-                tpos.y = Mathf.Min(tpos.y, rgUp.shortHit.point.y - r_sz2.y);
+                tpos.y = Mathf.Min(tpos.y, rgUp.shortHit.point.y - roofDist);
                 transform.position = tpos;
                 _velocity.y = Mathf.Min(_velocity.y, 0);
                 maxMove.up = rgUp.hitBaseDistance;
@@ -306,7 +312,7 @@ public class PlayerController : Entity
         }
 
         wallLeft = false;
-        vecrang = GetRayRange(transform.position.Add(x: -rgLeft.doffset), Vector2.up, r_sz2.y, groundMask, -0.05f);
+        vecrang = GetRayRange(transform.position.Add(x: -rgLeft.doffset, y:rect.position.y), Vector2.up, r_sz2.y, groundMask, -0.05f);
         if (rgLeft.Cast(transform.position, Vector2.left, vecrang, r_sz2.x + 0.01f) > 0)
         {
             if (rgLeft.hitCount == 1 && rgLeft.hitIndex == 0)
@@ -333,7 +339,7 @@ public class PlayerController : Entity
         { WallLeftElse(); }
 
         wallRight = false;
-        vecrang = GetRayRange(transform.position.Add(x: rgRight.doffset), Vector2.up, r_sz2.y, groundMask, -0.05f);
+        vecrang = GetRayRange(transform.position.Add(x: rgRight.doffset, y: rect.position.y), Vector2.up, r_sz2.y, groundMask, -0.05f);
         if (rgRight.Cast(transform.position, Vector2.right, vecrang, r_sz2.x + 0.01f) > 0)
         {
             if (rgRight.hitCount == 1 && rgRight.hitIndex == 0)
@@ -363,7 +369,9 @@ public class PlayerController : Entity
         void isGroundedElse()
         {
             if (isGrounded)
-            { OnExitGrounded(); }
+            { 
+                OnExitGrounded(); 
+            }
             isGrounded = false; wasGrounded += Time.fixedDeltaTime;
             isPlatform = false;
         }
@@ -391,9 +399,9 @@ public class PlayerController : Entity
         transform.position = tpos;
 
         // late fix
-        RaycastHit2D rhit = Physics2D.Raycast(tpos, Vector2.down, r_sz2 .y- 0.05f, groundMask);
+        RaycastHit2D rhit = Physics2D.Raycast(tpos, Vector2.down, groundDist- 0.05f, groundMask);
         if (rhit.collider)
-        { transform.position = new Vector3(tpos.x, rhit.point.y + r_sz2.y, tpos.z); }
+        { transform.position = new Vector3(tpos.x, rhit.point.y + groundDist, tpos.z); }
     }
 
 
@@ -466,37 +474,13 @@ public class PlayerController : Entity
             yield return new WaitForFixedUpdate();
         }
         isJumping = false;
-        //StartCoroutine(IWaitJumpApex(speedApexMult, 1f, 0.5f));
-    }
-
-    IEnumerator IJumpApexBoost(float multStart, float multEnd, float time)
-    {
-        float t = 0;
-        xSpeedMult = multStart;
-        while (t < time)
-        {
-            t += Time.fixedDeltaTime;
-            xSpeedMult = CurveCombination(t / time, EaseInCirc01, EaseOutSine01, 0.25f);
-            xSpeedMult = Mathf.Lerp(multStart, multEnd, t / time);
-            yield return new WaitForFixedUpdate();
-        }
-        xSpeedMult = multEnd;
-    }
-
-    IEnumerator IWaitJumpApex(float multStart, float multEnd, float time)
-    {
-        while (_velocity.y > 0)
-        {
-            if (isGrounded) yield break;
-            yield return new WaitForFixedUpdate();
-        }
-        StartCoroutine(IJumpApexBoost(multStart, multEnd, time));
     }
     
 
     IEnumerator ILerpStaticMovement(Vector2 start, Vector2 end, float time)
     {
         simulationEnabled = false;
+        _velocity = Vector2.zero;
         float t = 0;
         while (t < time || !simulationEnabled)
         {
@@ -614,33 +598,4 @@ public class PlayerController : Entity
 
 }
 
-
-
-
-
-/*
-IEnumerable<RaycastHit2D> CastRays(RaycastHit2D[] rhits, Vector2 origin, Vector2 dir, Vector2Range range, float dist, LayerMask layerMask)
-{
-    Vector2 point; int arrLen = rhits.Length, arrLen1 = arrLen > 2 ? arrLen - 1 : 1;
-    for (int i = 0; i < arrLen; i++)
-    {
-        point = origin + Vector2.Lerp(range.start, range.end, (float)i / arrLen1);
-        yield return rhits[i] = Physics2D.Raycast(point, dir, dist, layerMask);
-    }
-}
-IEnumerable<RaycastHit2D> CastRays(int count, Vector2 origin, Vector2 dir, Vector2Range range, float dist, LayerMask layerMask)
-{
-    Vector2 point;
-    for (int i = 0; i < count; i++)
-    {
-        point = origin + Vector2.Lerp(range.start, range.end, (float)i / (count - 1));
-        yield return Physics2D.Raycast(point, dir, dist, layerMask);
-    }
-}
-IEnumerable<Vector2> GetRayPositions(int count, Vector2Range range)
-{
-    for (int i = 0; i < count; i++)
-    { yield return Vector2.Lerp(range.start, range.end, (float)i / (count - 1)); }
-}
-*/
 

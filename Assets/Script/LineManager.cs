@@ -14,7 +14,7 @@ public class LineManager : MonoBehaviour
         for (int i = 0; i < 5; i++)
         {
             t = (float)i / 4;
-            Debug.Log($"[{i}]SineVector({t}) => {Utility.SineVector(t)}");
+            //Debug.Log($"[{i}]SineVector({t}) => {Utility.SineVector(t)}");
         }
     }
 

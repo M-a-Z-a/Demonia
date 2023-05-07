@@ -14,13 +14,17 @@ public class Area : MonoBehaviour
     List<Room> rooms;
     [SerializeField] Color ambientColor = Color.white;
     [SerializeField] float ambientIntensity = 1;
+    [SerializeField] AudioClip areaMusic;
+    [SerializeField] float areaMusicVolume = 1f;
     Transform objects, entities;
     Light2D ambientLight;
+    public bool ambientEnabled = true;
 
     private void OnValidate()
     {
+        activeArea = this;
         if (ambientLight || TryGetComponent<Light2D>(out ambientLight))
-        { UpdateAmbient(); }
+        { ResetAmbientLight(); }
     }
 
     private void OnDrawGizmos()
@@ -54,7 +58,7 @@ public class Area : MonoBehaviour
             if (FindPlayerRoom(out Room rm))
             { rm.Activate(); }
         }
-        UpdateAmbient();
+        ResetAmbientLight();
     }
 
     public void Update()
@@ -81,6 +85,12 @@ public class Area : MonoBehaviour
                 Debug.Log(pfound ? $"player in room: {proom.gameObject.name}" : "player lost?");
             }
         }
+    }
+
+
+    public void GetAmbientLight(out Color light_color, out float light_intensity)
+    {
+        light_color = ambientColor; light_intensity = ambientIntensity; 
     }
 
     public static bool FindPlayerRoom(out Room room)
@@ -119,12 +129,41 @@ public class Area : MonoBehaviour
         }
     }
 
-    void UpdateAmbient()
+
+    public void ResetAmbientLight()
     {
-        ambientLight.color = ambientColor;
-        ambientLight.intensity = ambientIntensity;
-        //RenderSettings.ambientLight = ambientColor;
-        //RenderSettings.ambientIntensity = ambientIntensity;
+        if (ambientLight != null)
+        {
+            ambientLight.color = ambientColor;
+            ambientLight.intensity = ambientIntensity;
+        }
+    }
+    public void SetAmbientLight(Color color, float intensity)
+    {
+        if (ambientLight != null)
+        {
+            ambientLight.color = color;
+            ambientLight.intensity = intensity;
+        }
+    }
+
+    public void ResetMusic()
+    {
+        if (areaMusic == null)
+        {
+            AudioListenerControl.Music_Stop(0.5f);
+        }
+        else if (areaMusic.name != AudioListenerControl.currentMusic?.name)
+        {
+            AudioListenerControl.Music_Change(areaMusic, areaMusicVolume, 1f);
+        }
+    }
+    public void SetMusic(AudioClip clip, float volume)
+    {
+        if (clip != null && clip.name != AudioListenerControl.currentMusic?.name)
+        {
+            AudioListenerControl.Music_Change(clip, volume, 2f);
+        }
     }
 
     public void SortEntities()
@@ -164,6 +203,7 @@ public class Area : MonoBehaviour
             r.FetchContainers();
             foreach (Transform t in r.objects)
             {
+                if (t.GetComponent<EntranceLight>()) continue;
                 if (!r.PointInRoom(t.position))
                 { tlist.Add(t); }
             }

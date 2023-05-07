@@ -163,6 +163,9 @@ MonoBehaviour:
   queStartIndex: 0
   toggleQue: []
   startTime: 0
+  onLaserHit:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!50 &8777172353534575404
 Rigidbody2D:
   serializedVersion: 4

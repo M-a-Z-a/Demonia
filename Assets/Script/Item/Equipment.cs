@@ -20,7 +20,7 @@ public class Equipment : Item
         { estats.RemoveEffect(ef); }
     }
 
-    public class EquipmentEffect : EntityStats.StatusEffect
+    public class EquipmentEffect : StatusEffect
     {
         public EquipmentEffect(string name) : base(name)
         { }
@@ -29,8 +29,8 @@ public class Equipment : Item
         { return base.Init(); }
         public override void OnStart()
         { base.OnStart(); }
-        public override void OnUpdate()
-        { base.OnUpdate(); }
+        public override void OnUpdate(float dt)
+        { base.OnUpdate(dt); }
         public override void OnEnd()
         { base.OnEnd(); }
 

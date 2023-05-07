@@ -94,6 +94,63 @@
     },
 
     {
+      "id": "crouch",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/crouch_0",
+          "time": 0.5,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/crouch_1",
+          "time": 0.5,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "crawl",
+      "loop": true,
+      "frames": [
+        {
+          "id": "player_atlas/crawl_0",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/crawl_1",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/crawl_2",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/crawl_3",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/crawl_4",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/crawl_5",
+          "time": 0.1,
+          "flags": []
+        }
+      ]
+    },
+
+
+
+
+    {
       "id": "air_ascend",
       "loop": true,
       "frames": [
@@ -186,6 +243,38 @@
       ]
     },
 
+
+    {
+      "id": "melee.a.u",
+      "loop": false,
+      "frames": [
+        {
+          "id": "player_atlas/melee.a.u.0",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.a.u.1",
+          "time": 0.2,
+          "flags": [ "attack"]
+        },
+        {
+          "id": "player_atlas/melee.a.u.2",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "player_atlas/melee.a.u.3",
+          "time": 0.1,
+          "flags": [ "attack" ]
+        },
+        {
+          "id": "player_atlas/melee.a.u.4",
+          "time": 0.1,
+          "flags": []
+        }
+      ]
+    },
 
 
     {

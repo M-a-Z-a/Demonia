@@ -28,9 +28,7 @@ public class TimeControl : MonoBehaviour
     public static Coroutine SetTimeScaleFade(float scale, float fade)
     { return instance.StartCoroutine(instance.IFadeTimeScale(scale, fade)); }
     public static Coroutine SetTimeScaleFadeForTime(float scale, float time, float fade_in_t = 0, float fade_out_t = 0, float? new_timescale = null)
-    {
-        return instance.StartCoroutine(instance.ISetTimeScaleForTime(scale, time, fade_in_t, fade_out_t, new_timescale)); 
-    }
+    { return instance.StartCoroutine(instance.ISetTimeScaleForTime(scale, time, fade_in_t, fade_out_t, new_timescale)); }
 
 
     IEnumerator IFadeTimeScale(float scale, float fade)

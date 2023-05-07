@@ -75,9 +75,15 @@ public class Entity : MonoBehaviour
 
     public virtual void AddForce(Vector2 force)
     {
-        _velocity += force;
+        float mult = 1f;
+        if (entityStats != null)
+        {
+            if (entityStats.TryGetAttribute("forceResist", out EntityStats.Attribute attr))
+            { mult = 1f - Utility.EaseOutSine01(attr.value * 0.01f); }
+        }
+        _velocity += force * mult;
     }
-    public virtual void ApplyDamage(EntityStats.Damage damage, MonoBehaviour origin)
+    public virtual void ApplyDamage(Damage damage, MonoBehaviour origin)
     {
         Debug.Log("Entity: ApplyDamage()");
         if (entityStats == null) return;

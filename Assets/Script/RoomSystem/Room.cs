@@ -15,12 +15,19 @@ public class Room : MonoBehaviour
     public enum RoomState { Disabled = 0, Enabled, Active };
     public static Room ActiveRoom { get; protected set; }
 
-    [SerializeField] public List<Room> connectedRooms;
+    [SerializeField] public List<Room> connectedRooms = new();
     //[SerializeField] public List<RoomConnection> roomConnections;
     [SerializeField] public Rect roomBounds;
-    [SerializeField] Color overrideRoomLight;
-    public Rect roomWorldBounds;
+    
+    [SerializeField] bool overrideAreaAmbient = false;
+    [SerializeField] Color roomAmbientColor = Color.black;
+    [SerializeField] float roomAmbientIntensity = 1f;
 
+    [SerializeField] bool overrideAreaMusic = false;
+    [SerializeField] AudioClip roomMusic;
+    [SerializeField] float roomMusicVolume = 1f;
+
+    public Rect roomWorldBounds;
     public bool firstLoad = true;
 
     public RoomState roomState = RoomState.Disabled;
@@ -29,6 +36,13 @@ public class Room : MonoBehaviour
     public List<Entity> entList = new();
 
     bool firstInit = true;
+
+    public void GetAmbientLight(out Color light_color, out float light_intensity)
+    {
+        if (!overrideAreaAmbient && transform.parent.TryGetComponent<Area>(out Area area))
+        { area.GetAmbientLight(out light_color, out light_intensity); return; }
+        light_color = roomAmbientColor; light_intensity = roomAmbientIntensity;
+    }
 
     public void SetActiveRoom()
     { ActiveRoom = this; }
@@ -78,12 +92,9 @@ public class Room : MonoBehaviour
     protected virtual void Awake()
     {
         GetRoomWorldBounds();
-        //FetchObjects();
     }
     protected virtual void Start()
     {
-        //FetchContents();
-        //FetchContents();
         Init();
     }
 
@@ -91,6 +102,7 @@ public class Room : MonoBehaviour
     {
         GetRoomWorldBounds();
     }
+
 
     public void Init()
     {
@@ -100,27 +112,8 @@ public class Room : MonoBehaviour
         FetchContents();
     }
 
-    /*
-    bool HasConnectionToRoom(Room room, out RoomConnection connection_out)
-    {
-        foreach (RoomConnection rc in roomConnections)
-        {
-            if (rc.room == room)
-            { connection_out = rc; return true; }
-        }
-        connection_out = null;
-        return false;
-    }
-    */
-
     public static int ConnectRooms(Room a, Room b, bool a2b_enabled = true, bool b2a_enabled = true)
     {
-        /*
-        if (!a.HasConnectionToRoom(b, out RoomConnection rc)) { a.roomConnections.Add(new RoomConnection(b, a2b_enabled)); }
-        else { rc.enabled = a2b_enabled; }
-        if (!b.HasConnectionToRoom(a, out rc)) { b.roomConnections.Add(new RoomConnection(a, b2a_enabled)); }
-        else { rc.enabled = b2a_enabled; }
-        */
         int rcon = 0;
         if (!a.connectedRooms.Contains(b)) { a.connectedRooms.Add(b); rcon += 1; }
         if (!b.connectedRooms.Contains(a)) { b.connectedRooms.Add(a); rcon += 2; }
@@ -144,7 +137,7 @@ public class Room : MonoBehaviour
         objects.gameObject.SetActive(state);
     }
 
-    protected virtual void GetRoomWorldBounds()
+    public virtual void GetRoomWorldBounds()
     { roomWorldBounds = new Rect(roomBounds.position + (Vector2)transform.position, roomBounds.size); }
 
     public virtual void FetchContainers()
@@ -201,11 +194,20 @@ public class Room : MonoBehaviour
         }
         ActiveRoom = this;
         
-        Debug.Log($"Room: {gameObject.name} activated");
+        //Debug.Log($"Room: {gameObject.name} activated");
         Load();
         LoadAdjacentRooms();
         SetObjectStates(true);
         SetEntityStates(true);
+
+        if (overrideAreaAmbient)
+        { Area.activeArea.SetAmbientLight(roomAmbientColor, roomAmbientIntensity); }
+        else
+        { Area.activeArea.ResetAmbientLight(); }
+        if (overrideAreaMusic && roomMusic != null)
+        { Area.activeArea.SetMusic(roomMusic, roomMusicVolume); }
+        else
+        { Area.activeArea.ResetMusic(); }
 
         Vector3 ppos = Player.pTransform.position;
         ppos.x = Mathf.Clamp(ppos.x, roomWorldBounds.xMin + 2, roomWorldBounds.xMax - 2);
@@ -218,7 +220,7 @@ public class Room : MonoBehaviour
     public virtual bool Deactivate()
     {
         roomState = RoomState.Enabled;
-        Debug.Log($"Room: {gameObject.name} deactivated");
+        //Debug.Log($"Room: {gameObject.name} deactivated");
         SetObjectStates(false);
         SetEntityStates(false);
         return true;
@@ -230,13 +232,13 @@ public class Room : MonoBehaviour
         gameObject.SetActive(true);
         SetObjectStates(false);
         SetEntityStates(false);
-        Debug.Log($"Room: {gameObject.name} loaded");
+        //Debug.Log($"Room: {gameObject.name} loaded");
         return true;
     }
 
     public virtual bool Unload()
     {
-        Debug.Log($"Room: {gameObject.name} unloaded");
+        //Debug.Log($"Room: {gameObject.name} unloaded");
         Deactivate();
         roomState = RoomState.Disabled;
         gameObject.SetActive(false);
@@ -448,6 +450,7 @@ public class RoomEditor : Editor
         }
         Vector2 s = instance.roomBounds.size;
         instance.roomBounds.size = new Vector2(Mathf.Floor(s.x), Mathf.Floor(s.y))+snapOffset;
+        instance.GetRoomWorldBounds();
     }
     void Nudge(float x = 0, float y = 0)
     {
@@ -463,6 +466,7 @@ public class RoomEditor : Editor
         Vector2 posComp = new Vector2(clampX > 0 ? -x : 0, clampY > 0 ? -y : 0);
         instance.roomBounds.size += vec;
         instance.roomBounds.position += posComp;
+        instance.GetRoomWorldBounds();
         SceneView.RepaintAll();
     }
 }

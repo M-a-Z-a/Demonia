@@ -39,7 +39,7 @@ public class TilemapLayer : MonoBehaviour
         Area a = null;
         TilemapLayerGroup g = null;
 
-        Debug.Log($"Finding connections in {transform.name}...");
+        //Debug.Log($"Finding connections in {transform.name}...");
         for (i = 0; i < lookoutDepth; i++)
         {
             r = pt.GetComponent<Room>();
@@ -56,7 +56,7 @@ public class TilemapLayer : MonoBehaviour
             { _area = a; break; }
             pt = pt.parent;
         }
-        Debug.Log($"Results: Area/Room/Group = {(_area ? _area.name : "None")}/{(_room ? _room.name : "None")}/{(_group ? _group.name : "None")}");
+        //Debug.Log($"Results: Area/Room/Group = {(_area ? _area.name : "None")}/{(_room ? _room.name : "None")}/{(_group ? _group.name : "None")}");
     }
 
 }

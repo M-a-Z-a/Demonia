@@ -24,7 +24,7 @@ public class Projectile : Entity
     {
         base.Awake();
         origScale = transform.localScale;
-        Debug.Log($"{origScale}");
+        //Debug.Log($"{origScale}");
     }
     void SetOrigScale(Vector3 localscale)
     { origScale = localscale; }
@@ -37,7 +37,7 @@ public class Projectile : Entity
     }
 
     // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
         timeToLive -= Time.deltaTime;
         float d = 1f - timeToLive / lifeTime;
@@ -52,12 +52,12 @@ public class Projectile : Entity
         if (timeToLive <= 0)
         { Destroy(gameObject); }
     }
-    private void OnDestroy()
+    void OnDestroy()
     {
         
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
         if (hits.Contains(collision))
         { return; }
@@ -65,4 +65,6 @@ public class Projectile : Entity
         for (int i = 0; i < onHitActions.Count; i++)
         { onHitActions[i].Invoke(this, collision); }
     }
+
+
 }

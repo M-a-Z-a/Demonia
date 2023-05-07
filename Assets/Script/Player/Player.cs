@@ -1,17 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 using static InputManagerClasses;
-using static UnityEngine.Rendering.DebugUI;
 using static Utility;
 
-public class Player : PlayerController
+public partial class Player : PlayerController
 {
     public static Player instance { get; protected set; }
     public static Transform pTransform { get; protected set; }
-    public Dictionary<string, Hitbox> melee_hbs;
+    public static Transform pDamageRelayTransform { get; protected set; }
 
     MeshRenderer rend;
     Material mat;
@@ -19,10 +17,11 @@ public class Player : PlayerController
 
     Transform cameraTarget;
     InputVector2 inputVector;
-    InputKey left, right, up, down, jump, attackA, attackB, interact;
-    float moveMultLeft = 1f, moveMultRight = 1f;
+    InputKey left, right, up, down, jump, dash, attackA, attackB, interact;
+    float moveMultLeft = 1f, moveMultRight = 1f, moveXMult = 1f;
     float wallYVel = 0f;
     int facing = 1;
+    bool isCrouched = false;
 
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
     int mJumps = 1, cmJumps = 0;
@@ -33,8 +32,8 @@ public class Player : PlayerController
 
     float anim_run_speed = 32f / 16f * 0.3f * 10f;
 
-    Rect rect_stand = new Rect(new Vector2(0,0), new Vector2(0.8f, 1.8f));
-    Rect rect_crouch = new Rect(new Vector2(0, -0.45f), new Vector2(0.8f, 0.9f));
+    //Rect rect_stand = new Rect(new Vector2(0,0), new Vector2(0.8f, 1.8f));
+    //Rect rect_crouch = new Rect(new Vector2(0, -0.45f), new Vector2(0.8f, 0.9f));
 
     Shockwave swJumpAir, swDeath;
     Vector2 dir;
@@ -42,12 +41,17 @@ public class Player : PlayerController
     float jumpHoldTime = 0.4f;
     float chargeAmount = 0f;
     int isCharging = 0, attackState = 0;
+    bool wgInit = false, meleeAirJump = false, last_maj = false;
 
     //string curAttackState = "";
     int curAttack = 0;
 
-    EntityStats.Stat stat_hp;
+    EntityStats.Stat stat_hp, stat_sp, stat_mp;
 
+    [SerializeField] RelayCollider damageRelay, damageRelayCrouch, intRelay, intRelayCrouch;
+
+    [SerializeField] SinMove[] jumpTrails, dashTrails;
+    //TrailRenderer[] jumpTrailRend = { };
     [SerializeField]
     AudioSource asource, asourceFeet;
     [SerializeField]
@@ -56,6 +60,9 @@ public class Player : PlayerController
     [SerializeField]
     ProjClass projectiles;
 
+
+    Rect standRect, crouchRect = new Rect(new Vector2(0, -0.5f), new Vector2(0.75f, 0.8f));
+
     string meleeChargeAnim = "melee.g.n.c.release", 
         meleeUpChargeAnim = "melee.g.u.c.release",
         meleeDownChargeAnim = "melee.g.d.c.release";
@@ -63,6 +70,8 @@ public class Player : PlayerController
     string meleeDownAirCharge = "melee.a.d.init",
         meleeDownAirRelease = "melee.a.d.release",
         meleeDownAirGround = "melee.a.d.ground";
+
+    string meleeUpAir = "melee.a.u";
 
     [System.Serializable]
     class ProjClass
@@ -84,6 +93,7 @@ public class Player : PlayerController
         instance = this;
 
         pTransform = transform;
+        pDamageRelayTransform = damageRelay.transform;
         cameraTarget = transform.Find("CameraTarget");
 
         rend = GetComponentInChildren<MeshRenderer>();
@@ -96,7 +106,7 @@ public class Player : PlayerController
         entityStats.SetAttribute("decelSpeed", 15f);
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 10f);
-        airJumpForce = entityStats.GetSetAttribute("airjumpforce", 6f);
+        airJumpForce = entityStats.GetSetAttribute("airjumpforce", 10f);
 
         asource.volume = 0.1f;
     }
@@ -105,12 +115,16 @@ public class Player : PlayerController
     protected override void Start()
     {
         base.Start();
+
+        standRect = coll.Rect();
+
         inputVector = InputManager.GetInputVector<InputVector2>("direction");
         left = inputVector.inputX.negative;
         right = inputVector.inputX.positive;
         up = inputVector.inputY.positive;
         down = inputVector.inputY.negative;
 
+        dash = InputManager.SetInputKey("dash", KeyCode.Z);
         jump = InputManager.SetInputKey("jump", KeyCode.X);
         attackA = InputManager.SetInputKey("attackA", KeyCode.C);
         attackB = InputManager.SetInputKey("attackB", KeyCode.V); 
@@ -122,8 +136,6 @@ public class Player : PlayerController
         animator.flagActions.Add("charging", OnCharge);
         animator.onAnimEnd.Add(OnAnimEnd);
 
-        //GetMeleeHitboxes();
-
         Transform effs = transform.Find("Effects");
         swDeath = effs.Find("ShockwaveDeath").GetComponent<Shockwave>();
         swDeath.Deactivate();
@@ -132,26 +144,52 @@ public class Player : PlayerController
         gravityMultiplier = 1.25f;
 
         stat_hp = entityStats.SetStat("health", 100, 100);
-        stat_hp.AddListener(OnHealthChanged);
+        stat_sp = entityStats.SetStat("energy", 100, 100);
+        stat_mp = entityStats.SetStat("mana", 100, 100);
+
+        stat_hp.onValueChanged.AddListener(OnHealthChanged);
+        stat_sp.onValueChanged.AddListener(OnEnergyChanged);
+        stat_mp.onValueChanged.AddListener(OnManaChanged);
+
+        entityStats.onStatusEffectAdded.AddListener(OnAddEffect);
+        entityStats.onStatusEffectRemoved.AddListener(OnRemoveEffect);
+
         HUD.instance.SetStatHP(stat_hp);
+        HUD.instance.SetStatSP(stat_sp);
+        HUD.instance.SetStatMP(stat_mp);
 
-        //Debug.Log($"stat_hp: {entityStats.GetAttribute("health").value}");
+        for (int i = 0; i < jumpTrails.Length; i++)
+        { jumpTrails[i].enabled = false; }
+        for (int i = 0; i < dashTrails.Length; i++)
+        { dashTrails[i].enabled = false; }
 
-        //transform.position = GameManager.Checkpoint.position;
-        //SetVelocity(Vector2.zero);
+        damageRelay.SaveColliderState("stand", damageRelay.Collider);
+        intRelay.SaveColliderState("stand", intRelay.Collider);
+
+        damageRelay.SaveColliderState("crouch", damageRelayCrouch.GetComponent<Collider2D>());
+        intRelay.SaveColliderState("crouch", intRelayCrouch.GetComponent<Collider2D>());
     }
     
 
     float aspeed = 1f;
-    /*
-    protected override void FixedUpdate()
-    { base.FixedUpdate(); }
-    */
+    bool roofCheck = false;
+
+    string i_anim = "idle", r_anim = "run", b_anim = "break";
+    float cmovemult = 1f, rspeedmult = 1f;
 
     protected void Update()
     {
+        stat_sp.value += 10 * energyMult * Time.deltaTime;
+        stat_mp.value += 20 * manaMult * Time.deltaTime;
+
+        if (stat_mp.value < 50f)
+        { stat_hp.value -= (1f - stat_mp.value / 50f) * 5f * Time.deltaTime; }
 
         dir = (Vector2)inputVector;
+
+        SetOverlayPosition();
+
+        if (isDashing) return;
 
         if (interact.down)
         { 
@@ -159,11 +197,44 @@ public class Player : PlayerController
             { intact.Interact(); } 
         }
 
-        if (isCharging < 1 && attackState < 1 && cComboTimer <= 0) Move(dir.x *= dir.x < 0 ? moveMultLeft : moveMultRight);
+        roofCheck = isGrounded && Physics2D.Raycast((Vector2)transform.position + crouchRect.position, Vector2.up, standRect.size.y - crouchRect.size.y / 2, groundMask);
+        if (isGrounded && (dir.y < 0 || roofCheck)) 
+        {
+            if (!isCrouched)
+            { SetCrouch(true); }
+        }
+        else
+        {
+            if (isCrouched)
+            { SetCrouch(false); }
+        }
+
+
+
+        if (isCharging < 1 && attackState < 1 && cComboTimer <= 0)
+        {
+            if (!isCrouched && dash.down && (dir.x != 0 || dir.y != 0))
+            {
+                Vector2 dnorm = dir.normalized;
+                for (int i = 0; i < dashTrails.Length; i++)
+                {
+                    stat_mp.value -= 20f;
+                    if (stat_mp.value < 1f)
+                    {
+                        stat_hp.value -= 5f;
+                    }
+                    
+                    dashTrails[i].xyzMult = new Vector3(-dnorm.y * 0.6f, dnorm.x * 0.6f, 0.1f); 
+                }
+                StartCoroutine(IDash(dnorm * 20f, 0.4f)); return; 
+            }
+            Move(dir.x *= (dir.x < 0 ? moveMultLeft : moveMultRight) * cmovemult * moveXMult); 
+        }
         aspeed = 1f;
         if (wasGrounded < coyoteTime && !isJumping)
         {
-            if (jump.down)
+            wgInit = false;
+            if (jump.down && !roofCheck)
             {
                 isCharging = 0;
                 if (isPlatform && dir.y < 0)
@@ -185,14 +256,14 @@ public class Player : PlayerController
                     {
                         if (relativeVelocity.x < 0)
                         {
-                            animator.SetState("break");
+                            animator.SetState(b_anim);
                             animator.FlipX(true);
                         }
                         else
                         {
-                            animator.SetState("run");
+                            animator.SetState(r_anim);
                             animator.FlipX(false);
-                            aspeed = Mathf.Clamp(Mathf.Abs(velocity.x) / anim_run_speed, 0.5f, 2f);
+                            aspeed = Mathf.Clamp(Mathf.Abs(velocity.x) / rspeedmult, 0.5f, 2f);
                             facing = 1;
                         }
                     }
@@ -200,14 +271,14 @@ public class Player : PlayerController
                     {
                         if (relativeVelocity.x > 0)
                         {
-                            animator.SetState("break");
+                            animator.SetState(b_anim);
                             animator.FlipX(false);
                         }
                         else
                         {
-                            animator.SetState("run");
+                            animator.SetState(r_anim);
                             animator.FlipX(true);
-                            aspeed = Mathf.Clamp(Mathf.Abs(velocity.x) / anim_run_speed, 0.5f, 2f);
+                            aspeed = Mathf.Clamp(Mathf.Abs(velocity.x) / rspeedmult, 0.5f, 2f);
                             facing = -1;
                         }
                     }
@@ -215,17 +286,17 @@ public class Player : PlayerController
                     {
                         if (relativeVelocity.x > 0.5f)
                         {
-                            animator.SetState("break");
+                            animator.SetState(b_anim);
                             animator.FlipX(false);
                         }
                         else if (relativeVelocity.x < -0.5f)
                         {
-                            animator.SetState("break");
+                            animator.SetState(b_anim);
                             animator.FlipX(true);
                         }
                         else
                         {
-                            animator.SetState("idle");
+                            animator.SetState(i_anim);
                         }
                     }
                 }
@@ -238,60 +309,27 @@ public class Player : PlayerController
 
                 if (attackA.down)
                 {
-                    /*
-                    if ()
-                    {
-                        
-                        if (cComboTimer > 0)
-                        {
-                            if (cComboTimer < cComboLastAttackDelay)
-                            {
-                                Attack(dir);
-                                cComboStage++;
-                                Debug.Log($"!Combo+ [{cComboStage}]");
-                                cComboTimer = 0.5f;
-                                cComboLastAttackDelay = cComboTimer - 0.2f;
 
-                                if (dir.x > 0) facing = 1;
-                                else if (dir.x < 0) facing = -1;
-                            }
-                        }
-                        else
-                        {
-                            Attack(dir);
-                            cComboStage = 1;
-                            Debug.Log($"!Combo Init [{cComboStage}]");
-                            cComboTimer = 0.5f;
-                            cComboLastAttackDelay = cComboTimer - 0.2f;
-                            StartCoroutine(IComboTimer(cComboTimer));
-
-                            if (dir.x > 0)
-                            { facing = 1; animator.FlipX(false); }
-                            else if (dir.x < 0)
-                            { facing = -1; animator.FlipX(true); }
-                        }
-                        
-                    }
-                    */
                 }
-                /*
-                else if (isCharging == 0 && attackA.holdTime > 0.2f)
-                {
-                    if (dir.x > 0)
-                    { facing = 1; animator.FlipX(false); }
-                    else if (dir.x < 0)
-                    { facing = -1; animator.FlipX(true); }
-
-                    cComboTimer = 0;
-                    AttackCharge(dir);
-                }
-                */
             }
         }
         else if (isCharging == 0 && attackState == 0) // != 1
         {
-            if (dir.y < 0 && attackA.hold)
-            { StartCoroutine(IHoldAirAttack(dir)); goto AIR_OUT; }
+            if (attackA.hold && attackA.holdTime < 0.1f)
+            {
+                if (dir.y > 0)
+                {
+                    animator.SetState(meleeUpAir);
+                    attackState = 2; goto AIR_OUT;
+                    //StartCoroutine(IHoldAirAttack(dir)); goto AIR_OUT; 
+                }
+                else if (dir.y < 0)
+                {
+                    StartCoroutine(IHoldAirAttack(dir)); goto AIR_OUT;
+                }
+
+                goto AIR_OUT;
+            }
 
             //isCharging = 0;
             if (ledgeLeft)
@@ -309,32 +347,10 @@ public class Player : PlayerController
                     StartCoroutine(IWaitJumpRelease());
                 }
             }
-            else if (wallLeft)
-            {
-                //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
-                if (velocity.y <= 0) { 
-                    animator.SetState("ledge_grab"); animator.FlipX(false); 
-                } 
-                else 
-                { animator.SetState("air_ascend"); }
-
-                if (_velocity.y < 0)
-                { WallFriction(); }
-                if (jump.down && !ledgeLeft)
-                {
-                    animator.FlipX(false);
-                    Vector2 jforce = AngleToVector2(dir.x > 0 ? 75f : 45f) * jumpForce;
-                    if (velocity.y > 0)
-                    { jforce.y = Mathf.Min(velocity.y + jforce.y, jforce.y * 1.5f) - velocity.y; }
-                    JumpInit(jforce, jumpForce * 0.5f, jumpHoldTime);
-                    StartCoroutine(IWaitLeftWalljump(0.4f));
-                    StartCoroutine(IWaitJumpRelease());
-                }
-            }
             else if (ledgeRight)
             {
                 //if (velocity.y <= 0) { 
-                    animator.SetState("ledge_grab"); animator.FlipX(true); 
+                animator.SetState("ledge_grab"); animator.FlipX(true);
                 //}
                 cmJumps = mJumps;
                 if (dir.y < 0)
@@ -346,37 +362,69 @@ public class Player : PlayerController
                     StartCoroutine(IWaitJumpRelease());
                 }
             }
+            else if (wallLeft)
+            {
+                if ((dir.x < 0 || wgInit) && velocity.y <= 0) {
+                    wgInit = true;
+                    animator.SetState("ledge_grab"); animator.FlipX(false);
+
+                    WallFriction();
+                    if (jump.down && !ledgeLeft)
+                    {
+                        animator.FlipX(false);
+                        //Vector2 jforce = AngleToVector2(dir.x > 0 ? 45f : 75f) * jumpForce;
+                        Vector2 jforce = AngleToVector2(45f) * (jumpForce * 1.25f);
+                        //if (velocity.y > 0)
+                        //{ jforce.y = Mathf.Min(velocity.y + jforce.y, jforce.y * 1.5f) - velocity.y; }
+
+                        JumpInit(jforce, jumpForce * 0.5f, jumpHoldTime);
+                        StartCoroutine(IWaitLeftWalljump(0.6f));
+                        StartCoroutine(IWaitJumpRelease());
+                    }
+                } 
+                else 
+                { animator.SetState("air_ascend"); wgInit = false; }
+
+            }
             else if (wallRight)
             {
-                if (velocity.y <= 0) { 
+                if ((dir.x > 0 || wgInit) && velocity.y <= 0) {
+                    wgInit = true;
                     animator.SetState("ledge_grab"); animator.FlipX(true);
+
+                    WallFriction();
+                    if (jump.down && !ledgeRight)
+                    {
+                        animator.FlipX(true);
+                        //Vector2 jforce = AngleToVector2(dir.x < 0 ? 135 : 105f) * jumpForce;
+                        Vector2 jforce = AngleToVector2(135f) * (jumpForce * 1.25f);
+                        //if (velocity.y > 0)
+                        //{ jforce.y = Mathf.Min(velocity.y + jforce.y, jforce.y * 1.5f) - velocity.y; }
+
+                        JumpInit(jforce, jumpForce * 0.5f);
+                        StartCoroutine(IWaitRightWalljump(0.6f));
+                        StartCoroutine(IWaitJumpRelease());
+                    }
                 }
                 else
-                { animator.SetState("air_ascend"); }
-                //_velocity.y = Mathf.Max(-0.5f, _velocity.y);
-                if (_velocity.y < 0)
-                { WallFriction(); }
-                if (jump.down && !ledgeRight)
-                {
-                    animator.FlipX(true);
-                    Vector2 jforce = AngleToVector2(dir.x < 0 ? 105f : 135f) * jumpForce;
-                    if (velocity.y > 0)
-                    { jforce.y = Mathf.Min(velocity.y + jforce.y, jforce.y * 1.5f) - velocity.y; }
-                    
-                    JumpInit(jforce, jumpForce * 0.5f);
-                    StartCoroutine(IWaitRightWalljump(0.4f));
-                    StartCoroutine(IWaitJumpRelease());
-                }
+                { animator.SetState("air_ascend"); wgInit = false; }
+
             }
-            else if(jump.down && cmJumps > 0 && _velocity.y <= 0 && _velocity.y > -10f)
+            else if(jump.down && dir.y > 0 && cmJumps > 0 && stat_sp.TryConsume(25f))// && _velocity.y <= 0 && _velocity.y > -10f)
             {
+                wgInit = false;
                 cmJumps--;
-                _velocity.y = 0;
                 swJumpAir.Activate();
-                JumpInit(new Vector2(0, airJumpForce), airJumpForce, jumpHoldTime); StartCoroutine(IWaitJumpRelease());
+                _velocity.y = 0;
+                _velocity.x = Mathf.Clamp(_velocity.x * 0.5f, -4f, 4f);
+                StartCoroutine(IWaitMoveX(0.5f));
+                JumpInit(new Vector2(0, airJumpForce * 2f), 0f, 0f);//airJumpForce, jumpHoldTime); 
+                StartCoroutine(IWaitJumpRelease());
+                StartCoroutine(IWaitJumpTrail(0.5f));
             }
             else
             {
+                wgInit = false;
                 if (dir.x > 0) animator.FlipX(false);
                 else if (dir.x < 0) animator.FlipX(true);
                 if (dir.y < 0)
@@ -391,153 +439,64 @@ public class Player : PlayerController
         animator.animSpeed = aspeed;
     }
 
+    void SetOverlayPosition()
+    {
+        Vector2 vec = Camera.main.WorldToScreenPoint(transform.position);
+        Vector2 vecpos = new Vector2(vec.x / Screen.currentResolution.width, vec.y / Screen.currentResolution.height);
+        HUD.instance.SetOverlayPosition(new Vector2(vec.x / Screen.currentResolution.width, vec.y / Screen.currentResolution.height));
+        //HUD.instance.SetOverlayPosition(new Vector2(vec.x / 380f, vec.y / 160f));
+    }
+
+
+    void SetCrouch(bool value)
+    {
+        if (value)
+        {
+            SetColliderRect(crouchRect);
+
+            damageRelay.LoadColliderState("crouch");
+            intRelay.LoadColliderState("crouch");
+
+            //damageRelay.gameObject.SetActive(false);
+            //intRelay.gameObject.SetActive(false);
+
+            //damageRelayCrouch.gameObject.SetActive(true);
+            //intRelayCrouch.gameObject.SetActive(true);
+
+            isCrouched = true;
+            i_anim = "crouch";
+            b_anim = "crouch";
+            r_anim = "crawl";
+            cmovemult = 0.5f;
+            rspeedmult = 1f;
+
+            return;
+        }
+
+        SetColliderRect(standRect);
+
+        damageRelay.LoadColliderState("stand");
+        intRelay.LoadColliderState("stand");
+
+        //damageRelay.gameObject.SetActive(true);
+        //intRelay.gameObject.SetActive(true);
+
+        //damageRelayCrouch.gameObject.SetActive(false);
+        //intRelayCrouch.gameObject.SetActive(false);
+
+        isCrouched = false;
+        i_anim = "idle";
+        b_anim = "break";
+        r_anim = "run";
+        cmovemult = 1f;
+        rspeedmult = anim_run_speed;
+    }
+
+
     void WallFriction()
     {
-        _velocity.y = TowardsTargetValue(_velocity.y, 0, -currentGravity * 1.30f * Time.deltaTime); //TowardsTargetValue(_velocity.y, 0, -(dir.y < 0 ? currentGravity * 0.5f : (dir.x > 0 ? currentGravity * 1.2f : currentGravity * 0.8f)) * Time.deltaTime);
-    }
-
-    bool AttackCharge()
-    {
-        if (isCharging > 0) return true;
-        float stime = 0.1f;
-        string anim;
-        Vector2 att_dir;
-        if (up.hold && up.holdTime < stime)
-        {
-            anim = "melee.g.u.c";
-            //animator.SetState("melee.g.u.c");
-            att_dir = new Vector2(dir.x != 0 ? dir.x : facing, 1); 
-        }
-        else if (down.hold && down.holdTime < stime)
-        {
-            anim = "melee.g.d.c";
-            //animator.SetState("melee.g.d.c");
-            att_dir = new Vector2(dir.x != 0 ? dir.x : facing, -1); 
-        }
-        else if (left.hold && left.holdTime < stime)
-        {
-            anim = "melee.g.n.c";
-            //animator.SetState("melee.g.n.c");
-            facing = -1; animator.FlipX(true); 
-            att_dir = new Vector2(-1, 0); 
-        }
-        else if (right.hold && right.holdTime < stime)
-        {
-            anim = "melee.g.n.c";
-            //animator.SetState("melee.g.n.c");
-            facing = 1; animator.FlipX(false); 
-            att_dir = new Vector2(1, 0); 
-        }
-        else { return false; }
-
-        isCharging = Mathf.Max(1, isCharging);
-
-        //facing = animator.flipX ? -1 : 1;
-        curAttack = 0;
-        Debug.Log($"charge init");
-        //if (chargeCoroutine == null) chargeCoroutine = StartCoroutine(IChargeAttack());
-        StartCoroutine(IChargeAttack(anim, att_dir));
-        return true;
-
-
-    }
-    void AttackChargeRelease(Vector2 vec)
-    {
-        if (isCharging < 1) { chargeAmount = 0; return; }
-        //isCharging = 1;
-        if (vec.y > 0)
-        { Attack_Charge_Up(); }
-        else if (vec.y < 0)
-        { Attack_Charge_Down(); }
-        else
-        { Attack_Charge_Neutral(); }
-        chargeAmount = 0;
-    }
-
-    void Attack(Vector2 vec)
-    {
-        if (vec.y > 0) { Attack_Up(); return; }
-        if (vec.y < 0) { Attack_Down(); return; }
-        Attack_Neutral();
-    }
-
-    Hitbox _chbox;
-    void Attack_Neutral()
-    {
-        _chbox = melee_hbs["melee_grounded_neutral"];
-        _chbox.xflip = facing < 0;
-        _chbox.Enable();
-    }
-    void Attack_Up()
-    {
-        _chbox = melee_hbs["melee_grounded_up"];
-        _chbox.xflip = facing < 0;
-        _chbox.Enable();
-    }
-    void Attack_Down()
-    {
-        _chbox = melee_hbs["melee_grounded_down"];
-        _chbox.xflip = facing < 0;
-        _chbox.Enable();
-    }
-
-    GameObject SpawnProjectile(GameObject prefab, Vector3 position, Vector2 direction, bool flipX)
-    {
-        GameObject go = Instantiate(prefab, position, Quaternion.identity);
-        Projectile proj = go.GetComponent<Projectile>();
-        proj.onHitActions.Add(ProjectileHit);
-        proj.flip = flipX;
-        Vector3 eul = go.transform.eulerAngles;
-        eul.z = Vector2.SignedAngle(Vector2.right, direction);
-        go.transform.eulerAngles = eul;
-        go.SetActive(true);
-        return go;
-    }
-
-    public void ProjectileHit(Projectile p, Collider2D coll)
-    {
-        //Debug.Log($"proj_hit {p.name} {coll.name}");
-        if (coll.tag != "Player")
-        {
-            if (coll.TryGetComponent(out Entity ent))
-            {
-                Debug.Log($"{ent.name}");
-                if (p.projectileTag == "ukick1")
-                { ent.velocity = Vector2.zero; }
-                float kbmult = 0.5f + p.timeToLive / p.lifeTime * 0.6f;
-                ent.AddForce(p.knockback * kbmult);
-                
-                if (p.timeToLive > p.lifeTime - 0.1f)
-                { TimeControl.SetTimeScaleFadeForTime(0.1f, 0.2f, 0f, 0f, 1f); }
-            }
-        }
-    }
-
-    void Attack_Charge_Up()
-    {
-        animator.SetState(meleeUpChargeAnim);
-    }
-    void Attack_Charge_Down()
-    {
-        animator.SetState(meleeDownChargeAnim);
-    }
-    void Attack_Charge_Neutral()
-    {
-        animator.SetState(meleeChargeAnim);
-    }
-
-
-    
-    void GetMeleeHitboxes()
-    {
-        melee_hbs = new();
-        Hitbox[] hboxes = transform.Find("MeleeHitboxes")?.GetComponentsInChildren<Hitbox>();
-        foreach (Hitbox hbox in hboxes)
-        {
-            hbox.origin = this;
-            hbox.Disable();
-            melee_hbs.Add(hbox.gameObject.name, hbox);
-        }
+        tempGravityMult = 0f;
+        _velocity.y = Mathf.Max(TowardsTargetValue(_velocity.y, -2f, -Mathf.Min(velocity.y, gravity) * Time.deltaTime), -2f); // Mathf.Min(_velocity.y - Mathf.Min(_velocity.y * 8f, -gravity) * Time.deltaTime, 0);
     }
 
 
@@ -576,6 +535,18 @@ public class Player : PlayerController
         }
         moveMultRight = 1f;
     }
+    IEnumerator IWaitMoveX(float time = 0.5f)
+    {
+        float t = 0;
+        while (t < time || !wallLeft)
+        {
+            t += Time.deltaTime;
+            moveXMult = Mathf.Lerp(0f, 1f, t / time);
+            yield return new WaitForEndOfFrame();
+        }
+        moveXMult = 1f;
+    }
+
     IEnumerator IWaitJumpRelease(float max_wait = 5f)
     {
         float t = 0;
@@ -587,6 +558,15 @@ public class Player : PlayerController
         JumpRelease();
     }
 
+    IEnumerator IWaitJumpTrail(float time = 0.5f)
+    {
+        for (int i = 0; i < jumpTrails.Length; i++)
+        { jumpTrails[i].enabled = true; }// jumpTrailRend[i].emitting = true; }
+        yield return new WaitForSeconds(time);
+        for (int i = 0; i < jumpTrails.Length; i++)
+        { jumpTrails[i].enabled = false; }//jumpTrailRend[i].emitting = false; }
+    }
+
     IEnumerator IHaltLedgeGrab(float time)
     {
         if (!ledgegrabEnabled) yield break;
@@ -595,91 +575,172 @@ public class Player : PlayerController
         ledgegrabEnabled = true;
     }
 
-    void DamageSlowdown(float pause_t = 0.2f, float fade_t = 0.25f)
+    void DamageSlowdown(float pause_t = 0.2f, float fade_t = 0.25f, float invincduration = 1f)
     {
-        StartCoroutine(IDamageFlash(Color.white, 0.2f));
-        TimeControl.SetTimeScaleFadeForTime(0.05f, pause_t, 0f, fade_t);
+        StartCoroutine(IDamageFlash(Color.white, 4));
+        
+        TimeControl.SetTimeScaleFadeForTime(0.05f, pause_t, 0f, fade_t, 1f);
     }
 
+    public Color pColor { get => mat.GetColor("_Color"); set => mat.SetColor("_Color", value); }
+    public float pColorLerp { get => mat.GetFloat("_ColorLerp"); set => mat.SetFloat("_ColorLerp", value); }
+    public float pColorTransparency { get => mat.GetFloat("_Transparency"); set => mat.SetFloat("_Transparency", value); }
+
+    IEnumerator IDamageFlash(Color color, int frames)
+    {
+        Color orig_color = pColor;
+        float orig_transp = pColorTransparency,
+            orig_clerp = pColorLerp;
+
+        pColor = color;
+        pColorLerp = 1f;
+        pColorTransparency = 0.5f;
+        int f = 0;
+        while (f < frames)
+        { yield return new WaitForEndOfFrame(); }
+        pColor = orig_color;
+        pColorTransparency = orig_transp;
+        pColorLerp = orig_clerp;
+    }
     IEnumerator IDamageFlash(Color color, float time)
     {
-        Color orig_color = mat.color;
-        
-        mat.SetColor("_Color", color);
-        mat.SetFloat("_ColorLerp", 1f);
+        Color orig_color = pColor;
+        float orig_transp = pColorTransparency, 
+            orig_clerp = pColorLerp;
+
+        pColor = color;
+        pColorLerp = 1f;
+        pColorTransparency = 0.5f;
         yield return new WaitForSeconds(time);
-        mat.SetColor("_Color", orig_color);
-        mat.SetFloat("_ColorLerp", 0f);
+        pColor = orig_color;
+        pColorTransparency = orig_transp;
+        pColorLerp = orig_clerp;
     }
 
-    IEnumerator IComboTimer(float time)
+
+
+    bool isDashing = false;
+    IEnumerator IDash(Vector2 dash_vel, float time = 0.5f)
     {
-        cComboTimer = time;
-        while (cComboTimer > 0)
+        isDashing = true;
+        
+        float t = 0, d;
+        _velocity.y = 0;
+        pColor = Color.black;
+        pColorLerp = 1f;
+        //pColorTransparency = 0.25f;
+        damageRelay.gameObject.SetActive(false);
+        for (int i = 0; i < dashTrails.Length; i++)
+        { dashTrails[i].enabled = true; }
+        while (t < time)
         {
-            cComboTimer -= Time.deltaTime;
-            yield return new WaitForEndOfFrame();
+            tempGravityMult = 0;
+            t += Time.fixedDeltaTime;
+            d = t / time;
+            pColorTransparency = 1f - Mathf.Sin(Mathf.Lerp(0f, 180f, d) * Mathf.Deg2Rad);
+            _velocity = dash_vel * Mathf.Sin(Mathf.LerpAngle(90f, 15f, d) * Mathf.Deg2Rad);
+            yield return new WaitForFixedUpdate();
         }
-        cComboStage = 0;
-        cComboTimer = 0;
-        Debug.Log($"!Combo End");
+        for (int i = 0; i < dashTrails.Length; i++)
+        { dashTrails[i].enabled = false; }
+        damageRelay.gameObject.SetActive(true);
+        pColorLerp = 0;
+        pColorTransparency = 1f;
+        isDashing = false;
     }
 
-    //Coroutine chargeCoroutine;
-    IEnumerator IChargeAttack(string anim, Vector2 att_dir)
-    {
+    float damage_treshold = 5f;
+    float manaMult = 1f, energyMult = 1f;
+    Coroutine manaMultCoroutine, energyMultCoroutine;
 
-        isCharging = Mathf.Max(1, isCharging);
-        animator.SetState(anim);
-        chargeAmount = 0f;
-        //int l_int = 0;
-        //animator.SetState("charge.n");
-        float stimer = 9f, prate, cdelta;
-        while ((attackA.hold && isCharging > 1) || isCharging == 1)
+    public void OnAddEffect(StatusEffect effect)
+    {
+        Debug.Log($"Effect added {effect.name}");
+        if (damageRelay.colliderState != 0 && effect.flags.Contains("invulnerable"))
         {
-            stimer += Time.deltaTime;
-            cdelta = chargeAmount / 3f;
-            prate = 0.25f + ((1f - cdelta) * 0.75f);
-            if (stimer >= prate)
-            {
-                Instantiate(projectiles.chargeShockwave, transform.position, Quaternion.identity);
-                asource.pitch = 1f + cdelta * 1f;
-                asource.PlayOneShot(soundChargeup, 0.5f);
-                stimer = 0; 
-            }
-            chargeAmount = Mathf.Min(chargeAmount + Time.deltaTime, 3f);
-            yield return new WaitForEndOfFrame();
-        }
-        AttackChargeRelease(att_dir);
-        //yield return new WaitForSeconds(1f);
-        //isCharging = 0;
-        //chargeCoroutine = null;
-    }
 
-    IEnumerator IHoldAirAttack(Vector2 att_dir)
+            pColor = Color.black;
+            pColorLerp = 0.5f;
+            pColorTransparency = 0.5f;
+            damageRelay.colliderState = RelayCollider.CollState.Disabled;
+            if (effect.GetType() == typeof(TimedStatusEffect))
+            {
+                DamageSlowdown(0.1f, 0.25f, ((TimedStatusEffect)effect).duration);
+                //StartCoroutine(IDamageFlash(Color.white, ((TimedStatusEffect)effect).duration)); 
+            }
+        }
+    }
+    public void OnRemoveEffect(StatusEffect effect)
     {
-        _velocity.y = 10f;
-        animator.SetState(meleeDownAirCharge);
-        attackState = 1;
-        string att_name = meleeDownAirRelease;
-        while ((attackState > 0 && attackA.hold) || attackState == 1)
-        { 
-            if (isGrounded)
-            {
-                if (attackState == 1)
-                { attackState = 0; yield break; }
-                att_name = meleeDownAirGround; break; 
-            }
-            yield return new WaitForEndOfFrame(); 
+        Debug.Log($"Effect removed {effect.name}");
+        if (damageRelay.colliderState == 0 && !entityStats.GetFlag("invulnerable"))
+        {
+            damageRelay.colliderState = RelayCollider.CollState.Enabled;
+
+            pColor = Color.black;
+            pColorLerp = 0f;
+            pColorTransparency = 1f;
         }
-        animator.SetState(att_name);
     }
 
 
+    public void OnHealthMaxChanged(float new_value)
+    {
+        damage_treshold = stat_hp.max * 0.05f;
+    }
     public void OnHealthChanged(float new_value, float old_value)
     { 
+        if (old_value - new_value > damage_treshold)
+        {
+            StatusEffect seff = new TimedStatusEffect("invulnerable", 2f);
+            seff.flags.Add("invulnerable");
+            entityStats.AddEffect(seff, this);
+        }
         if (new_value <= 0) DIEEE();
     }
+    public void OnEnergyChanged(float new_value, float old_value)
+    {
+        if (new_value < old_value)
+        {
+            if (energyMultCoroutine != null) StopCoroutine(energyMultCoroutine);
+            energyMultCoroutine = StartCoroutine(IWaitEnergy(0f, 1f, 1f, 2f));
+        }
+    }
+    public void OnManaChanged(float new_value, float old_value)
+    {
+        if (new_value < old_value)
+        {
+            if (manaMultCoroutine != null) StopCoroutine(manaMultCoroutine);
+            manaMultCoroutine = StartCoroutine(IWaitMana(0f, 1f, 1f, 2f));
+        }
+    }
+
+
+    IEnumerator IWaitMana(float mult0 = 0f, float mult1 = 1f, float multEnd = 1f, float time = 2f)
+    {
+        float t = 0, d = 0;
+        while (t < time)
+        { 
+            t += Time.deltaTime;
+            d = t / time;
+            manaMult = Mathf.Lerp(mult0, mult1, d);
+            yield return new WaitForEndOfFrame();
+        }
+        manaMult = multEnd;
+    }
+    IEnumerator IWaitEnergy(float mult0 = 0f, float mult1 = 1f, float multEnd = 1f, float time = 2f)
+    {
+        float t = 0, d = 0;
+        while (t < time)
+        {
+            t += Time.deltaTime;
+            d = t / time;
+            energyMult = Mathf.Lerp(mult0, mult1, d);
+            yield return new WaitForEndOfFrame();
+        }
+        energyMult = multEnd;
+    }
+
 
     protected override void OnEnterGrounded(Vector2 velocity, float fallDamageDelta)
     {
@@ -707,98 +768,9 @@ public class Player : PlayerController
     {
         asourceFeet.PlayOneShot(soundStep, 0.1f);
     }
-    public void OnCharge()
-    {
-        //if (isCharging == 1) isCharging = 2;
-    }
+    
 
-    public void OnAttack()
-    {
-        asource.pitch = 1f;
-        Vector2 pdir, knockback; bool flip;
-        GameObject go;
-        Projectile proj;
-        Vector3 ppos = transform.position;
-        facing = !animator.flipX ? 1 : -1;
-        curAttack++;
-        string canim = animator.currentAnimation.ID;
-
-        if (canim == meleeDownAirRelease)
-        {
-            //_velocity.y = 10f;
-        }
-        else if (canim == meleeDownAirGround)
-        {
-            if (facing > 0)
-            { pdir = AngleToVector2(80f); flip = false; }
-            else
-            { pdir = AngleToVector2(-80f); flip = true; }
-            go = SpawnProjectile(projectiles.chargeMeleeDown, ppos.Add(x: 0.4f * facing, y: -0.15f), Vector2.right, flip);//.transform.parent = transform;
-            knockback = AngleToVector2(45f) * 20f;
-            knockback.x *= facing;
-            proj = go.GetComponent<Projectile>();
-            proj.knockback = knockback;
-            proj.projectileTag = $"adkick{curAttack}";
-            asourceFeet.PlayOneShot(soundAxeExpl, 0.1f);
-        }
-        else if (canim == meleeUpChargeAnim)
-        {
-            if (facing > 0)
-            { pdir = AngleToVector2(80f); flip = false; }
-            else
-            { pdir = AngleToVector2(-80f); flip = true; }
-            go = SpawnProjectile(projectiles.chargeMeleeUp, ppos.Add(x: 0f * facing, y: 0f), pdir, flip);//.transform.parent = transform;
-            knockback = AngleToVector2(75f) * (curAttack == 1 ? 10f : 20f);
-            knockback.x *= facing;
-            proj = go.GetComponent<Projectile>();
-            proj.knockback = knockback;
-            proj.projectileTag = $"ukick{curAttack}";
-            asource.clip = soundSlash;
-            asource.Play();
-            _velocity = new Vector2(facing * 2f + dir.x * 1f, 8f);
-        }
-        else if (canim == meleeChargeAnim)
-        {
-            if (curAttack == 2)
-            {
-                _velocity = new Vector2(6f * -facing, 2f);
-                return;
-            }
-            if (facing > 0)
-            { pdir = Vector2.right; flip = false; }
-            else
-            { pdir = Vector2.left; flip = true; }
-            go = SpawnProjectile(projectiles.chargeMeleeForward, ppos.Add(x: 0.4f * facing, y: 0.1f), Vector2.right, flip);//.transform.parent = transform;
-            knockback = AngleToVector2(30f) * 20f;
-            knockback.x *= facing;
-            proj = go.GetComponent<Projectile>();
-            proj.knockback = knockback;
-            proj.projectileTag = $"nkick{curAttack}";
-            asource.clip = soundSlash;
-            asource.Play();
-            if (dir.x != 0)
-            { _velocity = new Vector2(6f * dir.x, 2f); }
-            else
-            { _velocity = new Vector2(4f * facing, 2f); }
-        } 
-        else if (canim == meleeDownChargeAnim)
-        {
-            if (facing > 0)
-            { pdir = AngleToVector2(80f); flip = false; }
-            else
-            { pdir = AngleToVector2(-80f); flip = true; }
-            go = SpawnProjectile(projectiles.chargeMeleeDown, ppos.Add(x: 0.4f * facing, y: -0.15f), Vector2.right, flip);//.transform.parent = transform;
-            knockback = AngleToVector2(45f) * 20f;
-            knockback.x *= facing;
-            proj = go.GetComponent<Projectile>();
-            proj.knockback = knockback;
-            proj.projectileTag = $"dkick{curAttack}";
-            asourceFeet.PlayOneShot(soundAxeExpl, 0.1f);
-            //asource.clip = soundAxeExpl;
-            //asource.Play();
-            //_velocity = new Vector2(facing * 2f + dir.x * 1f, 8f);
-        }
-    }
+    
 
     void OnAnimEnd()
     {
@@ -889,11 +861,11 @@ public class Player : PlayerController
     }
     void damageTest()
     {
-        ApplyDamage(new EntityStats.Damage(999), this);
+        ApplyDamage(new Damage(999), this);
     }
     public void OnDamageTriggerEnter(Collider2D coll)
     {
-        Debug.Log($"entityStats: {entityStats != null}");
+        //Debug.Log($"entityStats: {entityStats != null}");
 
         switch (coll.gameObject.tag)
         {

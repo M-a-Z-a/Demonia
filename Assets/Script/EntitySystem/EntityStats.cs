@@ -2,10 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using System.Text.RegularExpressions;
 
 public class EntityStats : MonoBehaviour
 {
+    public const string formula_attribute = "%<attr>%";
+    public const string forumla_stat = "%<stat><stat.max>%";
+    public const string formulaRegex = "";
 
     [SerializeField] Dictionary<string, Stat> _stats = new();
     [SerializeField] Dictionary<string, Attribute> _attributes = new();
@@ -19,6 +23,8 @@ public class EntityStats : MonoBehaviour
     public List<StatusEffect> statusEffects { get => _statusEffects; }
 
     public delegate void OnDamageDelegate(float value, float percentage);
+
+    public UnityEvent<StatusEffect> onStatusEffectAdded, onStatusEffectRemoved;
 
 
     private void Awake()
@@ -35,34 +41,67 @@ public class EntityStats : MonoBehaviour
     {
     }
 
+    /*
     private void Update()
     {
         UpdateEffects();
     }
+    */
 
     public bool GetFlag(string flag)
     { return _flags.ContainsKey(flag); }
+    public List<string> GetFlags()
+    {
+        List<string> s = new();
+        foreach (string k in _flags.Keys)
+        { s.Add(k); }
+        return s;
+    }
+
     void AddFlag(string flag)
     {
         if (_flags.ContainsKey(flag))
         { _flags[flag]++; return; }
         _flags.Add(flag, 1);
     }
-    void RemoveFlag(string flag)
+    void AddFlags(IEnumerable<string> flags)
+    {
+        List<string> fadded = new();
+        foreach (string f in flags)
+        {
+            if (fadded.Contains(f)) continue;
+            fadded.Add(f);
+            AddFlag(f);
+        }
+    }
+    bool RemoveFlag(string flag)
     {
         if (_flags.TryGetValue(flag, out int v))
         { 
             if (v > 1) 
-            { _flags["flag"]--; return; }
-            _flags.Remove("flag");
+            { _flags[flag]--; return true; }
+            _flags.Remove(flag);
+            return true;
         }
+        return false;
+    }
+    int RemoveFlags(IEnumerable<string> flags)
+    {
+        int frem = 0;
+        List<string> fremoved = new();
+        foreach (string f in flags)
+        {
+            if (fremoved.Contains(f)) continue;
+            fremoved.Add(f);
+            if (RemoveFlag(f)) frem++;
+        }
+        return frem;
     }
 
 
     public void ApplyDamage(Damage damage, MonoBehaviour origin, bool applyEffects = true)
     {
         Debug.Log("EntityStats: ApplyDamage()");
-        bool isUniversal = false;
         for (int i = 0; i < damage.flags.Count; i++)
         {
             switch (damage.flags[i])
@@ -73,40 +112,48 @@ public class EntityStats : MonoBehaviour
                 case "neutral":
                     break;
 
-                case "universal":
-                    isUniversal = true;
-                    break;
-
                 case "negative":
                 default:
                     break;
             }
         }
-        Debug.Log(_stats["health"].value);
-        _stats["health"].value -= damage.damage;
-        Debug.Log(_stats["health"].value);
+        //Debug.Log(_stats["health"].value);
+        if (damage.formula != null)
+        {
+            float dmg_value = ParseFormula(damage);
+            _stats["health"].value -= dmg_value; 
+        }
+        else
+        { _stats["health"].value -= damage.damage; }
+        //Debug.Log(_stats["health"].value);
 
         if (!applyEffects) return;
         for (int i = 0; i < damage.effects.Count; i++)
         { AddEffect(damage.effects[i], origin); }
     }
 
-    public bool AddEffect(StatusEffect effect, MonoBehaviour origin, bool apply_OnStart = true)
+    public bool AddEffect(StatusEffect effect, MonoBehaviour origin)
     {
         if (!effect.Init(this, origin)) return false;
         _statusEffects.Add(effect);
-        if (apply_OnStart) effect.OnStart();
+        effect.OnStart();
+        AddFlags(effect.flags);
+        onStatusEffectAdded.Invoke(effect);
         return true;
     }
-    public bool RemoveEffect(StatusEffect effect, bool apply_OnEnd = true)
+    public bool RemoveEffect(StatusEffect effect)
     { 
         if (_statusEffects.Remove(effect))
         {
-            if (apply_OnEnd) effect.OnEnd();
+            effect.OnEnd();
+            RemoveFlags(effect.flags);
+            onStatusEffectRemoved.Invoke(effect);
             return true;
         }
         return false;
     }
+
+    /*
     public void UpdateEffects()
     {
         if (_statusEffects.Count > 0)
@@ -115,11 +162,17 @@ public class EntityStats : MonoBehaviour
             { _statusEffects[i].OnUpdate(); }
         }
     }
+    */
 
-    public void CleanseEffects(bool apply_OnEnd = false)
+    float ParseFormula(Damage damage)
+    {
+        return damage.damage;
+    }
+
+    public void CleanseEffects()
     {
         for (int i = _statusEffects.Count-1; i >= 0; i--)
-        { RemoveEffect(_statusEffects[i], apply_OnEnd); }
+        { RemoveEffect(_statusEffects[i]); }
     }
 
     public bool TryGetStat(string name, out Stat stat)
@@ -172,28 +225,47 @@ public class EntityStats : MonoBehaviour
     public class Stat
     {
         string _name;
-        [SerializeField] float _value = 0, _max, _vlast = 0;
+        [SerializeField] float _value = 0, _max, _modmax = 0, _vlast = 0;
         public string name { get => _name; }
         public float value { get => _value; set => SetValue(value); }
-        public float max { get => _max; set => SetMax(value); }
+        public float max { get => _max + _modmax; set => SetModMax(value); }
+        public float max_raw { get => _max; set => SetMax(value); }
+        public float max_mod { get => _modmax; set => SetMod(value); }
         public float delta { get => _max > 0 ? _value / _max : 0; }
 
-        List<Action<float, float>> onValueChanged = new ();
+        public UnityEvent<float, float> onValueChanged = new ();
+        public UnityEvent<float> onMaxChanged = new();
 
         public Stat(string name, float value = 100, float max = 100)
         { _name = name; SetMax(max); SetValue(value); }
 
+        public bool TryConsume(float value)
+        {
+            if (_value < value) return false;
+            this.value -= value;
+            return true;
+        }
+
+        float _valtmp;
         void SetValue(float value)
         {
-            _value = Mathf.Clamp(value, 0, _max);
+            _valtmp = _value;
+            _value = Mathf.Clamp(value, 0, max);
             if (_value == _vlast) return;
             _vlast = _value;
-            for (int i = 0; i < onValueChanged.Count; i++)
-            { onValueChanged[i].Invoke(_value, _vlast); }
+            onValueChanged.Invoke(_value, _valtmp);
         }
         void SetMax(float value)
-        { _max = Mathf.Max(value, 0); SetValue(_value); }
+        { _max = Mathf.Max(value, 0); SetValue(_value); MaxChanged(); }
+        void SetModMax(float v)
+        { SetMod(v - _max); }
+        void SetMod(float v)
+        { _modmax = v; SetValue(_value); MaxChanged(); }
 
+        void MaxChanged()
+        { onMaxChanged.Invoke(max); }
+
+        /*
         public bool AddListener(Action<float, float> action)
         { 
             if (onValueChanged.Contains(action)) return false; 
@@ -201,6 +273,7 @@ public class EntityStats : MonoBehaviour
         }
         public bool RemoveListener(Action<float, float> action)
         { return onValueChanged.Remove(action); }
+        */
 
         public static implicit operator float(Stat stat)
         { return stat.value; }
@@ -213,8 +286,10 @@ public class EntityStats : MonoBehaviour
     public class Attribute
     {
         string _name;
-        float _value, _vlast = 0;
-        public float value { get => _value; set => SetValue(value); }
+        float _value, _modvalue = 0, _vlast = 0;
+        public float value { get => _value + _modvalue; set => SetModValue(value); }
+        public float value_mod { get => _modvalue; set => SetMod(value); }
+        public float value_raw { get => _value; set => SetValue(value); }
         public string name { get => _name; }
         List<Action<float, float>> onValueChanged = new();
 
@@ -231,6 +306,13 @@ public class EntityStats : MonoBehaviour
             for (int i = 0; i < onValueChanged.Count; i++)
             { onValueChanged[i].Invoke(_value, _vlast); }
         }
+        void SetModValue(float v)
+        {
+            float val = v - _value;
+            SetMod(val);
+        }
+        void SetMod(float v)
+        { _modvalue = v; }
         public bool AddListener(Action<float, float> action)
         {
             if (onValueChanged.Contains(action)) return false;
@@ -245,73 +327,6 @@ public class EntityStats : MonoBehaviour
         { return Mathf.FloorToInt(attr.value); }
         public static implicit operator string(Attribute attr)
         { return $"{attr.value}"; }
-    }
-
-
-
-
-    [System.Serializable]
-    public class StatusEffect
-    {
-        public string name { get => _name; }
-        string _name;
-        protected EntityStats entityStats { get => _estats; }
-        EntityStats _estats;
-        public List<string> flags { get => _flags; }
-        List<string> _flags = new();
-        public MonoBehaviour origin { get => _origin; }
-        MonoBehaviour _origin;
-        public StatusEffect(string name)
-        { _name = name; }
-
-        public bool Init(EntityStats estats, MonoBehaviour origin)
-        {
-            if (_estats == null)
-            { _estats = estats; _origin = origin; return Init(); }
-            return false;
-        }
-        protected virtual bool Init()
-        { return true; }
-        public virtual void OnStart()
-        { }
-        public virtual void OnUpdate()
-        { }
-        public virtual void OnEnd()
-        { }
-        public bool Remove()
-        { 
-            if (_estats != null)
-            { return _estats.RemoveEffect(this); }
-            return false;
-        }
-
-        protected bool AddFlag(string flag)
-        {
-            if (_flags.Contains(flag)) return false;
-            _flags.Add(flag);
-            return true;
-        }
-        protected bool RemoveFlag(string flag)
-        { return _flags.Remove(flag); }
-
-    }
-
-    public class Damage
-    {
-        public float damage { get => _damage; }
-        protected float _damage;
-        public List<string> flags { get => _flags; }
-        protected List<string> _flags;
-        public List<StatusEffect> effects { get => _effects; }
-        protected List<StatusEffect> _effects;
-
-        public Damage(float damage, IEnumerable<StatusEffect> statusEffects = null, IEnumerable<string> flags = null)
-        {
-            _damage = Mathf.Max(damage, 0);
-            _effects = statusEffects == null ? new() : new(statusEffects);
-            _flags = flags == null ? new() : new(flags);
-        }
-
     }
 
 

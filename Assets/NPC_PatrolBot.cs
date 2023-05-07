@@ -9,7 +9,7 @@ public class NPC_PatrolBot : Entity
     Transform ltrans, target;
     Vector2 target_lpos;
 
-    float scanCenterDefault = -90f, scanCenter = 0, scanCone = 90, scanSpeed = 0.5f;
+    float scanCenterDefault = -90f, scanCenter = 0, scanCone = 90, scanSpeed = 0.25f;
     enum AlertState { Normal, Caution, Alert }
     AlertState pState = 0;
 
@@ -29,17 +29,17 @@ public class NPC_PatrolBot : Entity
                 laser.color = Color.red;
                 scanCone = 30;
                 alertLevel = 5f;
-                SetScanRate(0.5f);
+                SetScanRate(1f);
                 break;
             case AlertState.Caution:
                 laser.color = Color.yellow;
                 scanCone = 90f;
-                SetScanRate(1f);
+                SetScanRate(2f);
                 break;
             case AlertState.Normal:
                 laser.color = Color.green;
                 scanCone = 90f;
-                SetScanRate(5f);
+                SetScanRate(4f);
                 break;
         }
     }
@@ -149,20 +149,25 @@ public class NPC_PatrolBot : Entity
         { target = null; }
     }
 
+    
     IEnumerator IScan()
     {
+        //float[] scan_offset = { 0, 90f, 180f, 270f };
+        float[] scan_offset = { 0, 120f, 240f };
+        int off_index = 0, off_len = scan_offset.Length;
         bool alt = false;
         bool alt2 = false;
         float sinangle = 0;
         while (true)
         {
             sinangle += 360f * scanSpeed * Time.deltaTime;
-            float siny = Mathf.Sin(sinangle * Mathf.Deg2Rad) * scanCone;
+            float siny = Mathf.Sin((sinangle + scan_offset[off_index++% off_len]) * Mathf.Deg2Rad) * scanCone;
             Vector3 eul = ltrans.eulerAngles;
-            eul.z = (flipX ? transform.eulerAngles.z + 180f : transform.eulerAngles.z) + scanCenter + ((alt = !alt) ? -siny : siny) * 0.5f;
+            eul.z = (flipX ? transform.eulerAngles.z + 180f : transform.eulerAngles.z) + scanCenter + siny * 0.5f;
+            //eul.z = (flipX ? transform.eulerAngles.z + 180f : transform.eulerAngles.z) + scanCenter + ((alt = !alt) ? -siny : siny) * 0.5f;
             ltrans.eulerAngles = eul;
             laser.UpdateLaser();
-            yield return new WaitForFixedUpdate();
+            yield return new WaitForEndOfFrame();
         }
     }
 

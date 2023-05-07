@@ -9,7 +9,7 @@ public class Hitbox : MonoBehaviour
     List<Entity> ents = new();
 
     public MonoBehaviour origin;
-    public EntityStats.Damage damage;
+    public Damage damage;
     public bool destroyOnEnd = false;
     public float hitRate = 0;
     public float t = 0, time = 0.1f;

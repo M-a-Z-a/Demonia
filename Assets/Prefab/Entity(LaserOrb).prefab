@@ -99,6 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: LaserOrb
+  entityTags: []
   laser_prefab: {fileID: 0}
   rotationSpeed: 45
   lasers: 3
@@ -254,6 +255,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: Laser
+  entityTags: []
   distance: 100
   _isActive: 1
   stopLayer:
@@ -544,6 +546,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: Laser
+  entityTags: []
   distance: 100
   _isActive: 1
   stopLayer:

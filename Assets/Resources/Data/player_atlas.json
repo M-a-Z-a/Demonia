@@ -47,17 +47,55 @@
 
 
     {
-      "id": "idle_crouch_0",
-      "position": [ 384, 192 ],
+      "id": "crouch_0",
+      "position": [ 0, 192 ],
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]
     },
     {
-      "id": "idle_crouch_1",
-      "position": [ 384, 192 ],
+      "id": "crouch_1",
+      "position": [ 64, 192 ],
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]
     },
+
+    {
+      "id": "crawl_0",
+      "position": [ 0, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "crawl_1",
+      "position": [ 64, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "crawl_2",
+      "position": [ 128, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "crawl_3",
+      "position": [ 192, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "crawl_4",
+      "position": [ 256, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "crawl_5",
+      "position": [ 320, 256 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
 
 
     {
@@ -185,6 +223,38 @@
     {
       "id": "ledge_0",
       "position": [ 448, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+
+
+    {
+      "id": "melee.a.u.0",
+      "position": [ 192, 704 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "melee.a.u.1",
+      "position": [ 256, 704 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "melee.a.u.2",
+      "position": [ 320, 704 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "melee.a.u.3",
+      "position": [ 384, 704 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ]
+    },
+    {
+      "id": "melee.a.u.4",
+      "position": [ 448, 704 ],
       "size": [ 64, 64 ],
       "pivot": [ 32, 32 ]
     },
