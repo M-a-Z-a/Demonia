@@ -49,6 +49,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: Slash
+  _entityType: 0
   entityTags: []
   projectileTag: 
   lifeTime: 0.2

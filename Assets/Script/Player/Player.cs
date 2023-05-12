@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Light2D = UnityEngine.Rendering.Universal.Light2D;
 
 using static InputManagerClasses;
 using static Utility;
@@ -16,6 +17,7 @@ public partial class Player : PlayerController
     MatAnimator animator;
 
     Transform cameraTarget;
+    Light2D playerLight, playerVision;
     InputVector2 inputVector;
     InputKey left, right, up, down, jump, dash, attackA, attackB, interact;
     float moveMultLeft = 1f, moveMultRight = 1f, moveXMult = 1f;
@@ -117,7 +119,9 @@ public partial class Player : PlayerController
         base.Start();
 
         standRect = coll.Rect();
-
+        playerLight = transform.Find("Player Light")?.GetComponent<Light2D>();
+        playerVision = transform.Find("Player Vision")?.GetComponent<Light2D>();
+        
         inputVector = InputManager.GetInputVector<InputVector2>("direction");
         left = inputVector.inputX.negative;
         right = inputVector.inputX.positive;
@@ -168,8 +172,10 @@ public partial class Player : PlayerController
 
         damageRelay.SaveColliderState("crouch", damageRelayCrouch.GetComponent<Collider2D>());
         intRelay.SaveColliderState("crouch", intRelayCrouch.GetComponent<Collider2D>());
+
+        Room.onAnyRoomActivated.AddListener(OnRoomActivated);
     }
-    
+
 
     float aspeed = 1f;
     bool roofCheck = false;
@@ -457,11 +463,8 @@ public partial class Player : PlayerController
             damageRelay.LoadColliderState("crouch");
             intRelay.LoadColliderState("crouch");
 
-            //damageRelay.gameObject.SetActive(false);
-            //intRelay.gameObject.SetActive(false);
-
-            //damageRelayCrouch.gameObject.SetActive(true);
-            //intRelayCrouch.gameObject.SetActive(true);
+            playerVision.transform.localPosition = new Vector3(0, -0.6f,0);
+            playerLight.transform.localPosition = new Vector3(0, -0.6f, 0);
 
             isCrouched = true;
             i_anim = "crouch";
@@ -478,11 +481,8 @@ public partial class Player : PlayerController
         damageRelay.LoadColliderState("stand");
         intRelay.LoadColliderState("stand");
 
-        //damageRelay.gameObject.SetActive(true);
-        //intRelay.gameObject.SetActive(true);
-
-        //damageRelayCrouch.gameObject.SetActive(false);
-        //intRelayCrouch.gameObject.SetActive(false);
+        playerVision.transform.localPosition = new Vector3(0, 0.45f, 0);
+        playerLight.transform.localPosition = new Vector3(0, 0, 0);
 
         isCrouched = false;
         i_anim = "idle";
@@ -877,6 +877,27 @@ public partial class Player : PlayerController
     }
     public void OnDamageTriggerExit(Collider2D coll)
     {  }
+
+
+    public void OnRoomActivated(Room active_room, Room last_active_room) 
+    {
+        if (active_room.isDarkRoom)
+        {
+            playerLight.intensity = 0.75f;
+            playerLight.pointLightInnerRadius = 0f;
+            playerLight.pointLightOuterRadius = 10f;
+            playerLight.falloffIntensity = 0.5f;
+            playerLight.shadowIntensity = 0.9f;
+        }
+        else
+        {
+            playerLight.intensity = 0.5f;
+            playerLight.pointLightInnerRadius = 0f;
+            playerLight.pointLightOuterRadius = 2f;
+            playerLight.falloffIntensity = 0.75f;
+            playerLight.shadowIntensity = 0.5f;
+        }
+    }
 
 
 }

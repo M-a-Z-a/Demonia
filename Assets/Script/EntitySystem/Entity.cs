@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Entity : MonoBehaviour
 {
+    public enum EntityType { Entity, Object }
+
     static string _groundMaskDefaultName = "Ground", _platformMaskDefaultName = "Platform";
 
     public static int groundMaskDefault { get => Utility.GetLayerMaskByNames(_groundMaskDefaultName); }
@@ -11,8 +13,10 @@ public class Entity : MonoBehaviour
 
 
     public string entityName { get => _entityName; set => Rename(value); }
-    [SerializeField] string _entityName = "Entity";
+    [SerializeField] string _entityName = "";
+    [SerializeField] EntityType _entityType = 0;
     [SerializeField] protected List<string> entityTags = new();
+    public EntityType entityType { get => _entityType; }
     public List<string> EntityTags { get => entityTags; }
     public EntityStats entityStats { get => _entityStats; }
     protected EntityStats _entityStats;
@@ -39,8 +43,14 @@ public class Entity : MonoBehaviour
 
     public void Rename(string name)
     {
-        _entityName = name;
-        gameObject.name = $"Entity({name})";
+        _entityName = name??"";
+        switch (entityType)
+        {
+            case EntityType.Entity:
+                gameObject.name = $"Entity({(name==""?"<nameless>":name)})"; break;
+            case EntityType.Object:
+                gameObject.name = $"Object({(name==""?"<nameless>":name)})"; break;
+        }
     }
 
     public void FetchEntityComponents()

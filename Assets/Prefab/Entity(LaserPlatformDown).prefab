@@ -286,6 +286,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: LaserPlatformDown
+  _entityType: 0
   entityTags: []
   distance: 100
   _isActive: 1

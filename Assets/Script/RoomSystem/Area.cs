@@ -184,7 +184,7 @@ public class Area : MonoBehaviour
                 { ents.RemoveAt(i); continue; }
                 if (r.PointInRoom(ent.transform.position))
                 {
-                    ent.transform.parent = r.entities;
+                    ent.transform.parent = ent.entityType == Entity.EntityType.Entity ? r.entities : r.objects;
                     ents.RemoveAt(i);
                     continue;
                 }

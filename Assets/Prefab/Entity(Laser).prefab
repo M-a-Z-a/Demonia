@@ -154,6 +154,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: Laser
+  _entityType: 0
   entityTags: []
   distance: 100
   _isActive: 1

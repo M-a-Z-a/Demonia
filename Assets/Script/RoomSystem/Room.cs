@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Tilemaps;
 
 #if UNITY_EDITOR
@@ -12,16 +13,20 @@ using UnityEditor;
 
 public class Room : MonoBehaviour
 {
+    public static UnityEvent<Room, Room> onAnyRoomActivated = new();
+
     public enum RoomState { Disabled = 0, Enabled, Active };
     public static Room ActiveRoom { get; protected set; }
 
     [SerializeField] public List<Room> connectedRooms = new();
     //[SerializeField] public List<RoomConnection> roomConnections;
     [SerializeField] public Rect roomBounds;
-    
+
     [SerializeField] bool overrideAreaAmbient = false;
     [SerializeField] Color roomAmbientColor = Color.black;
     [SerializeField] float roomAmbientIntensity = 1f;
+    [SerializeField] bool darkRoom = false;
+    public bool isDarkRoom { get => darkRoom; }
 
     [SerializeField] bool overrideAreaMusic = false;
     [SerializeField] AudioClip roomMusic;
@@ -36,6 +41,8 @@ public class Room : MonoBehaviour
     public List<Entity> entList = new();
 
     bool firstInit = true;
+
+    
 
     public void GetAmbientLight(out Color light_color, out float light_intensity)
     {
@@ -192,6 +199,7 @@ public class Room : MonoBehaviour
             ActiveRoom.UnloadAdjacentRooms(rlist);
             ActiveRoom.Deactivate();
         }
+        Room laroom = ActiveRoom;
         ActiveRoom = this;
         
         //Debug.Log($"Room: {gameObject.name} activated");
@@ -213,6 +221,8 @@ public class Room : MonoBehaviour
         ppos.x = Mathf.Clamp(ppos.x, roomWorldBounds.xMin + 2, roomWorldBounds.xMax - 2);
         ppos.y = Mathf.Clamp(ppos.y, roomWorldBounds.yMin + 2, roomWorldBounds.yMax - 2);
         GameManager.Checkpoint.position = ppos;
+
+        onAnyRoomActivated.Invoke(ActiveRoom, laroom);
 
         return true;
     }

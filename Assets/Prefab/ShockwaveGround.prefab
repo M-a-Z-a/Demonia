@@ -99,6 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: GroundShockwave
+  _entityType: 0
   entityTags: []
   projectileTag: 
   lifeTime: 0.2

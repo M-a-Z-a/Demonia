@@ -157,11 +157,12 @@ public class NPC_PatrolBot : Entity
         int off_index = 0, off_len = scan_offset.Length;
         bool alt = false;
         bool alt2 = false;
-        float sinangle = 0;
+        float sinangle = 0, roundangle;
         while (true)
         {
             sinangle += 360f * scanSpeed * Time.deltaTime;
-            float siny = Mathf.Sin((sinangle + scan_offset[off_index++% off_len]) * Mathf.Deg2Rad) * scanCone;
+            roundangle = RoundScale(sinangle, 12);
+            float siny = Mathf.Sin((roundangle + scan_offset[off_index++% off_len]) * Mathf.Deg2Rad) * scanCone;
             Vector3 eul = ltrans.eulerAngles;
             eul.z = (flipX ? transform.eulerAngles.z + 180f : transform.eulerAngles.z) + scanCenter + siny * 0.5f;
             //eul.z = (flipX ? transform.eulerAngles.z + 180f : transform.eulerAngles.z) + scanCenter + ((alt = !alt) ? -siny : siny) * 0.5f;
@@ -170,5 +171,8 @@ public class NPC_PatrolBot : Entity
             yield return new WaitForEndOfFrame();
         }
     }
+
+    float RoundScale(float value, float scale)
+    { return Mathf.Round(value * scale) / scale; }
 
 }
