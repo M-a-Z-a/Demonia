@@ -1,0 +1,67 @@
+{
+  "id": "boss_robotA_atlas",
+  "sample_size": [ 2304, 1536 ],
+  "frame_size": [ 192, 128 ],
+  "frames": [
+    {
+      "id": "idle_0",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 0, 0 ]
+    },
+    {
+      "id": "idle_1",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 1, 0 ]
+    },
+    {
+      "id": "idle_2",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 2, 0 ]
+    },
+    {
+      "id": "idle_3",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 3, 0 ]
+    },
+    {
+      "id": "idle_4",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 4, 0 ]
+    },
+    {
+      "id": "idle_5",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 5, 0 ]
+    },
+    {
+      "id": "idle_6",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 6, 0 ]
+    },
+    {
+      "id": "idle_7",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 7, 0 ]
+    },
+    {
+      "id": "idle_8",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 8, 0 ]
+    },
+    {
+      "id": "idle_9",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 9, 0 ]
+    },
+    {
+      "id": "idle_10",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 10, 0 ]
+    },
+    {
+      "id": "idle_11",
+      "pivot": [ 64, 60 ],
+      "frame_position": [ 11, 0 ]
+    }
+  ]
+}

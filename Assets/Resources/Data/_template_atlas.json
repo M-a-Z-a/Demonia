@@ -1,0 +1,14 @@
+{
+  "id": "template_atlas",
+  "sample_size": [ 512, 1024 ],
+  "frame_size": [0, 0],
+  "frames": [
+    {
+      "id": "template_frame",
+      "position": [ 0, 64 ],
+      "size": [ 64, 64 ],
+      "pivot": [ 32, 32 ],
+	  "frame_position": [0, 0]
+    }
+  ]
+}

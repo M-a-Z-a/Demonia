@@ -119,7 +119,7 @@ public partial class MatAnimExtras
     public class JsonAtlas
     {
         public string id;
-        public float[] sample_size;
+        public float[] sample_size, frame_size;
         public Frame[] frames;
         bool scaled = false;
         
@@ -128,17 +128,31 @@ public partial class MatAnimExtras
         {
             public string id;
             public float[] position, size, pivot;
+            public int[] frame_position;
+            public override string ToString()
+            { return $"{{id: {id}, position[{position.Length}]:[{string.Join(',', position)}], size[{size.Length}]:[{string.Join(',', size)}], pivot[{pivot.Length}]:[{string.Join(',', pivot)}], frame_position[{frame_position.Length}]:[{string.Join(',', frame_position)}]}}"; }
         }
 
         public Vector2 GetSizeNormal()
         { return new Vector2(1f / sample_size[0], 1f / sample_size[1]); }
-        public Frame FrameSizeToAtlas(Frame frame)
+        Frame FrameSizeToAtlas(Frame frame)
         {
-            Frame f = new Frame() { id = frame.id, position = frame.position, size = frame.size, pivot = frame.pivot };
+            Frame f = new Frame() { id = frame.id, position = frame.position, size = frame.size, pivot = frame.pivot, frame_position = frame.frame_position };
 
-            f.pivot[0] = f.pivot[0]/f.size[0]-0.5f; f.pivot[1] = f.pivot[1]/f.size[1]-0.5f;
-            f.position[0] /= sample_size[0]; f.position[1] = 1f - (f.position[1] / sample_size[1]);
-            f.size[0] /= sample_size[0]; f.size[1] /= sample_size[1];
+            if (frame_size != null && frame_size.Length == 2 && 
+                f.frame_position != null && f.frame_position.Length == 2 && 
+                frame_size[0] > 0 && frame_size[1] > 0)
+            {
+                f.position[0] = f.frame_position[0] * frame_size[0];
+                f.position[1] = f.frame_position[1] * frame_size[1] + frame_size[1];
+                f.size = frame_size;
+            }
+            else
+            {
+                f.position[0] /= sample_size[0]; f.position[1] = 1f - (f.position[1] / sample_size[1]);
+                f.size[0] /= sample_size[0]; f.size[1] /= sample_size[1];
+            }
+            f.pivot[0] = f.pivot[0] / f.size[0] - 0.5f; f.pivot[1] = f.pivot[1] / f.size[1] - 0.5f;
 
             return f;
         }

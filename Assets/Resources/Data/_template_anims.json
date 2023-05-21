@@ -1,0 +1,16 @@
+{
+  "id": "template_anims",
+  "animations": [
+    {
+      "id": "template_anim",
+      "loop": true,
+      "flags": [],
+      "frames": [
+        {
+          "id": "template/path/to/atlas",
+          "time": 0.4,
+          "flags": []
+        }
+	}
+  ]
+}
