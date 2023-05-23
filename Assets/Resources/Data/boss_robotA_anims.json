@@ -1,0 +1,602 @@
+{
+  "id": "boss_robotA_anims",
+  "animations": [
+    {
+      "id": "idle",
+      "loop": true,
+      "flags": [],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/idle_0",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_1",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_3",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_4",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_5",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_6",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_7",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_10",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/idle_11",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "melee.init",
+      "loop": false,
+      "flags": [],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/melee_init_0",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_1",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_3",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_4",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_5",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_6",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_7",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_10",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/melee_init_11",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "melee.A",
+      "loop": false,
+      "flags": [],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/meleeA_0",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_1",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_3",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_4",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_5",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_6",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_7",
+          "time": 0.05,
+          "flags": [ "attackA" ]
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_10",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/meleeA_11",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "stomp",
+      "loop": false,
+      "flags": [],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/stomp_0",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_1",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_3",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_4",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_5",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_6",
+          "time": 0.15,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_7",
+          "time": 0.05,
+          "flags": [ "stomp" ]
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_10",
+          "time": 0.15,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/stomp_11",
+          "time": 0.1,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "throw.A",
+      "loop": false,
+      "flags": [],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/throwA1_0",
+          "time": 0.05,
+          "flags": [ "faceTarget" ]
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_1",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_3",
+          "time": 0.05,
+          "flags": [ "throwA1" ]
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_4",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_5",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_6",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_7",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_10",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA1_11",
+          "time": 0.05,
+          "flags": []
+        },
+
+        {
+          "id": "boss_robotA_atlas/throwA2_0",
+          "time": 0.05,
+          "flags": [ "faceTarget" ]
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_1",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_3",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_4",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_5",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_6",
+          "time": 0.05,
+          "flags": [ "throwA2" ]
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_7",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_10",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/throwA2_11",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "railgun.init",
+      "loop": false,
+      "flags": [],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/railgun_0",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_1",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_3",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_4",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_5",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_6",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_7",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_10",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_11",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "railgun.fire",
+      "loop": false,
+      "flags": ["!endflag"],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/railgun_7",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_8",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/railgun_10",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_11",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "missiles.init",
+      "loop": false,
+      "flags": [],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/missiles_0",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_1",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_2",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_3",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_4",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_5",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_6",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_7",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_10",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_11",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    },
+
+    {
+      "id": "missiles.fire",
+      "loop": false,
+      "flags": [ "!endflag" ],
+      "frames": [
+        {
+          "id": "boss_robotA_atlas/missiles_7",
+          "time": 0.1,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_8",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_9",
+          "time": 0.05,
+          "flags": []
+        },
+        {
+          "id": "boss_robotA_atlas/missiles_10",
+          "time": 0.05,
+          "flags": []
+        }
+      ]
+    }
+  ]
+}

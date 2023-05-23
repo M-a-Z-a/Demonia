@@ -99,6 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: LaserOrb
+  _entityType: 0
   entityTags: []
   laser_prefab: {fileID: 0}
   rotationSpeed: 45
@@ -255,6 +256,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: Laser
+  _entityType: 0
   entityTags: []
   distance: 100
   _isActive: 1
@@ -264,6 +266,9 @@ MonoBehaviour:
   queStartIndex: 0
   toggleQue: []
   startTime: 0
+  onLaserHit:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!61 &6733674253482703445
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -546,6 +551,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: Laser
+  _entityType: 0
   entityTags: []
   distance: 100
   _isActive: 1
@@ -555,6 +561,9 @@ MonoBehaviour:
   queStartIndex: 0
   toggleQue: []
   startTime: 0
+  onLaserHit:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!61 &52019226338960847
 BoxCollider2D:
   m_ObjectHideFlags: 0

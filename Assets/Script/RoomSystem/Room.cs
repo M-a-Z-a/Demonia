@@ -18,6 +18,8 @@ public class Room : MonoBehaviour
     public enum RoomState { Disabled = 0, Enabled, Active };
     public static Room ActiveRoom { get; protected set; }
 
+    public string roomName { get => _roomName; protected set => UpdateName(value); }
+    [SerializeField] string _roomName = "";
     [SerializeField] public List<Room> connectedRooms = new();
     //[SerializeField] public List<RoomConnection> roomConnections;
     [SerializeField] public Rect roomBounds;
@@ -107,9 +109,18 @@ public class Room : MonoBehaviour
 
     private void OnValidate()
     {
+        UpdateName();
         GetRoomWorldBounds();
     }
 
+    
+    void UpdateName(string n = null)
+    { 
+        if (n != null)
+        { _roomName = n; }
+        if (_roomName != "")
+        { gameObject.name = $"Room({_roomName})"; }
+    }
 
     public void Init()
     {
@@ -323,10 +334,10 @@ public class RoomEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Rename:", GUILayout.Width(64));
-        instance.name = EditorGUILayout.DelayedTextField(instance.name);
-        EditorGUILayout.EndHorizontal();
+        //EditorGUILayout.BeginHorizontal();
+        //EditorGUILayout.LabelField("Rename:", GUILayout.Width(64));
+        //instance.name = EditorGUILayout.DelayedTextField(instance.name);
+        //EditorGUILayout.EndHorizontal();
 
         base.OnInspectorGUI();
         //DrawDefaultInspector();

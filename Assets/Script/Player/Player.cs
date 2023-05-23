@@ -26,7 +26,8 @@ public partial class Player : PlayerController
     bool isCrouched = false;
 
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
-    int mJumps = 1, cmJumps = 0;
+    EntityStats.Attribute djump, wgrab;
+    int mJumps = 0, cmJumps = 0;
 
     int cComboStage = 0; 
     float cComboTimer = 0, cComboLastAttackDelay = 0;
@@ -106,6 +107,10 @@ public partial class Player : PlayerController
         entityStats.SetAttribute("speed", 8f);
         entityStats.SetAttribute("accelSpeed", 40f);
         entityStats.SetAttribute("decelSpeed", 15f);
+        djump = entityStats.GetSetAttribute("djump", 0);
+        wgrab = entityStats.GetSetAttribute("wgrab", 0);
+        djump.onValueChanged.AddListener(OndjumpChanged);
+        wgrab.onValueChanged.AddListener(OnwgrabChanged);
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 10f);
         airJumpForce = entityStats.GetSetAttribute("airjumpforce", 10f);
@@ -134,7 +139,8 @@ public partial class Player : PlayerController
         attackB = InputManager.SetInputKey("attackB", KeyCode.V); 
         interact = InputManager.SetInputKey("interact", KeyCode.A);
 
-        animator.FetchAnimationData(atlas_path: "Data/player_atlas");
+        animator.FetchAnimationData();
+        //animator.FetchAnimationData(atlas_path: "Data/player_atlas");
         animator.flagActions.Add("step", OnStep);
         animator.flagActions.Add("attack", OnAttack);
         animator.flagActions.Add("charging", OnCharge);
@@ -628,14 +634,21 @@ public partial class Player : PlayerController
         _velocity.y = 0;
         pColor = Color.black;
         pColorLerp = 1f;
+        bool d_released = false;
+        float t_rate = 1f, t_delta = 0f;
+        //bool dreleased = false;
         //pColorTransparency = 0.25f;
         damageRelay.gameObject.SetActive(false);
         for (int i = 0; i < dashTrails.Length; i++)
         { dashTrails[i].enabled = true; }
         while (t < time)
         {
+            if (!dash.hold)
+            { d_released = true; }
+            if (d_released && t_delta < 1f)
+            { t_rate = Mathf.Lerp(1f, 3f, Mathf.Max(t_delta += Time.deltaTime * 4f, 1f)); }
             tempGravityMult = 0;
-            t += Time.fixedDeltaTime;
+            t += Time.fixedDeltaTime * t_rate;
             d = t / time;
             pColorTransparency = 1f - Mathf.Sin(Mathf.Lerp(0f, 180f, d) * Mathf.Deg2Rad);
             _velocity = dash_vel * Mathf.Sin(Mathf.LerpAngle(90f, 15f, d) * Mathf.Deg2Rad);
@@ -787,6 +800,16 @@ public partial class Player : PlayerController
     }
 
 
+
+    void OnwgrabChanged(float value, float lvalue)
+    { }
+    void OndjumpChanged(float value, float lvalue)
+    {
+        Debug.Log($"djump {value} {lvalue}");
+        mJumps = Mathf.RoundToInt(value); 
+    }
+
+
     void DIEEE()
     {
         swDeath.Activate();
@@ -828,8 +851,12 @@ public partial class Player : PlayerController
                 //DIEEE();
                 //break;
             case "Checkpoint":
-                if (collision.gameObject.TryGetComponent<Checkpoint>(out Checkpoint c))
-                { c.SetActiveCheckpoint(); }
+                if (collision.gameObject.TryGetComponent<Checkpoint>(out var cp))
+                { cp.SetActiveCheckpoint(); }
+                break;
+            case "Collectable":
+                if (collision.gameObject.TryGetComponent<CollectRelay>(out var cr))
+                { cr.Collect(this); }
                 break;
         }
     }
@@ -837,7 +864,7 @@ public partial class Player : PlayerController
 
     List<Interactable> interactsInRange = new();
 
-    public void OnInteractTriggerEnter(Collider2D coll)
+    public void OnInteractTriggerEnter(RelayCollider relay, Collider2D coll)
     {
         if (coll.tag == "Interactive")
         {
@@ -848,7 +875,7 @@ public partial class Player : PlayerController
             }
         }
     }
-    public void OnInteractTriggerExit(Collider2D coll)
+    public void OnInteractTriggerExit(RelayCollider relay, Collider2D coll)
     {
         if (coll.tag == "Interactive")
         {
@@ -863,7 +890,7 @@ public partial class Player : PlayerController
     {
         ApplyDamage(new Damage(999), this);
     }
-    public void OnDamageTriggerEnter(Collider2D coll)
+    public void OnDamageTriggerEnter(RelayCollider relay, Collider2D coll)
     {
         //Debug.Log($"entityStats: {entityStats != null}");
 
@@ -875,7 +902,7 @@ public partial class Player : PlayerController
                 break;
         }
     }
-    public void OnDamageTriggerExit(Collider2D coll)
+    public void OnDamageTriggerExit(RelayCollider relay, Collider2D coll)
     {  }
 
 

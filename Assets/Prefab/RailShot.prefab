@@ -166,7 +166,7 @@ GameObject:
   - component: {fileID: 8367785091058857985}
   - component: {fileID: 2312616141344533839}
   m_Layer: 0
-  m_Name: RailBulletTest
+  m_Name: RailShot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

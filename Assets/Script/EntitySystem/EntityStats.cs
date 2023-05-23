@@ -24,7 +24,9 @@ public class EntityStats : MonoBehaviour
 
     public delegate void OnDamageDelegate(float value, float percentage);
 
-    public UnityEvent<StatusEffect> onStatusEffectAdded, onStatusEffectRemoved;
+    [SerializeField] public UnityEvent<StatusEffect> onStatusEffectAdded = new(), onStatusEffectRemoved = new();
+    [SerializeField] public UnityEvent<Attribute> onAttributeAdded = new();
+    [SerializeField] public UnityEvent<Stat> onStatAdded = new();
 
 
     private void Awake()
@@ -39,14 +41,9 @@ public class EntityStats : MonoBehaviour
 
     private void OnValidate()
     {
+
     }
 
-    /*
-    private void Update()
-    {
-        UpdateEffects();
-    }
-    */
 
     public bool GetFlag(string flag)
     { return _flags.ContainsKey(flag); }
@@ -187,6 +184,7 @@ public class EntityStats : MonoBehaviour
         if (TryGetStat(name, out Stat stat))
         { stat.max = max; stat.value = value; return stat; }
         _stats.Add(name, new Stat(name, value, max));
+        onStatAdded.Invoke(_stats[name]);
         return _stats[name];
     }
     public Stat GetSetStat(string name, float value_if_set = 100, float max_if_set = 100)
@@ -194,6 +192,7 @@ public class EntityStats : MonoBehaviour
         if (TryGetStat(name, out Stat stat))
         { return stat; }
         _stats.Add(name, new Stat(name, value_if_set, max_if_set));
+        onStatAdded.Invoke(_stats[name]);
         return _stats[name];
     }
 
@@ -209,6 +208,7 @@ public class EntityStats : MonoBehaviour
         if (TryGetAttribute(name, out Attribute attr))
         { attr.value = value; return attr; }
         _attributes.Add(name, new Attribute(name, value));
+        onAttributeAdded.Invoke(_attributes[name]);
         return _attributes[name];
     }
     public Attribute GetSetAttribute(string name, float value_if_set = 0f)
@@ -216,6 +216,7 @@ public class EntityStats : MonoBehaviour
         if (TryGetAttribute(name, out Attribute attr))
         { return attr; }
         _attributes.Add(name, new Attribute(name, value_if_set));
+        onAttributeAdded.Invoke(_attributes[name]);
         return _attributes[name];
     }
 
@@ -265,16 +266,6 @@ public class EntityStats : MonoBehaviour
         void MaxChanged()
         { onMaxChanged.Invoke(max); }
 
-        /*
-        public bool AddListener(Action<float, float> action)
-        { 
-            if (onValueChanged.Contains(action)) return false; 
-            onValueChanged.Add(action); return true;
-        }
-        public bool RemoveListener(Action<float, float> action)
-        { return onValueChanged.Remove(action); }
-        */
-
         public static implicit operator float(Stat stat)
         { return stat.value; }
         public static implicit operator int(Stat stat)
@@ -291,7 +282,7 @@ public class EntityStats : MonoBehaviour
         public float value_mod { get => _modvalue; set => SetMod(value); }
         public float value_raw { get => _value; set => SetValue(value); }
         public string name { get => _name; }
-        List<Action<float, float>> onValueChanged = new();
+        public UnityEvent<float, float> onValueChanged = new();
 
         public Attribute(string name, float value = 0)
         {
@@ -303,8 +294,7 @@ public class EntityStats : MonoBehaviour
             _value = v;
             if (_value == _vlast) return;
             _vlast = _value;
-            for (int i = 0; i < onValueChanged.Count; i++)
-            { onValueChanged[i].Invoke(_value, _vlast); }
+            onValueChanged.Invoke(_value, _vlast);
         }
         void SetModValue(float v)
         {
@@ -313,13 +303,6 @@ public class EntityStats : MonoBehaviour
         }
         void SetMod(float v)
         { _modvalue = v; }
-        public bool AddListener(Action<float, float> action)
-        {
-            if (onValueChanged.Contains(action)) return false;
-            onValueChanged.Add(action); return true;
-        }
-        public bool RemoveListener(Action<float, float> action)
-        { return onValueChanged.Remove(action); }
 
         public static implicit operator float(Attribute attr)
         { return attr.value; }

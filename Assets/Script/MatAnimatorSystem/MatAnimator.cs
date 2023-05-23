@@ -8,16 +8,16 @@ using static Utility;
 public class MatAnimator : MonoBehaviour
 {
 
-    Dictionary<string, MatAnimation> anims;
+    Dictionary<string, MatAnimation> anims = new();
     [SerializeField] Transform rendererTransform;
-    [SerializeField] string animationGroup, jsonPath;
+    [SerializeField] string animationGroup, jsonPath, atlasPath;
     Renderer rend;
     Material mat;
     public MatAnimation currentAnimation { get => anims[curAnim]; }
     string curAnim;
     [SerializeField] float currentAnimTime = 0;
     [SerializeField] MatFrame curFrame;
-    [SerializeField] string defaultState = "";
+    //[SerializeField] string defaultState = "";
     Vector3 rtransOffset, rtransScale;
     [SerializeField] bool autoFetchOnStart = false;
     public float animSpeed = 1f;
@@ -49,7 +49,7 @@ public class MatAnimator : MonoBehaviour
             if (MatAnimation.FromJsonAnim(anim, out MatAnimation manim))
             {
                 if (anims.ContainsKey(anim.id))
-                { anims[anim.id] = manim;  continue; }
+                { anims[anim.id] = manim; continue; }
                 anims.Add(anim.id, manim); 
             }
         }
@@ -59,12 +59,13 @@ public class MatAnimator : MonoBehaviour
     {
         if (animation_group == null) animation_group = animationGroup;
         if (animation_json_path == null) animation_json_path = jsonPath;
+        if (atlas_path == null) atlas_path = atlasPath;
         if (atlas_path != null) LoadJsonAtlas(atlas_path, out _);
         if (GetOrLoadJsonAnimGroup(animation_group, animation_json_path, out JsonAnimGroup agroup))
         { ParseJsonAnimGroup(agroup); }
         else
         { Debug.LogError($"AnimationGroup \"{animation_group}\"({animation_json_path}) not found!", this); }
-        if (defaultState != "") SetState(defaultState);
+        //if (defaultState != "") SetState(defaultState);
     }
 
     void FetchRenderer()
@@ -85,19 +86,25 @@ public class MatAnimator : MonoBehaviour
         if (flip != flipX)
         {
             flipX = flip;
-            rendererTransform.localScale = rtransScale.Mult((flipX ? -1 : 1) * frameflip.x);
+            //rendererTransform.localScale = rtransScale.Mult((flipX ? -1 : 1) * frameflip.x);
+            rendererTransform.localScale = rtransScale.Mult((flipX ? -1 : 1) * frameflip.x, frameflip.y);
+            rendererTransform.localPosition = rtransOffset.Add(-curFrame.pivot.x * rendererTransform.localScale.x, -curFrame.pivot.y * rendererTransform.localScale.y);
         }
     }
+
     public void SetState(string state, float? t = null)
     {
         bool tflags = false;
         if (curAnim == state)
         { if (t == null) return; }
+        else if (!anims.ContainsKey(state))
+        {
+            Debug.LogWarning($"Animation state \"{state}\" does not exist in group \"{animationGroup}\"");
+            return;
+        }
         else
         { tflags = true; animEnded = false; }
-        //if (curAnim == state && t == null) return;
         curAnim = state;
-        //Debug.Log($"AnimState set to: {curAnim}");
         currentAnimTime = t != null ? (float)t : 0;
         NextFrame(tflags);
     }
@@ -124,8 +131,11 @@ public class MatAnimator : MonoBehaviour
             if (!animEnded && currentAnimTime >= canim.Duration)
             {
                 animEnded = true;
-                for (int i = 0; i < onAnimEnd.Count; i++)
-                { onAnimEnd[i].Invoke(); }
+                if (!canim.Flags.Contains("!endflag"))
+                {
+                    for (int i = 0; i < onAnimEnd.Count; i++)
+                    { onAnimEnd[i].Invoke(); }
+                }
             }
             currentAnimTime = Mathf.Clamp(currentAnimTime, 0, canim.Duration); 
         }
@@ -157,13 +167,13 @@ public class MatAnimator : MonoBehaviour
         mat.SetVector("_Offset", curFrame.rect.position);
         mat.SetVector("_Tiling", curFrame.rect.size);
         mat.SetVector("_NormalMultiply", frameflip);
-        float diff = curFrame.rect.size.x / curFrame.rect.size.x;
-        //Vector3 vec = rendererTransform.localScale;
+
         rendererTransform.localScale = rtransScale.Mult((flipX ? -1 : 1) * frameflip.x, frameflip.y);
-        rendererTransform.localPosition = rtransOffset.Add(curFrame.pivot.x * rendererTransform.localScale.x, curFrame.pivot.y * rendererTransform.localScale.y);
-        
-        float ctime = currentAnimTime - atime;
-        ctime = curFrame.Time - ctime;
+        rendererTransform.localPosition = new Vector3(-curFrame.pivot.x * rendererTransform.localScale.x, -curFrame.pivot.y * rendererTransform.localScale.y, rtransOffset.z);
+        //rendererTransform.localPosition = rtransOffset.Add(-curFrame.pivot.x * rendererTransform.localScale.x, -curFrame.pivot.y * rendererTransform.localScale.y);
+
+        //float ctime = currentAnimTime - atime;
+        //ctime = curFrame.Time - ctime;
         if (playAnimCoroutine != null) StopCoroutine(playAnimCoroutine);
         //playAnimCoroutine = StartCoroutine(IWaitNextFrameAtTime(Time.time + ctime));
         if (!animEnded) playAnimCoroutine = StartCoroutine(IWaitNextFrame(curFrame.Time, atime));// - ctime));
@@ -182,7 +192,7 @@ public class MatAnimator : MonoBehaviour
         while (t < time)
         {
             t += Time.deltaTime * animSpeed;
-            yield return null;
+            yield return new WaitForEndOfFrame();
         }
         currentAnimTime = frameTime + time;
         NextFrame();

@@ -57,6 +57,7 @@ MonoBehaviour:
   overrideAreaAmbient: 0
   roomAmbientColor: {r: 0, g: 0, b: 0, a: 1}
   roomAmbientIntensity: 1
+  darkRoom: 0
   overrideAreaMusic: 0
   roomMusic: {fileID: 0}
   roomMusicVolume: 1

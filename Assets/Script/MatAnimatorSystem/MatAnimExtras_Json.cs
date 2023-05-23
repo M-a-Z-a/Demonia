@@ -130,7 +130,13 @@ public partial class MatAnimExtras
             public float[] position, size, pivot;
             public int[] frame_position;
             public override string ToString()
-            { return $"{{id: {id}, position[{position.Length}]:[{string.Join(',', position)}], size[{size.Length}]:[{string.Join(',', size)}], pivot[{pivot.Length}]:[{string.Join(',', pivot)}], frame_position[{frame_position.Length}]:[{string.Join(',', frame_position)}]}}"; }
+            {
+                return $"{{" +
+                    $"id: {id}, position[{position.Length}]:[{string.Join(',', position)}], " +
+                    $"size[{size.Length}]:[{string.Join(',', size)}], " +
+                    $"pivot[{pivot.Length}]:[{string.Join(',', pivot)}]}}";
+                //, frame_position[{frame_position.Length}]:[{string.Join(',', frame_position)}]}}"; 
+            }
         }
 
         public Vector2 GetSizeNormal()
@@ -143,16 +149,16 @@ public partial class MatAnimExtras
                 f.frame_position != null && f.frame_position.Length == 2 && 
                 frame_size[0] > 0 && frame_size[1] > 0)
             {
-                f.position[0] = f.frame_position[0] * frame_size[0];
-                f.position[1] = f.frame_position[1] * frame_size[1] + frame_size[1];
-                f.size = frame_size;
+                f.position = new float[] { f.frame_position[0] * frame_size[0] / sample_size[0], 1f - (f.frame_position[1]+1) * frame_size[1] / sample_size[1] };
+                f.pivot[0] = f.pivot[0] / frame_size[0] - 0.5f; f.pivot[1] = f.pivot[1] / frame_size[1] - 0.5f;
+                f.size = new float[] { frame_size[0] / sample_size[0], frame_size[1] / sample_size[1] };
             }
             else
             {
                 f.position[0] /= sample_size[0]; f.position[1] = 1f - (f.position[1] / sample_size[1]);
+                f.pivot[0] = f.pivot[0] / f.size[0] - 0.5f; f.pivot[1] = f.pivot[1] / f.size[1] - 0.5f;
                 f.size[0] /= sample_size[0]; f.size[1] /= sample_size[1];
             }
-            f.pivot[0] = f.pivot[0] / f.size[0] - 0.5f; f.pivot[1] = f.pivot[1] / f.size[1] - 0.5f;
 
             return f;
         }

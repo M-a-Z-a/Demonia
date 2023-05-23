@@ -48,6 +48,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityName: Graviton
+  _entityType: 0
+  entityTags: []
   layerMask:
     serializedVersion: 2
     m_Bits: 1024

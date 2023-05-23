@@ -9,7 +9,7 @@ using UnityEditor;
 
 public class TilemapLayer : MonoBehaviour
 {
-
+    public string layerName = "";
     [SerializeField] Room _room = null;
     [SerializeField] Area _area = null;
     [SerializeField] TilemapLayerGroup _group = null;
@@ -17,7 +17,6 @@ public class TilemapLayer : MonoBehaviour
     public Room room { get => _room; }
     public Area area { get => _area; }
     public TilemapLayerGroup group { get => _group; }
-
 
     private void Awake()
     {

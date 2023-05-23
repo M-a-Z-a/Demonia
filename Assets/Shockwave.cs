@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(Renderer))]
 public class Shockwave : MonoBehaviour
@@ -15,6 +16,8 @@ public class Shockwave : MonoBehaviour
     public TimeScale timeScale = TimeScale.ScaledTime;
     
     Renderer rend;
+
+    [HideInInspector] public UnityEvent<float, float, float, float> onUpdate = new();
 
     private void OnValidate()
     {
@@ -69,11 +72,12 @@ public class Shockwave : MonoBehaviour
             }
             float d = t / 1f;
             float v = widthOverTime.Evaluate(d) * widthMultiplier;
-            float dv = deltaOverTime.Evaluate(d) * 0.4f;
+            float dv = deltaOverTime.Evaluate(d);
             float sv = strengthOverTime.Evaluate(d) * strengthMultiplier;
-            mat.SetFloat("_Delta", dv);
+            mat.SetFloat("_Delta", dv * 0.4f);
             mat.SetFloat("_Size", (1f - d) * v);
             mat.SetFloat("_DistortStrength", sv);
+            onUpdate.Invoke(d, dv, v, sv);
         }
         else
         {

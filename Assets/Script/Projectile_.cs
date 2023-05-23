@@ -10,8 +10,7 @@ using UnityEditor;
 
 public class Projectile_ : MonoBehaviour
 {
-    public List<UnityAction<Projectile_, RaycastHit2D>> onColliderEnter = new();
-    public List<UnityAction<Projectile_, RaycastHit2D>> onColliderExit = new();
+    public UnityEvent<Projectile_, RaycastHit2D> onColliderEnter = new(), onColliderExit = new();
 
     public Vector2 velocity = Vector2.right;
     public LayerMask layerMask;
@@ -95,15 +94,13 @@ public class Projectile_ : MonoBehaviour
                 {
                     Debug.Log ($"IN (dot: {dot})");
                     Debug.DrawRay(rhit.point, rhit.normal, Color.red, 1f);
-                    foreach (var a in onColliderEnter)
-                    { a.Invoke(this, rhit); }
+                    onColliderEnter.Invoke(this, rhit);
                 }
                 else if (dot > 0)
                 {
                     Debug.Log($"OUT (dot: {dot})");
                     Debug.DrawRay(rhit.point, rhit.normal, Color.green, 1f);
-                    foreach (var a in onColliderExit)
-                    { a.Invoke(this, rhit); }
+                    onColliderExit.Invoke(this, rhit);
                 }
                 continue;
             }

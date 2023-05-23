@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
+[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class RelayCollider : MonoBehaviour
 {
     public enum CollState { Disabled = 0, Enabled = 1 }
@@ -13,7 +14,7 @@ public class RelayCollider : MonoBehaviour
     [SerializeField] List<string> relayTags = new();
     Collider2D coll;
     public Collider2D Collider { get => coll; }
-    [SerializeField] UnityEvent<Collider2D> onTriggerEnter, onTriggerExit;
+    [SerializeField] UnityEvent<RelayCollider, Collider2D> onTriggerEnter, onTriggerExit;
 
     Dictionary<string, ColliderState> collStates = new Dictionary<string, ColliderState>();
 
@@ -58,12 +59,12 @@ public class RelayCollider : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     { 
-        onTriggerEnter.Invoke(collision);
+        onTriggerEnter.Invoke(this, collision);
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        onTriggerExit.Invoke(collision);
+        onTriggerExit.Invoke(this, collision);
     }
 
     public bool LoadColliderState(string state)

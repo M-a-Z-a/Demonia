@@ -13,7 +13,7 @@ public class HUD : MonoBehaviour
     Transform stat, thp;
     EntityStats estats;
     Stat stat_hp, stat_sp, stat_mp, stat_boss_hp;
-    Player p;
+
     [SerializeField] GameObject hp_object, sp_object, boss_hp_object;
     [SerializeField] Image hp_bar, sp_bar, boss_hp_bar;
     [SerializeField] TMPro.TextMeshProUGUI hp_text, sp_text;
@@ -26,7 +26,6 @@ public class HUD : MonoBehaviour
     private void Awake()
     {
         instance = this;
-
 
         overlayMaterial = ((Blit)manaOverlay).blitPass.blitMaterial;
         //Debug.Log(overlayMaterial);
@@ -48,13 +47,17 @@ public class HUD : MonoBehaviour
         stat_boss_hp = stat;
         stat_boss_hp.onValueChanged.AddListener(BossHPChanged);
     }
+
+    Coroutine bossHpBarCoroutine;
     public void EnableBossHpBar(bool state)
     {
         if (state)
         {
-            StartCoroutine(IAnimateBossHPBar());
+            if (bossHpBarCoroutine != null) StopCoroutine(bossHpBarCoroutine);
+            bossHpBarCoroutine = StartCoroutine(IAnimateBossHPBar());
             return;
         }
+        if (bossHpBarCoroutine != null) StopCoroutine(bossHpBarCoroutine);
         boss_hp_object.SetActive(false);
     }
 

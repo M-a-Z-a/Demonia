@@ -7,6 +7,28 @@ public class TimeControl : MonoBehaviour
 
     static TimeControl instance;
     static float fixedDeltaTime_default, timeScale_default;
+    static bool _paused;
+    public static bool paused { get => _paused; set => PauseState(value); }
+
+    static float tmp_tscale = 1f;
+
+    static void PauseState(bool b)
+    { 
+        if (b) Pause(); 
+        else Resume(); 
+    }
+    static void Pause()
+    {
+        if (_paused) return;
+        _paused = true;
+        tmp_tscale = Time.timeScale;
+        SetTimescale(0);
+    }
+    static void Resume()
+    {
+        if (!_paused) return;
+        SetTimescale(tmp_tscale);
+    }
 
     private void Awake()
     {
@@ -37,6 +59,7 @@ public class TimeControl : MonoBehaviour
         float t = 0;
         while (t < fade)
         {
+            while (_paused) { yield return new WaitForEndOfFrame(); }
             t += Time.unscaledDeltaTime;
             SetTimescale(Mathf.Lerp(init_timescale, scale, t / fade));
             yield return new WaitForEndOfFrame();
@@ -55,6 +78,7 @@ public class TimeControl : MonoBehaviour
         float t = 0;
         while (t < time)
         {
+            while (_paused) { yield return new WaitForEndOfFrame(); }
             t += Time.unscaledDeltaTime;
             yield return new WaitForEndOfFrame();
         }
