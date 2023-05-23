@@ -252,6 +252,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 721a37d76fab5374dbeefac0a71dce9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  onColliderEnter:
+    m_PersistentCalls:
+      m_Calls: []
+  onColliderExit:
+    m_PersistentCalls:
+      m_Calls: []
   velocity: {x: 200, y: 0}
   layerMask:
     serializedVersion: 2

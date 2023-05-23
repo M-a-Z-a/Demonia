@@ -37,6 +37,7 @@ public partial class Player : PlayerController
                 ent.AddForce(p.knockback * kbmult);
 
                 ent.ApplyDamage(meleeDamage, this);
+                stat_hp.value += meleeDamage.damage * 0.2f;
 
                 if (p.timeToLive > p.lifeTime - 0.1f)
                 { TimeControl.SetTimeScaleFadeForTime(0.1f, 0.2f, 0f, 0f, 1f); }
@@ -88,7 +89,21 @@ public partial class Player : PlayerController
         }
         else if (canim == meleeDownAirRelease)
         {
-            //_velocity.y = 10f;
+            if (curAttack == 1)
+            { last_maj = meleeAirJump; }
+            if (facing > 0)
+            { pdir = AngleToVector2(-80f); flip = false; }
+            else
+            { pdir = AngleToVector2(80f); flip = true; }
+            go = SpawnProjectile(projectiles.chargeMeleeUp, ppos.Add(x: 0f * facing, y: 0f), pdir, flip);//.transform.parent = transform;
+            knockback = AngleToVector2(-75f) * (curAttack == 1 ? 10f : 20f);
+            knockback.x *= facing;
+            proj = go.GetComponent<Projectile>();
+            proj.knockback = knockback;
+            proj.projectileTag = $"adkick{curAttack}";
+            asource.clip = soundSlash;
+            asource.Play();
+            _velocity = new Vector2(facing * 2f + dir.x * 1f, -8f);
         }
         else if (canim == meleeDownAirGround)
         {
@@ -282,6 +297,7 @@ public partial class Player : PlayerController
             }
             yield return new WaitForEndOfFrame();
         }
+        attackState = 2;
         animator.SetState(att_name);
     }
 

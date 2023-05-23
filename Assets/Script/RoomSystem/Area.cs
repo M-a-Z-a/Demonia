@@ -20,6 +20,7 @@ public class Area : MonoBehaviour
     Light2D ambientLight;
     public bool ambientEnabled = true;
 
+    public bool lockRoom = false;
     private void OnValidate()
     {
         activeArea = this;

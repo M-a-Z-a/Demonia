@@ -111,7 +111,7 @@ public class HUD : MonoBehaviour
     {
         mpd = new_value / stat_mp.max;
         manaOverlay.SetActive(mpd < 1f);
-        overlayMaterial.SetFloat("_Volume", 0.5f - mpd * 0.4f);
+        overlayMaterial.SetFloat("_Volume", 0.3f - mpd * 0.2f);
     }
 
 

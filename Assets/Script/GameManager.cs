@@ -70,11 +70,13 @@ public class GameManager : MonoBehaviour
 
     public static bool LoadScene(int index)
     {
+        if (index < 3) HUD.instance.gameObject.SetActive(false);
         Scene scene = SceneManager.GetSceneByBuildIndex(index);
         if (scene == null) return false;
         onSceneLoadInit.Invoke(scene);
         SceneManager.LoadScene(index);
         onSceneLoadFinished.Invoke(scene);
+        if (index > 2) HUD.instance.gameObject.SetActive(true);
         return true;
     }
     
@@ -84,7 +86,7 @@ public class GameManager : MonoBehaviour
     {
         InputManager.UpdateInputs();
         if (Input.GetKeyDown(KeyCode.Escape))
-        { Exit_Game(); }
+        { Reset_Menu(); }
         if (Input.GetKeyDown(KeyCode.F4))
         { Reset_Checkpoint(); Reset_Game_Fade(); }
         if (Input.GetKeyDown(KeyCode.F5))
@@ -94,9 +96,13 @@ public class GameManager : MonoBehaviour
     {
         instance.checkpoint.position = instance.orig_cpPos;
     }
-    public static void Reset_Game()
+    public static void Reset_Menu()
     {
         LoadScene(sceneIndexes["MainMenu"]);
+    }
+    public static void Reset_Game()
+    {
+        LoadScene(3);
         //TimeControl.SetTimeScaleFadeForTime(0f, 2f, 0, 1f);
         //TimeControl.SetTimeScaleFade(0f, 1f);
     }
@@ -113,6 +119,7 @@ public class GameManager : MonoBehaviour
 
     static IEnumerator ILoadSceneAsync(int index)
     {
+        if (index < 3) HUD.instance.gameObject.SetActive(false);
         Scene scene = SceneManager.GetSceneByBuildIndex(index);
         onSceneLoadInit.Invoke(scene);
         AsyncOperation operation = SceneManager.LoadSceneAsync(index);
@@ -126,6 +133,7 @@ public class GameManager : MonoBehaviour
             yield return new WaitForEndOfFrame();
         }
         onSceneLoadFinished.Invoke(scene);
+        if (index > 2) HUD.instance.gameObject.SetActive(true);
     }
 
 

@@ -226,7 +226,7 @@ public class AI_Boss : EntityController
         if (stateQue.Count > 0)
         {
             //SetState(GetStateEnum(stateQue.state), set_idle: set_idle);
-            SetState(GetStateEnum(stateQue[0]), set_idle: set_idle);
+            SetState(GetStateEnum(stateQue[0]), set_idle: false);
             stateQue.RemoveAt(0);
             return;
         }
@@ -482,7 +482,7 @@ public class AI_Boss : EntityController
             animator.SetState("railgun.fire");
             animState = 1;
 
-            tdir = GetTargetDirection();
+            tdir = target.position - spos;
 
             a = Vector2.SignedAngle(new Vector2(facing, 0), tdir);
 

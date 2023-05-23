@@ -7,14 +7,15 @@ public class AttributeChanger : MonoBehaviour
     public enum AttributeChangeType { Set, Add, Subtract, Multiply, Divide, Round, Floor, Ceil }
     [SerializeField] List<AttrChange> attributeChanges;
 
-    public void ApplyAttributes(Entity entity)
+    public void ApplyAttributes(CollectRelay crel)
     {
-        if (!entity?.entityStats) return;
+        //if (!entity?.entityStats) return;
         EntityStats.Attribute attr;
+        EntityStats estats = crel.ent.GetComponent<EntityStats>();
         float v;
         foreach (AttrChange ac in attributeChanges)
         {
-            attr = entity.entityStats.GetSetAttribute(ac.attributeName, ac.defaultValue);
+            attr = estats.GetSetAttribute(ac.attributeName, ac.defaultValue);
             v = attr.value;
             switch(ac.changeType)
             {
@@ -27,7 +28,7 @@ public class AttributeChanger : MonoBehaviour
                 case AttributeChangeType.Ceil: v = CeilValue(v, Mathf.RoundToInt(ac.value)); break;
                 default: v = attr.value; break;
             }
-            attr.value = v;
+            estats.SetAttribute(ac.attributeName, v);
         }
     }
 

@@ -5,7 +5,8 @@ using UnityEngine.Events;
 
 public class CollectRelay : MonoBehaviour
 {
-    [SerializeField] UnityEvent<Entity> onCollect;   
+    [SerializeField] UnityEvent<CollectRelay> onCollect;
+    public Entity ent;
     public void Collect(Entity entity)
-    { onCollect.Invoke(entity); }
+    { ent = entity; onCollect.Invoke(this); }
 }

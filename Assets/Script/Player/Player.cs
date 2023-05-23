@@ -27,7 +27,7 @@ public partial class Player : PlayerController
 
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
     EntityStats.Attribute djump, wgrab;
-    int mJumps = 0, cmJumps = 0;
+    int mJumps = 1, cmJumps = 0;
 
     int cComboStage = 0; 
     float cComboTimer = 0, cComboLastAttackDelay = 0;
@@ -107,10 +107,6 @@ public partial class Player : PlayerController
         entityStats.SetAttribute("speed", 8f);
         entityStats.SetAttribute("accelSpeed", 40f);
         entityStats.SetAttribute("decelSpeed", 15f);
-        djump = entityStats.GetSetAttribute("djump", 0);
-        wgrab = entityStats.GetSetAttribute("wgrab", 0);
-        djump.onValueChanged.AddListener(OndjumpChanged);
-        wgrab.onValueChanged.AddListener(OnwgrabChanged);
         coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
         jumpForce = entityStats.GetSetAttribute("jumpforce", 10f);
         airJumpForce = entityStats.GetSetAttribute("airjumpforce", 10f);
@@ -163,6 +159,11 @@ public partial class Player : PlayerController
 
         entityStats.onStatusEffectAdded.AddListener(OnAddEffect);
         entityStats.onStatusEffectRemoved.AddListener(OnRemoveEffect);
+
+        djump = entityStats.GetSetAttribute("djump", 0);
+        wgrab = entityStats.GetSetAttribute("wgrab", 0);
+        djump.onValueChanged.AddListener(OndjumpChanged);
+        wgrab.onValueChanged.AddListener(OnwgrabChanged);
 
         HUD.instance.SetStatHP(stat_hp);
         HUD.instance.SetStatSP(stat_sp);
@@ -454,7 +455,7 @@ public partial class Player : PlayerController
     void SetOverlayPosition()
     {
         Vector2 vec = Camera.main.WorldToScreenPoint(transform.position);
-        Vector2 vecpos = new Vector2(vec.x / Screen.currentResolution.width, vec.y / Screen.currentResolution.height);
+        //Vector2 vecpos = new Vector2(vec.x / Screen.currentResolution.width, vec.y / Screen.currentResolution.height);
         HUD.instance.SetOverlayPosition(new Vector2(vec.x / Screen.currentResolution.width, vec.y / Screen.currentResolution.height));
         //HUD.instance.SetOverlayPosition(new Vector2(vec.x / 380f, vec.y / 160f));
     }
@@ -583,7 +584,7 @@ public partial class Player : PlayerController
 
     void DamageSlowdown(float pause_t = 0.2f, float fade_t = 0.25f, float invincduration = 1f)
     {
-        StartCoroutine(IDamageFlash(Color.white, 4));
+        StartCoroutine(IDamageFlash(Color.white, 2f));
         
         TimeControl.SetTimeScaleFadeForTime(0.05f, pause_t, 0f, fade_t, 1f);
     }
@@ -602,25 +603,37 @@ public partial class Player : PlayerController
         pColorLerp = 1f;
         pColorTransparency = 0.5f;
         int f = 0;
+        bool blinkbool = false;
         while (f < frames)
-        { yield return new WaitForEndOfFrame(); }
+        {
+            pColorTransparency = (blinkbool = !blinkbool) ? pColorTransparency = 0f : pColorTransparency = 1f;
+            f++;
+            yield return new WaitForEndOfFrame(); 
+        }
         pColor = orig_color;
         pColorTransparency = orig_transp;
         pColorLerp = orig_clerp;
     }
-    IEnumerator IDamageFlash(Color color, float time)
+    IEnumerator IDamageFlash(Color color, float time, float blink_t = 0.1f)
     {
         Color orig_color = pColor;
         float orig_transp = pColorTransparency, 
             orig_clerp = pColorLerp;
 
-        pColor = color;
-        pColorLerp = 1f;
+        float t = 0;
+        bool blinkbool = false;
+        //pColor = color;
+        //pColorLerp = 1f;
         pColorTransparency = 0.5f;
-        yield return new WaitForSeconds(time);
-        pColor = orig_color;
+        while (t < time)
+        {
+            pColorTransparency = (blinkbool = !blinkbool) ? pColorTransparency = 0.2f : pColorTransparency = 1f;
+            yield return new WaitForSeconds(blink_t);
+            t += blink_t;
+        }
+        //pColor = orig_color;
+        //pColorLerp = orig_clerp;
         pColorTransparency = orig_transp;
-        pColorLerp = orig_clerp;
     }
 
 
@@ -776,7 +789,6 @@ public partial class Player : PlayerController
         base.OnTouchWallRight(velocity);
     }
 
-    
     public void OnStep()
     {
         asourceFeet.PlayOneShot(soundStep, 0.1f);
@@ -801,9 +813,9 @@ public partial class Player : PlayerController
 
 
 
-    void OnwgrabChanged(float value, float lvalue)
+    public void OnwgrabChanged(float value, float lvalue)
     { }
-    void OndjumpChanged(float value, float lvalue)
+    public void OndjumpChanged(float value, float lvalue)
     {
         Debug.Log($"djump {value} {lvalue}");
         mJumps = Mathf.RoundToInt(value); 
