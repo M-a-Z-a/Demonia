@@ -41,7 +41,11 @@ public class HUD : MonoBehaviour
 
     }
 
-
+    public void ClearBossHP()
+    {
+        if (stat_boss_hp != null)
+        { stat_boss_hp.onValueChanged.RemoveListener(BossHPChanged); }
+    }
     public void SetBossHP(Stat stat)
     {
         stat_boss_hp = stat;
@@ -67,22 +71,22 @@ public class HUD : MonoBehaviour
     {
         stat_hp = stat;
         stat_hp.onValueChanged.AddListener(PlayerHPChanged);
-        PlayerHPChanged(stat_hp.value, 0);
+        PlayerHPChanged(null, stat_hp.value, 0);
     }
     public void SetStatSP(Stat stat)
     {
         stat_sp = stat;
         stat_sp.onValueChanged.AddListener(PlayerSPChanged);
-        PlayerSPChanged(stat_sp.value, 0);
+        PlayerSPChanged(null, stat_sp.value, 0);
     }
     public void SetStatMP(Stat stat)
     {
         stat_mp = stat;
         stat_mp.onValueChanged.AddListener(PlayerMPChanged);
-        PlayerMPChanged(stat_sp.value, 0);
+        PlayerMPChanged(null, stat_sp.value, 0);
     }
 
-    public void PlayerHPChanged(float new_value, float old_value)
+    public void PlayerHPChanged(Stat stat, float new_value, float old_value)
     {
         hp_bar.fillAmount = new_value / stat_hp.max;
         if (new_value > 0)
@@ -91,7 +95,7 @@ public class HUD : MonoBehaviour
         { hp_text.text = $"{0} / {Mathf.Round(stat_hp.max)}"; }
     }
 
-    public void PlayerSPChanged(float new_value, float old_value)
+    public void PlayerSPChanged(Stat stat, float new_value, float old_value)
     {
         sp_bar.fillAmount = new_value / stat_sp.max;
         if (new_value > 0)
@@ -107,7 +111,7 @@ public class HUD : MonoBehaviour
         overlayMaterial.SetVector("_Position", Vector2.Lerp(vecCenter, vec, 1f - mpd));
     }
 
-    public void PlayerMPChanged(float new_value, float old_value)
+    public void PlayerMPChanged(Stat stat, float new_value, float old_value)
     {
         mpd = new_value / stat_mp.max;
         manaOverlay.SetActive(mpd < 1f);
@@ -115,7 +119,7 @@ public class HUD : MonoBehaviour
     }
 
 
-    public void BossHPChanged(float new_value, float old_value)
+    public void BossHPChanged(Stat stat, float new_value, float old_value)
     {
         boss_hp_bar.fillAmount = new_value / stat_boss_hp.max;
     }

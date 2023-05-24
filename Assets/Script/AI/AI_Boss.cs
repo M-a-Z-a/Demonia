@@ -7,6 +7,8 @@ using UnityEngine.Events;
 
 public class AI_Boss : EntityController
 {
+    public static AI_Boss activeBoss { get; protected set; }
+
     public enum StateEnum { Idle, Attack, AttackTp, Dash, Missile, Railgun, Throw, Stomp, LaserBeam, LaserArray }
 
     List<StateEnum> statePool = new() { StateEnum.AttackTp, StateEnum.Dash, StateEnum.Missile, StateEnum.LaserArray, StateEnum.Throw, StateEnum.Railgun },
@@ -125,25 +127,26 @@ public class AI_Boss : EntityController
 
     }
 
-    private void OnEnable()
+    protected void OnEnable()
     {
+        activeBoss = this;
         idle_time = 2f;
         StartCoroutine(ISetBossHpBar());
         animator.SetState("idle", 0);
     }
-    IEnumerator ISetBossHpBar()
-    {
-        yield return new WaitForEndOfFrame();
-        HUD.instance.SetBossHP(stat_hp);
-        HUD.instance.EnableBossHpBar(true);
+    protected void OnDisable()
+    { 
+        if (activeBoss == this) activeBoss = null; 
     }
-    IEnumerator ISetBossHpBar(Func<bool> condition, float max_wait = 2f)
+
+    IEnumerator ISetBossHpBar(int wait_frames = 1, float wait_time = 0, bool is_realtime = false)
     {
-        float t = 0;
-        while (!condition.Invoke() && t < max_wait)
-        { 
-            t += Time.deltaTime;
-            yield return new WaitForEndOfFrame();
+        for (int f = 0; f < wait_frames; f++)
+        { yield return new WaitForEndOfFrame(); }
+        if (wait_time > 0)
+        {
+            if (is_realtime) yield return new WaitForSecondsRealtime(wait_time);
+            else yield return new WaitForSeconds(wait_time);
         }
         HUD.instance.SetBossHP(stat_hp);
         HUD.instance.EnableBossHpBar(true);
@@ -828,7 +831,7 @@ public class AI_Boss : EntityController
         return false;
     }
 
-    void OnHealthChanged(float value, float last_value)
+    void OnHealthChanged(EntityStats.Stat stat, float value, float last_value)
     {
         if (value < last_value) OnDamageTaken(last_value - value);
     }

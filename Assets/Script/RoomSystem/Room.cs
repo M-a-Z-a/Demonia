@@ -44,7 +44,10 @@ public class Room : MonoBehaviour
 
     bool firstInit = true;
 
+    TilemapLayerGroup lgroup;
     
+    public void GetLayerGroup()
+    { lgroup = GetComponentInChildren<TilemapLayerGroup>(); }
 
     public void GetAmbientLight(out Color light_color, out float light_intensity)
     {
@@ -111,6 +114,7 @@ public class Room : MonoBehaviour
     {
         UpdateName();
         GetRoomWorldBounds();
+        GetLayerGroup();
     }
 
     
