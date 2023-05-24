@@ -9,6 +9,9 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance { get; protected set; }
     public static UnityEvent<Scene> onSceneLoadInit = new(), onSceneLoadFinished = new();
+    public enum GameRunState { None, Menu, Loading, Running }
+    public static GameRunState gameRunState = 0;
+    public static bool gameIsRunning { get => (int)gameRunState >= 2; }
 
     public InputManager.InputKeyCode left, right, up, down;
     InputManager.InputDirection directionX, directionY;
@@ -20,8 +23,6 @@ public class GameManager : MonoBehaviour
 
     static ScreenFader mainFader;
     public static float loadingProgress { get; protected set; }
-
-    static List<MonoBehaviour> persistentMonos = new();
 
     static Dictionary<string, int> sceneIndexes = new()
     {
@@ -74,10 +75,10 @@ public class GameManager : MonoBehaviour
         if (scene == null) return false;
         onSceneLoadInit.Invoke(scene);
         SceneManager.LoadScene(index);
+        SetRunStateFromSceneIndex(index);
         onSceneLoadFinished.Invoke(scene);
         return true;
     }
-    
 
     // Update is called once per frame
     void Update()
@@ -115,6 +116,7 @@ public class GameManager : MonoBehaviour
     {
         Scene scene = SceneManager.GetSceneByBuildIndex(index);
         onSceneLoadInit.Invoke(scene);
+        gameRunState = GameRunState.Loading;
         AsyncOperation operation = SceneManager.LoadSceneAsync(index);
         operation.allowSceneActivation = true;
 
@@ -125,6 +127,7 @@ public class GameManager : MonoBehaviour
             { operation.allowSceneActivation = true; }
             yield return new WaitForEndOfFrame();
         }
+        SetRunStateFromSceneIndex(index);
         onSceneLoadFinished.Invoke(scene);
     }
 
@@ -139,6 +142,19 @@ public class GameManager : MonoBehaviour
         yield return mainFader.FadeTo(new Color(1f, 1f, 1f, 0f), 0.5f);
     }
 
+    static void SetRunStateFromSceneIndex(int index)
+    { gameRunState = GetRunStateFromSceneIndex(index); }
+    static GameRunState GetRunStateFromSceneIndex(int index)
+    {
+        if (index < 0) return 0;
+        switch(index)
+        {
+            case 0: return GameRunState.None;
+            case 1: return GameRunState.Menu;
+            case 2: return GameRunState.Loading;
+            default: return GameRunState.Running;
+        }
+    }
 }
 
 

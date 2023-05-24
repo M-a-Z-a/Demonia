@@ -20,6 +20,9 @@ public class CameraControl : MonoBehaviour
 
     public float cameraSpeed = 16;
     public Transform followTarget;
+    public List<Transform> alt_targets = new();
+
+    [SerializeField] Vector2? overrideCameraTarget;
 
     Vector2 targetPos, nudge = Vector2.zero, snudge = Vector2.zero;
     public Vector2 padding = new Vector2(1f, 1f);
@@ -87,7 +90,7 @@ public class CameraControl : MonoBehaviour
 
         if (Room.ActiveRoom?.roomBounds != null) moveTo = ClampInRect(moveTo, GetCamClampRect(), padding);
 
-        Vector2 dist = moveTo - tpos; 
+        Vector2 dist = moveTo - tpos;
         Vector2 dir = dist.normalized;
         float d = dist.magnitude;
         float s = Mathf.Max(1f, d * cameraSpeed);
@@ -115,6 +118,7 @@ public class CameraControl : MonoBehaviour
         if (Player.instance != null)
         { followTarget = Player.instance.transform; }
     }
+    
 
     int nudgePriority = 0, shakePriority = 0;
     Coroutine currentNudge, currentShake;
@@ -184,6 +188,7 @@ public class CameraControl : MonoBehaviour
         nudgePriority = 0;
         currentNudge = null;
     }
+
 
 }
 

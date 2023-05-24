@@ -28,6 +28,7 @@ public partial class Player : PlayerController
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
     EntityStats.Attribute djump, wgrab;
     int mJumps = 0, cmJumps = 0;
+    bool wgrabEnabled = false;
 
     int cComboStage = 0; 
     float cComboTimer = 0, cComboLastAttackDelay = 0;
@@ -104,18 +105,9 @@ public partial class Player : PlayerController
 
         animator = GetComponent<MatAnimator>();
 
-        entityStats.SetAttribute("speed", 8f);
-        entityStats.SetAttribute("accelSpeed", 40f);
-        entityStats.SetAttribute("decelSpeed", 15f);
-        djump = entityStats.GetSetAttribute("djump", 0);
-        wgrab = entityStats.GetSetAttribute("wgrab", 0);
-        djump.onValueChanged.AddListener(OndjumpChanged);
-        wgrab.onValueChanged.AddListener(OnwgrabChanged);
-        coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
-        jumpForce = entityStats.GetSetAttribute("jumpforce", 10f);
-        airJumpForce = entityStats.GetSetAttribute("airjumpforce", 10f);
-
         asource.volume = 0.1f;
+
+        SetEntityStats();
     }
     
 
@@ -139,6 +131,7 @@ public partial class Player : PlayerController
         attackB = InputManager.SetInputKey("attackB", KeyCode.V); 
         interact = InputManager.SetInputKey("interact", KeyCode.A);
 
+
         animator.FetchAnimationData();
         //animator.FetchAnimationData(atlas_path: "Data/player_atlas");
         animator.flagActions.Add("step", OnStep);
@@ -152,17 +145,6 @@ public partial class Player : PlayerController
         swJumpAir = effs.Find("ShockwaveAirJump").GetComponent<Shockwave>();
         swJumpAir.Deactivate();
         gravityMultiplier = 1.25f;
-
-        stat_hp = entityStats.SetStat("health", 100, 100);
-        stat_sp = entityStats.SetStat("energy", 100, 100);
-        stat_mp = entityStats.SetStat("mana", 100, 100);
-
-        stat_hp.onValueChanged.AddListener(OnHealthChanged);
-        stat_sp.onValueChanged.AddListener(OnEnergyChanged);
-        stat_mp.onValueChanged.AddListener(OnManaChanged);
-
-        entityStats.onStatusEffectAdded.AddListener(OnAddEffect);
-        entityStats.onStatusEffectRemoved.AddListener(OnRemoveEffect);
 
         HUD.instance.SetStatHP(stat_hp);
         HUD.instance.SetStatSP(stat_sp);
@@ -180,6 +162,34 @@ public partial class Player : PlayerController
         intRelay.SaveColliderState("crouch", intRelayCrouch.GetComponent<Collider2D>());
 
         Room.onAnyRoomActivated.AddListener(OnRoomActivated);
+    }
+
+    void SetEntityStats()
+    {
+        entityStats.SetAttribute("speed", 8f);
+        entityStats.SetAttribute("accelSpeed", 40f);
+        entityStats.SetAttribute("decelSpeed", 15f);
+        coyoteTime = entityStats.GetSetAttribute("coyoteTime", 0.1f);
+        jumpForce = entityStats.GetSetAttribute("jumpforce", 10f);
+        airJumpForce = entityStats.GetSetAttribute("airjumpforce", 10f);
+
+        djump = entityStats.GetSetAttribute("djump", 0);
+        wgrab = entityStats.GetSetAttribute("wgrab", 0);
+
+        djump.onValueChanged.AddListener(OndjumpChanged); djump.TestValue();
+        wgrab.onValueChanged.AddListener(OnwgrabChanged); wgrab.TestValue();
+        
+
+        stat_hp = entityStats.SetStat("health", 100, 100);
+        stat_sp = entityStats.SetStat("energy", 100, 100);
+        stat_mp = entityStats.SetStat("mana", 100, 100);
+
+        stat_hp.onValueChanged.AddListener(OnHealthChanged);
+        stat_sp.onValueChanged.AddListener(OnEnergyChanged);
+        stat_mp.onValueChanged.AddListener(OnManaChanged);
+
+        entityStats.onStatusEffectAdded.AddListener(OnAddEffect);
+        entityStats.onStatusEffectRemoved.AddListener(OnRemoveEffect);
     }
 
 
@@ -697,11 +707,11 @@ public partial class Player : PlayerController
     }
 
 
-    public void OnHealthMaxChanged(float new_value)
+    public void OnHealthMaxChanged(EntityStats.Stat stat, float new_value)
     {
         damage_treshold = stat_hp.max * 0.05f;
     }
-    public void OnHealthChanged(float new_value, float old_value)
+    public void OnHealthChanged(EntityStats.Stat stat, float new_value, float old_value)
     { 
         if (old_value - new_value > damage_treshold)
         {
@@ -711,7 +721,7 @@ public partial class Player : PlayerController
         }
         if (new_value <= 0) DIEEE();
     }
-    public void OnEnergyChanged(float new_value, float old_value)
+    public void OnEnergyChanged(EntityStats.Stat stat, float new_value, float old_value)
     {
         if (new_value < old_value)
         {
@@ -719,7 +729,7 @@ public partial class Player : PlayerController
             energyMultCoroutine = StartCoroutine(IWaitEnergy(0f, 1f, 1f, 2f));
         }
     }
-    public void OnManaChanged(float new_value, float old_value)
+    public void OnManaChanged(EntityStats.Stat stat, float new_value, float old_value)
     {
         if (new_value < old_value)
         {
@@ -781,10 +791,10 @@ public partial class Player : PlayerController
     {
         asourceFeet.PlayOneShot(soundStep, 0.1f);
     }
-    
 
-    
 
+
+    int astate_end = 3;
     void OnAnimEnd()
     {
         if (isCharging > 0)
@@ -795,17 +805,17 @@ public partial class Player : PlayerController
         }
         if (attackState > 0)
         {
-            attackState = (attackState + 1) % 3;
+            attackState = (attackState + 1) % astate_end;
         }
     }
 
 
-
-    void OnwgrabChanged(float value, float lvalue)
-    { }
-    void OndjumpChanged(float value, float lvalue)
+    void OnwgrabChanged(EntityStats.Attribute attr, float value, float lvalue)
     {
-        Debug.Log($"djump {value} {lvalue}");
+        wgrabEnabled = Mathf.RoundToInt(value) > 0;
+    }
+    void OndjumpChanged(EntityStats.Attribute attr, float value, float lvalue)
+    {
         mJumps = Mathf.RoundToInt(value); 
     }
 

@@ -234,8 +234,8 @@ public class EntityStats : MonoBehaviour
         public float max_mod { get => _modmax; set => SetMod(value); }
         public float delta { get => _max > 0 ? _value / _max : 0; }
 
-        public UnityEvent<float, float> onValueChanged = new ();
-        public UnityEvent<float> onMaxChanged = new();
+        public UnityEvent<Stat, float, float> onValueChanged = new ();
+        public UnityEvent<Stat, float> onMaxChanged = new();
 
         public Stat(string name, float value = 100, float max = 100)
         { _name = name; SetMax(max); SetValue(value); }
@@ -254,7 +254,7 @@ public class EntityStats : MonoBehaviour
             _value = Mathf.Clamp(value, 0, max);
             if (_value == _vlast) return;
             _vlast = _value;
-            onValueChanged.Invoke(_value, _valtmp);
+            onValueChanged.Invoke(this, _value, _valtmp);
         }
         void SetMax(float value)
         { _max = Mathf.Max(value, 0); SetValue(_value); MaxChanged(); }
@@ -264,7 +264,7 @@ public class EntityStats : MonoBehaviour
         { _modmax = v; SetValue(_value); MaxChanged(); }
 
         void MaxChanged()
-        { onMaxChanged.Invoke(max); }
+        { onMaxChanged.Invoke(this, max); }
 
         public static implicit operator float(Stat stat)
         { return stat.value; }
@@ -277,24 +277,30 @@ public class EntityStats : MonoBehaviour
     public class Attribute
     {
         string _name;
-        float _value, _modvalue = 0, _vlast = 0;
+        float _value = 0, _modvalue = 0, _vlast = 0;
         public float value { get => _value + _modvalue; set => SetModValue(value); }
         public float value_mod { get => _modvalue; set => SetMod(value); }
         public float value_raw { get => _value; set => SetValue(value); }
         public string name { get => _name; }
-        public UnityEvent<float, float> onValueChanged = new();
+        public UnityEvent<Attribute, float, float> onValueChanged = new();//, onModChanged = new();
+
+        public void TestValue()
+        {
+            onValueChanged.Invoke(this, value, _vlast);
+        }
 
         public Attribute(string name, float value = 0)
         {
             _name = name;
-            this.value = value;
+            _value = value;
+            _vlast = value;
         }
         void SetValue(float v)
         { 
             _value = v;
-            if (_value == _vlast) return;
-            _vlast = _value;
-            onValueChanged.Invoke(_value, _vlast);
+            if (value == _vlast) return;
+            onValueChanged.Invoke(this, value, _vlast);
+            _vlast = value;
         }
         void SetModValue(float v)
         {
@@ -302,7 +308,15 @@ public class EntityStats : MonoBehaviour
             SetMod(val);
         }
         void SetMod(float v)
-        { _modvalue = v; }
+        { 
+            _modvalue = v;
+            if (value == _vlast) return;
+            onValueChanged.Invoke(this, value, _vlast);
+            _vlast = value;
+            //if (_modvalue == _mlast) return;
+            //_mlast = _modvalue;
+            //onModChanged.Invoke(_value, _vlast);
+        }
 
         public static implicit operator float(Attribute attr)
         { return attr.value; }
