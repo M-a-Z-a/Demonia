@@ -9,8 +9,13 @@ using static Utility;
 public partial class Player : PlayerController
 {
     public static Player instance { get; protected set; }
+    public static bool isAlive { get => instance.stat_hp.value > 0; }
     public static Transform pTransform { get; protected set; }
     public static Transform pDamageRelayTransform { get; protected set; }
+
+    [SerializeField] static string _saveGroup = "playerData", _saveStatsId = "EntityStats";
+    public static string saveGroup { get => _saveGroup; }
+    public static string saveStatsId { get => _saveStatsId; }
 
     MeshRenderer rend;
     Material mat;
@@ -26,13 +31,12 @@ public partial class Player : PlayerController
     bool isCrouched = false;
 
     EntityStats.Attribute coyoteTime, jumpForce, airJumpForce;
-    EntityStats.Attribute djump, wgrab;
+    EntityStats.Attribute Ability_multiJump, Ability_wallGrab, Ability_dash;
+    bool multiJumpEnabled = false, wallGrabEnabled = false, dashEnabled = false;
     int mJumps = 0, cmJumps = 0;
-    bool wgrabEnabled = false;
 
     int cComboStage = 0; 
     float cComboTimer = 0, cComboLastAttackDelay = 0;
-    float wallSlow = 1f;
 
     float anim_run_speed = 32f / 16f * 0.3f * 10f;
 
@@ -76,6 +80,13 @@ public partial class Player : PlayerController
         meleeDownAirGround = "melee.a.d.ground";
 
     string meleeUpAir = "melee.a.u";
+
+
+
+    public static UnityEngine.Events.UnityEvent<Player> OnPlayerEnabled = new();
+    public static UnityEngine.Events.UnityEvent<Player> OnPlayerDisabled = new();
+    public static UnityEngine.Events.UnityEvent<Player, Vector3> OnPlayerPositionSet = new();
+
 
     [System.Serializable]
     class ProjClass
@@ -161,7 +172,30 @@ public partial class Player : PlayerController
         damageRelay.SaveColliderState("crouch", damageRelayCrouch.GetComponent<Collider2D>());
         intRelay.SaveColliderState("crouch", intRelayCrouch.GetComponent<Collider2D>());
 
-        Room.onAnyRoomActivated.AddListener(OnRoomActivated);
+        Room.OnAnyRoomActivated.AddListener(OnRoomActivated);
+
+        LoadData(true);
+    }
+
+    public static void SetPlayerPosition(Vector2 position)
+    {
+        Vector3 tpos = instance.transform.position;
+        SetPlayerPosition(new Vector3(position.x, position.y, tpos.z)); 
+    }
+    public static void SetPlayerPosition(Vector3 position)
+    {
+        Debug.Log($"Player moved: {instance.transform.position} => {position}");
+        instance.transform.position = position;
+        OnPlayerPositionSet.Invoke(instance, position);
+    }
+
+    private void OnEnable()
+    {
+        OnPlayerEnabled.Invoke(instance);
+    }
+    private void OnDisable()
+    {
+        OnPlayerDisabled.Invoke(instance);
     }
 
     void SetEntityStats()
@@ -173,17 +207,20 @@ public partial class Player : PlayerController
         jumpForce = entityStats.GetSetAttribute("jumpforce", 10f);
         airJumpForce = entityStats.GetSetAttribute("airjumpforce", 10f);
 
-        djump = entityStats.GetSetAttribute("djump", 0);
-        wgrab = entityStats.GetSetAttribute("wgrab", 0);
+        Ability_multiJump = entityStats.GetSetAttribute("djump", 0);
+        Ability_wallGrab = entityStats.GetSetAttribute("wgrab", 0);
+        Ability_dash = entityStats.GetSetAttribute("dash", 0);
 
-        djump.onValueChanged.AddListener(OndjumpChanged); djump.TestValue();
-        wgrab.onValueChanged.AddListener(OnwgrabChanged); wgrab.TestValue();
-        
+        Ability_multiJump.onValueChanged.AddListener(OnAbilityChanged_MultiJump); Ability_multiJump.TestValue();
+        Ability_wallGrab.onValueChanged.AddListener(OnAbilityChanged_WallGrab); Ability_wallGrab.TestValue();
+        Ability_dash.onValueChanged.AddListener(OnAbilityChanged_Dash); Ability_dash.TestValue();
 
         stat_hp = entityStats.SetStat("health", 100, 100);
-        stat_sp = entityStats.SetStat("energy", 100, 100);
-        stat_mp = entityStats.SetStat("mana", 100, 100);
+        stat_sp = entityStats.SetStat("energy", 0, 0);
+        stat_mp = entityStats.SetStat("mana", 0, 0);
 
+        stat_hp.onMaxChanged.AddListener(OnHpMaxChanged);
+        stat_sp.onMaxChanged.AddListener(OnSpMaxChanged);
         stat_hp.onValueChanged.AddListener(OnHealthChanged);
         stat_sp.onValueChanged.AddListener(OnEnergyChanged);
         stat_mp.onValueChanged.AddListener(OnManaChanged);
@@ -204,8 +241,9 @@ public partial class Player : PlayerController
         stat_sp.value += 10 * energyMult * Time.deltaTime;
         stat_mp.value += 20 * manaMult * Time.deltaTime;
 
-        if (stat_mp.value < 50f)
-        { stat_hp.value -= (1f - stat_mp.value / 50f) * 5f * Time.deltaTime; }
+        float mphalf = stat_mp.max / 2;
+        if (mphalf > 0 && stat_mp.value < mphalf)
+        { stat_hp.value -= (1f - stat_mp.value / mphalf) * 5f * Time.deltaTime; }
 
         dir = (Vector2)inputVector;
 
@@ -235,7 +273,7 @@ public partial class Player : PlayerController
 
         if (isCharging < 1 && attackState < 1 && cComboTimer <= 0)
         {
-            if (!isCrouched && dash.down && (dir.x != 0 || dir.y != 0))
+            if (!isCrouched && dash.down && dashEnabled && (dir.x != 0 || dir.y != 0))
             {
                 Vector2 dnorm = dir.normalized;
                 for (int i = 0; i < dashTrails.Length; i++)
@@ -341,13 +379,14 @@ public partial class Player : PlayerController
             {
                 if (dir.y > 0)
                 {
+                    animator.SetState("idle");
                     animator.SetState(meleeUpAir);
-                    attackState = 2; goto AIR_OUT;
+                    attackState = 2; //goto AIR_OUT;
                     //StartCoroutine(IHoldAirAttack(dir)); goto AIR_OUT; 
                 }
                 else if (dir.y < 0)
                 {
-                    StartCoroutine(IHoldAirAttack(dir)); goto AIR_OUT;
+                    StartCoroutine(IHoldAirAttack(dir)); //goto AIR_OUT;
                 }
 
                 goto AIR_OUT;
@@ -384,7 +423,7 @@ public partial class Player : PlayerController
                     StartCoroutine(IWaitJumpRelease());
                 }
             }
-            else if (wallLeft)
+            else if (wallLeft && wallGrabEnabled)
             {
                 if ((dir.x < 0 || wgInit) && velocity.y <= 0) {
                     wgInit = true;
@@ -408,7 +447,7 @@ public partial class Player : PlayerController
                 { animator.SetState("air_ascend"); wgInit = false; }
 
             }
-            else if (wallRight)
+            else if (wallRight && wallGrabEnabled)
             {
                 if ((dir.x > 0 || wgInit) && velocity.y <= 0) {
                     wgInit = true;
@@ -430,7 +469,6 @@ public partial class Player : PlayerController
                 }
                 else
                 { animator.SetState("air_ascend"); wgInit = false; }
-
             }
             else if(jump.down && dir.y > 0 && cmJumps > 0 && stat_sp.TryConsume(25f))// && _velocity.y <= 0 && _velocity.y > -10f)
             {
@@ -737,6 +775,36 @@ public partial class Player : PlayerController
             manaMultCoroutine = StartCoroutine(IWaitMana(0f, 1f, 1f, 2f));
         }
     }
+    void OnHpMaxChanged(EntityStats.Stat stat, float value)
+    {
+        Debug.Log($"OnHpMaxChanged() => value: {value}");
+        HUD.instance.SetHPBarWidth(value);
+    }
+    void OnSpMaxChanged(EntityStats.Stat stat, float value)
+    {
+        Debug.Log($"OnSpMaxChanged() => value: {value}");
+        HUD.instance.SetSPBarActive(value > 0);
+        HUD.instance.SetSPBarWidth(value);
+    }
+    void OnAbilityChanged_Dash(EntityStats.Attribute attr, float value, float lvalue)
+    {
+        dashEnabled = value > 0;
+        if (dashEnabled && stat_mp.max_raw < 100)
+        { stat_mp.max_raw = 100; stat_mp.Refill(); }
+    }
+    void OnAbilityChanged_WallGrab(EntityStats.Attribute attr, float value, float lvalue)
+    {
+        wallGrabEnabled = value > 0;
+        Debug.Log($"wallgrab(enabled:{wallGrabEnabled}) value:{value}");
+    }
+    void OnAbilityChanged_MultiJump(EntityStats.Attribute attr, float value, float lvalue)
+    {
+        mJumps = Mathf.RoundToInt(value);
+        cmJumps = mJumps;
+        multiJumpEnabled = cmJumps > 0;
+        if (multiJumpEnabled && stat_sp.max_raw < 50)
+        { stat_sp.max_raw = 50; stat_sp.Refill(); }
+    }
 
 
     IEnumerator IWaitMana(float mult0 = 0f, float mult1 = 1f, float multEnd = 1f, float time = 2f)
@@ -810,21 +878,16 @@ public partial class Player : PlayerController
     }
 
 
-    void OnwgrabChanged(EntityStats.Attribute attr, float value, float lvalue)
-    {
-        wgrabEnabled = Mathf.RoundToInt(value) > 0;
-    }
-    void OndjumpChanged(EntityStats.Attribute attr, float value, float lvalue)
-    {
-        mJumps = Mathf.RoundToInt(value); 
-    }
+    
 
 
     void DIEEE()
     {
+        Debug.Log("Player died");
         swDeath.Activate();
         StartCoroutine(IDeathFade(0.1f, 0.2f));
-        GameManager.Reset_Game_Fade();
+        //GameManager.Reset_Game();
+        GameManager.Reset_Game_Fade(GameManager.ResetGameMode.ToSavepoint);
     }
 
 
@@ -861,11 +924,11 @@ public partial class Player : PlayerController
                 //DIEEE();
                 //break;
             case "Checkpoint":
-                if (collision.gameObject.TryGetComponent<Checkpoint>(out var cp))
+                if (collision.TryGetComponent<Checkpoint>(out var cp))
                 { cp.SetActiveCheckpoint(); }
                 break;
             case "Collectable":
-                if (collision.gameObject.TryGetComponent<CollectRelay>(out var cr))
+                if (collision.TryGetComponent<CollectRelay>(out var cr))
                 { cr.Collect(this); }
                 break;
         }
@@ -918,7 +981,7 @@ public partial class Player : PlayerController
 
     public void OnRoomActivated(Room active_room, Room last_active_room) 
     {
-        if (active_room.isDarkRoom)
+        if (active_room.hasRoomFlags(Room.RoomFlag.DarkRoom))
         {
             playerLight.intensity = 0.75f;
             playerLight.pointLightInnerRadius = 0f;
@@ -936,5 +999,23 @@ public partial class Player : PlayerController
         }
     }
 
+
+    public static void SaveData(bool force_save = false)
+    {
+        if (isAlive || force_save)
+        {
+            Debug.Log("player_saved");
+            SaveManager.GetPlayerEntityStats().PushValues(instance.entityStats); 
+        }
+    }
+    public static void LoadData(bool full_load = false)
+    { 
+        SaveManager.GetPlayerEntityStats().PullValues(instance.entityStats);
+        foreach (string k in instance.entityStats.stats.Keys)
+        { instance.entityStats.stats[k].TestMax(); }
+        if (full_load) 
+        { SetPlayerPosition(GameManager.Savepoint.position); }
+        Debug.Log("player_loaded");
+    }
 
 }

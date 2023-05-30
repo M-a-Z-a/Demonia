@@ -106,12 +106,12 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
-    - _Volume: 0.10000001
+    - _Volume: NaN
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 0.1981132, g: 0.017755425, b: 0.07561881, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Position: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _Position: {r: NaN, g: NaN, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &5601524055967884711
 MonoBehaviour:

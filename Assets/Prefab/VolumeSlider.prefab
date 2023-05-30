@@ -308,7 +308,7 @@ MonoBehaviour:
   namePrefix: Slider
   mixer: {fileID: 24100000, guid: f469ffd82fa74174c8210656ab57d5a6, type: 2}
   exposedValue: Master_volume
-  min_value: -80
+  min_value: -40
   max_value: 0
   _valueExists: 1
 --- !u!1 &5352791514860030271

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using System.Text.RegularExpressions;
+using Unity.VisualScripting;
 
 public class EntityStats : MonoBehaviour
 {
@@ -14,7 +15,9 @@ public class EntityStats : MonoBehaviour
     [SerializeField] Dictionary<string, Stat> _stats = new();
     [SerializeField] Dictionary<string, Attribute> _attributes = new();
     [SerializeField] List<StatusEffect> _statusEffects = new();
-    Dictionary<string, int> _flags = new();
+    [SerializeField] Dictionary<string, int> _flags = new();
+    Dictionary<string, float> _statMods = new(), _attrMods = new();
+
 
     [SerializeField] string entityStatsPath = "";
     static string _gEntityStatsPath = "Data/stats_default";
@@ -24,9 +27,9 @@ public class EntityStats : MonoBehaviour
 
     public delegate void OnDamageDelegate(float value, float percentage);
 
-    [SerializeField] public UnityEvent<StatusEffect> onStatusEffectAdded = new(), onStatusEffectRemoved = new();
-    [SerializeField] public UnityEvent<Attribute> onAttributeAdded = new();
-    [SerializeField] public UnityEvent<Stat> onStatAdded = new();
+    [NonSerialized] public UnityEvent<StatusEffect> onStatusEffectAdded = new(), onStatusEffectRemoved = new();
+    [NonSerialized] public UnityEvent<Attribute> onAttributeAdded = new();
+    [NonSerialized] public UnityEvent<Stat> onStatAdded = new();
 
 
     private void Awake()
@@ -150,6 +153,37 @@ public class EntityStats : MonoBehaviour
         return false;
     }
 
+
+    void UpdateMods()
+    {
+        Attribute attr;
+        Stat stat;
+        foreach (string k in _attrMods.Keys)
+        {
+            if (!_attributes.TryGetValue(k, out attr)) continue;
+            attr.value_mod += _attrMods[k];
+        }
+        foreach (string k in _statMods.Keys)
+        {
+            if (!_stats.TryGetValue(k, out stat)) continue;
+            stat.max_mod += _statMods[k];
+        }
+    }
+    bool UpdateStatMod(string stat_name)
+    {
+        if (!_stats.TryGetValue(stat_name, out Stat stat)) return false;
+        if (_statMods.TryGetValue(stat_name, out float value))
+        { stat.max_mod += value; }
+        return true;
+    }
+    bool UpdateAttrMod(string attr_name)
+    {
+        if (!_attributes.TryGetValue(attr_name, out Attribute attr)) return false;
+        if (_attrMods.TryGetValue(attr_name, out float value))
+        { attr.value_mod += value; }
+        return true;
+    }
+
     /*
     public void UpdateEffects()
     {
@@ -225,7 +259,7 @@ public class EntityStats : MonoBehaviour
     [System.Serializable]
     public class Stat
     {
-        string _name;
+        [SerializeField] string _name;
         [SerializeField] float _value = 0, _max, _modmax = 0, _vlast = 0;
         public string name { get => _name; }
         public float value { get => _value; set => SetValue(value); }
@@ -234,8 +268,19 @@ public class EntityStats : MonoBehaviour
         public float max_mod { get => _modmax; set => SetMod(value); }
         public float delta { get => _max > 0 ? _value / _max : 0; }
 
-        public UnityEvent<Stat, float, float> onValueChanged = new ();
-        public UnityEvent<Stat, float> onMaxChanged = new();
+        [NonSerialized] public UnityEvent<Stat, float, float> onValueChanged = new ();
+        [NonSerialized] public UnityEvent<Stat, float> onMaxChanged = new();
+
+        public void TestMax()
+        { onMaxChanged.Invoke(this, max); }
+        public void TestValue()
+        { onValueChanged.Invoke(this, _value, _value); }
+
+        public void Refill()
+        { value = max; }
+
+        public void SetValues(float value, float max)
+        { _max = max; SetValue(value); onMaxChanged.Invoke(this, max); }
 
         public Stat(string name, float value = 100, float max = 100)
         { _name = name; SetMax(max); SetValue(value); }
@@ -257,10 +302,17 @@ public class EntityStats : MonoBehaviour
             onValueChanged.Invoke(this, _value, _valtmp);
         }
         void SetMax(float value)
-        { _max = Mathf.Max(value, 0); SetValue(_value); MaxChanged(); }
+        {
+            float v = _max;
+            _max = Mathf.Max(value, 0);
+            float vdiff = _max - v;
+            if (_value > 0) { SetValue(Mathf.Max(_value + vdiff, 1)); }
+            else { SetValue(_value + vdiff); }
+            MaxChanged(); 
+        }
         void SetModMax(float v)
         { SetMod(v - _max); }
-        void SetMod(float v)
+        void SetMod(float v, bool maxchanged = true)
         { _modmax = v; SetValue(_value); MaxChanged(); }
 
         void MaxChanged()
@@ -274,15 +326,16 @@ public class EntityStats : MonoBehaviour
         { return $"{stat.value}"; }
     }
 
+    [System.Serializable]
     public class Attribute
     {
-        string _name;
-        float _value = 0, _modvalue = 0, _vlast = 0;
+        [SerializeField] string _name;
+        [SerializeField] float _value = 0, _modvalue = 0, _vlast = 0;
         public float value { get => _value + _modvalue; set => SetModValue(value); }
         public float value_mod { get => _modvalue; set => SetMod(value); }
         public float value_raw { get => _value; set => SetValue(value); }
         public string name { get => _name; }
-        public UnityEvent<Attribute, float, float> onValueChanged = new();//, onModChanged = new();
+        [NonSerialized] public UnityEvent<Attribute, float, float> onValueChanged = new();//, onModChanged = new();
 
         public void TestValue()
         {
@@ -293,8 +346,9 @@ public class EntityStats : MonoBehaviour
         {
             _name = name;
             _value = value;
-            _vlast = value;
+            _vlast = this.value;
         }
+
         void SetValue(float v)
         { 
             _value = v;
@@ -313,9 +367,6 @@ public class EntityStats : MonoBehaviour
             if (value == _vlast) return;
             onValueChanged.Invoke(this, value, _vlast);
             _vlast = value;
-            //if (_modvalue == _mlast) return;
-            //_mlast = _modvalue;
-            //onModChanged.Invoke(_value, _vlast);
         }
 
         public static implicit operator float(Attribute attr)
@@ -467,6 +518,167 @@ public class EntityStats : MonoBehaviour
 
         public static implicit operator string(JsonAttribute jattr)
         { return jattr.GetString(); }
+    }
+
+}
+
+
+
+
+[System.Serializable]
+[CreateAssetMenu(fileName = "SaveDataAsset(EntityStats)", menuName = "SaveData/EntityStats")]
+public class SaveDataAssetEntityStats : ScriptableObject
+{
+    [SerializeField] Dictionary<string, EntityStats.Stat> stats = new();
+    [SerializeField] Dictionary<string, EntityStats.Attribute> attributes = new();
+
+    public void PushValues(EntityStats estats, bool push_attributes = true, bool push_stats = true)
+    {
+        EntityStats.Attribute attr, attr_out;
+        EntityStats.Stat stat, stat_out;
+        if (push_stats)
+        {
+            foreach (string k in estats.stats.Keys)
+            {
+                stat = estats.stats[k];
+                if (stats.TryGetValue(k, out stat_out))
+                {
+                    stat_out.SetValues(stat.value, stat.max_raw);
+                    continue;
+                }
+                stats.Add(k, new EntityStats.Stat(k, stat.value, stat.max_raw));
+            }
+        }
+        if (push_attributes)
+        {
+            foreach (string k in estats.attributes.Keys)
+            {
+                attr = estats.attributes[k];
+                if (attributes.TryGetValue(k, out attr_out))
+                {
+                    attr_out.value_raw = attr.value_raw;
+                    continue;
+                }
+                attributes.Add(k, new EntityStats.Attribute(k, attr.value_raw));
+            }
+        } 
+
+        Debug.Log($"saved health: {(stats.TryGetValue("health", out EntityStats.Stat hstat) ? hstat.value : "none")}");
+    }
+
+    public void PullValues(EntityStats estats, bool pull_attributes = true, bool pull_stats = true)
+    {
+        EntityStats.Attribute attr, attr_out;
+        EntityStats.Stat stat, stat_out;
+        
+        if (pull_attributes)
+        {
+            foreach (string k in attributes.Keys)
+            {
+                attr = attributes[k];
+                if (estats.attributes.TryGetValue(k, out attr_out))
+                {
+                    attr_out.value_raw = attr.value_raw;
+                    continue; 
+                }
+                estats.SetAttribute(k, attr.value_raw);
+            }
+        }
+        if (pull_stats)
+        {
+            foreach (string k in stats.Keys)
+            {
+                stat = stats[k];
+                if (estats.stats.TryGetValue(k, out stat_out))
+                {
+                    stat_out.SetValues(stat.value, stat.max_raw);
+                    continue;
+                }
+                estats.SetStat(k, stat.value, stat.max_raw);
+            }
+        }
+    }
+
+
+    public void Clear()
+    {
+        stats = new();
+        attributes = new();
+    }
+
+    public string ToJson()
+    { 
+        SaveDataAssetEntityStatsWrapper wrapper = new SaveDataAssetEntityStatsWrapper();
+
+        wrapper.stats = new();
+        foreach (string k in stats.Keys)
+        { wrapper.stats.Add(new StatWrapper(stats[k])); }
+
+        wrapper.attributes = new();
+        foreach (string k in attributes.Keys)
+        { wrapper.attributes.Add(new AttributeWrapper(attributes[k])); }
+
+        return JsonUtility.ToJson(wrapper, true);
+    }
+    public void FromJson(string json)
+    {
+        SaveDataAssetEntityStatsWrapper wrapper = JsonUtility.FromJson<SaveDataAssetEntityStatsWrapper>(json);
+        stats = new();
+        attributes = new();
+        EntityStats.Stat estat;
+        EntityStats.Attribute eattr;
+        foreach (StatWrapper statw in wrapper.stats)
+        {
+            estat = new EntityStats.Stat(statw.name, statw.value, statw.max);
+            stats.Add(statw.name, estat);
+        }
+        foreach (AttributeWrapper attrw in wrapper.attributes)
+        {
+            eattr = new EntityStats.Attribute(attrw.name, attrw.value);
+            attributes.Add(attrw.name, eattr);
+        }
+    }
+
+    [System.Serializable]
+    public class SaveDataAssetEntityStatsWrapper
+    {
+        public List<StatWrapper> stats;
+        public List<AttributeWrapper> attributes;
+    }
+    [System.Serializable]
+    public class StatWrapper
+    {
+        public string name;
+        public float value, max;
+        public StatWrapper(EntityStats.Stat stat)
+        {
+            name = stat.name;
+            value = stat.value;
+            max = stat.max_raw;
+        }
+        public bool SetStat(EntityStats.Stat stat)
+        {
+            if (stat.name != name) return false;
+            stat.SetValues(value, max);
+            return true;
+        }
+    }
+    [System.Serializable]
+    public class AttributeWrapper
+    {
+        public string name;
+        public float value;
+        public AttributeWrapper(EntityStats.Attribute attribute)
+        {
+            name = attribute.name;
+            value = attribute.value_raw;
+        }
+        public bool SetAttribute(EntityStats.Attribute attribute)
+        {
+            if (attribute.name != name) return false;
+            attribute.value_raw = value;
+            return true;
+        }
     }
 
 }

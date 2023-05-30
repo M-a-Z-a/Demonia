@@ -26,10 +26,10 @@ public class PlasmaBall : Entity
     protected override void Start()
     {
         base.Start();
-        LineRenderer lr;
+        LineRenderer lr = GetComponent<LineRenderer>();
         for (int i = 0; i < shockCount; i++)
         {
-            lr = LineManager.CreateLineRenderer();
+            //lr = LineManager.CreateLineRenderer();
             lr.positionCount = 10;
             lr.widthMultiplier = 1f;
             lr.enabled = false;

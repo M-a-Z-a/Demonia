@@ -19,6 +19,7 @@ public class Area : MonoBehaviour
     Transform objects, entities;
     Light2D ambientLight;
     public bool ambientEnabled = true;
+    public bool loadConnectedOnly = true;
 
     public bool lockRoom = false;
     private void OnValidate()
@@ -47,6 +48,7 @@ public class Area : MonoBehaviour
     }
     private void Start()
     {
+
         SortEntities();
         //rooms = new(gameObject.GetComponentsInChildren<Room>(true));
         Debug.Log($"room count: {rooms.Count}");
@@ -54,8 +56,7 @@ public class Area : MonoBehaviour
         { 
             foreach (Room r in rooms)
             { r.Init(); r.Unload(); }
-            //rooms[0].Activate(); 
-            Player.pTransform.position = GameManager.Checkpoint.position;
+            Player.SetPlayerPosition(GameManager.Checkpoint.position);
             if (FindPlayerRoom(out Room rm))
             { rm.Activate(); }
         }
@@ -69,21 +70,47 @@ public class Area : MonoBehaviour
             if (ActiveRoom && !ActiveRoom.PointInRoom(Player.pTransform.position))
             {
                 bool pfound = false;
+                Room lroom = ActiveRoom;
                 for (int i = 0; i < ActiveRoom.connectedRooms.Count; i++)
                 {
                     if (ActiveRoom.connectedRooms[i].roomWorldBounds.Contains(Player.pTransform.position))
                     { ActiveRoom.connectedRooms[i].Activate(); pfound = true; break; }
                 }
                 Room proom = ActiveRoom;
-                if (pfound == false)
-                {
+                if (!loadConnectedOnly && pfound == false)
+                { 
                     if (FindPlayerRoom(out proom))
                     {
                         proom.Activate();
                         pfound = true;
                     }
                 }
-                Debug.Log(pfound ? $"player in room: {proom.gameObject.name}" : "player lost?");
+                if (pfound)
+                {
+                    Debug.Log($"player in room: {proom.gameObject.name}");
+                    if (proom.hasRoomFlags(RoomFlag.SaveRoom))
+                    {
+                        //SaveManager.SetVector("player_position", proom.roomWorldBounds.center);
+                        GameManager.SetActiveSavepoint(proom.roomWorldBounds.center);
+                        GameManager.SetActiveCheckpoint(proom.roomWorldBounds.center);
+                        Player.SaveData();
+                        SaveManager.SaveDataToFile();
+                    }
+                    else if (lroom.hasRoomFlags(RoomFlag.SaveRoom))
+                    {
+                        Player.SaveData();
+                    }
+                }
+                else
+                {
+                    Debug.Log("player lost?");
+                    Player.SetPlayerPosition(GameManager.Checkpoint.position);
+                    //Player.pTransform.position = ;
+                    if (FindPlayerRoom(out Room rm))
+                    { 
+                        rm.Activate();
+                    }
+                }
             }
         }
     }
@@ -209,9 +236,10 @@ public class Area : MonoBehaviour
                 { tlist.Add(t); }
             }
         }
-        int t_count = tlist.Count;
+        int t_count;
         foreach (Room r in rooms)
         {
+            t_count = tlist.Count;
             for (int i = t_count - 1; i >= 0; i--)
             {
                 if (r.PointInRoom(tlist[i].position))
@@ -224,6 +252,12 @@ public class Area : MonoBehaviour
         }
         foreach (Transform t in tlist)
         { t.parent = objects; }
+    }
+
+
+    void OnRoomChanged()
+    {
+
     }
 }
 

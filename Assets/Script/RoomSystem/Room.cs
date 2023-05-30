@@ -13,9 +13,10 @@ using UnityEditor;
 
 public class Room : MonoBehaviour
 {
-    public static UnityEvent<Room, Room> onAnyRoomActivated = new();
+    public static UnityEvent<Room, Room> OnAnyRoomActivated = new();
 
     public enum RoomState { Disabled = 0, Enabled, Active };
+    [Flags] public enum RoomFlag { SaveRoom = 1, DarkRoom = 2 }
     public static Room ActiveRoom { get; protected set; }
 
     public string roomName { get => _roomName; protected set => UpdateName(value); }
@@ -27,12 +28,18 @@ public class Room : MonoBehaviour
     [SerializeField] bool overrideAreaAmbient = false;
     [SerializeField] Color roomAmbientColor = Color.black;
     [SerializeField] float roomAmbientIntensity = 1f;
-    [SerializeField] bool darkRoom = false;
-    public bool isDarkRoom { get => darkRoom; }
+    [SerializeField] RoomFlag _roomFlags;
+    public RoomFlag roomFlags { get => _roomFlags; }
+    public bool hasRoomFlags(RoomFlag flags)
+    { return (_roomFlags & flags) != 0; }
+    //[SerializeField] bool darkRoom = false;
+    //public bool isDarkRoom { get => (_roomFlags & RoomFlag.DarkRoom) != 0; }
 
     [SerializeField] bool overrideAreaMusic = false;
     [SerializeField] AudioClip roomMusic;
     [SerializeField] float roomMusicVolume = 1f;
+
+    public Vector2 cameraPaddingMin = new Vector2(1f, 1f), cameraPaddingMax = new Vector2(1f, 1f);
 
     public Rect roomWorldBounds;
     public bool firstLoad = true;
@@ -45,9 +52,12 @@ public class Room : MonoBehaviour
     bool firstInit = true;
 
     TilemapLayerGroup lgroup;
-    
+
     public void GetLayerGroup()
-    { lgroup = GetComponentInChildren<TilemapLayerGroup>(); }
+    { 
+        lgroup = GetComponentInChildren<TilemapLayerGroup>();
+        lgroup?.OnValidate();
+    }
 
     public void GetAmbientLight(out Color light_color, out float light_intensity)
     {
@@ -64,6 +74,8 @@ public class Room : MonoBehaviour
     {
         Vector3 rposmin = transform.position + (Vector3)roomBounds.min;
         Vector3 rposmax = transform.position + (Vector3)roomBounds.max;
+
+        // draw room bounds
         Gizmos.color = Color.yellow;
         Gizmos.DrawRay(rposmin, new Vector3(roomBounds.width, 0, 0));
         Gizmos.DrawRay(rposmin, new Vector3(0, roomBounds.height, 0));
@@ -83,13 +95,26 @@ public class Room : MonoBehaviour
     }
     protected virtual void OnDrawGizmosSelected()
     {
+        // draw outline
+        Gizmos.color = Color.white;
         Vector3 rposmin = transform.position + (Vector3)roomBounds.min - new Vector3(0.5f, 0.5f, 0f);
         Vector3 rposmax = transform.position + (Vector3)roomBounds.max + new Vector3(0.5f, 0.5f, 0f);
-        Gizmos.color = Color.white;
         Gizmos.DrawRay(rposmin, new Vector3(roomBounds.width + 1f, 0, 0));
         Gizmos.DrawRay(rposmin, new Vector3(0, roomBounds.height + 1f, 0));
         Gizmos.DrawRay(rposmax, new Vector3(-roomBounds.width-1f, 0, 0));
         Gizmos.DrawRay(rposmax, new Vector3(0, -roomBounds.height-1f, 0));
+
+        Vector2 cpcomb = cameraPaddingMin + cameraPaddingMax;
+        // draw camera bounds
+        Gizmos.color = new Color(0,1f,0,0.5f);
+        rposmin = transform.position + (Vector3)roomBounds.min + (Vector3)cameraPaddingMin;
+        rposmax = transform.position + (Vector3)roomBounds.max - (Vector3)cameraPaddingMax;
+        //rposmin = transform.position + (Vector3)roomBounds.min - new Vector3(0.5f, 0.5f, 0f) + (Vector3)cameraPaddingMin;
+        //rposmax = transform.position + (Vector3)roomBounds.max + new Vector3(0.5f, 0.5f, 0f) - (Vector3)cameraPaddingMax;
+        Gizmos.DrawRay(rposmin, new Vector3(roomBounds.width - cpcomb.x, 0, 0));
+        Gizmos.DrawRay(rposmin, new Vector3(0, roomBounds.height - cpcomb.y, 0));
+        Gizmos.DrawRay(rposmax, new Vector3(-roomBounds.width + cpcomb.x, 0, 0));
+        Gizmos.DrawRay(rposmax, new Vector3(0, -roomBounds.height + cpcomb.y, 0));
 
         Vector2 rpos = roomWorldBounds.center;
         Vector2 dist;
@@ -237,7 +262,7 @@ public class Room : MonoBehaviour
         ppos.y = Mathf.Clamp(ppos.y, roomWorldBounds.yMin + 2, roomWorldBounds.yMax - 2);
         GameManager.Checkpoint.position = ppos;
 
-        onAnyRoomActivated.Invoke(ActiveRoom, laroom);
+        OnAnyRoomActivated.Invoke(ActiveRoom, laroom);
 
         return true;
     }
@@ -323,7 +348,7 @@ public class Room : MonoBehaviour
 [CanEditMultipleObjects]
 public class RoomEditor : Editor
 {
-
+    static bool draggingEnabled = false;
     Room instance;
     static Vector2 snapOffset = new Vector2(0.5f, 0.5f);
     static bool isOffset = true;

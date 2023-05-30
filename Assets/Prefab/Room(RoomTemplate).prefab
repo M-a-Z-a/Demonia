@@ -45,8 +45,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9867c880b9c85440ad646c05c4ec1b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  room: {fileID: 5813804451100629938}
   tmapNamePrefix: RoomTemplate
+  area: {fileID: 0}
+  room: {fileID: 5813804451100629938}
+  layers:
+  - {fileID: 7924545206886749854}
 --- !u!1 &3189189432614736982
 GameObject:
   m_ObjectHideFlags: 0
@@ -167,10 +170,12 @@ MonoBehaviour:
   overrideAreaAmbient: 0
   roomAmbientColor: {r: 0, g: 0, b: 0, a: 1}
   roomAmbientIntensity: 1
-  darkRoom: 0
+  _roomFlags: 0
   overrideAreaMusic: 0
   roomMusic: {fileID: 0}
   roomMusicVolume: 1
+  cameraPaddingMin: {x: 1, y: 1}
+  cameraPaddingMax: {x: 1, y: 1}
   roomWorldBounds:
     serializedVersion: 2
     x: 0
@@ -199,7 +204,7 @@ GameObject:
   - component: {fileID: 4610858627199878368}
   - component: {fileID: 426084831575044460}
   m_Layer: 10
-  m_Name: RoomTemplate(Main)
+  m_Name: RoomTemplate[Main]
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -233,9 +238,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   layerName: Main
-  _room: {fileID: 5813804451100629938}
-  _area: {fileID: 0}
-  _group: {fileID: 3020157787941662520}
+  room: {fileID: 5813804451100629938}
+  area: {fileID: 0}
+  group: {fileID: 3020157787941662520}
+  rend: {fileID: 6467104727265871976}
+  tmap: {fileID: 6244105144240880840}
 --- !u!1839735485 &6244105144240880840
 Tilemap:
   m_ObjectHideFlags: 0

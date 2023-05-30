@@ -185,7 +185,7 @@ public class AI_Boss : EntityController
             foreach (ProjectileControlled missile in missiles)
             {
                 missile.UpdateLifetime();
-                missile.RotateTowards(target.position, (missile.TimeToLive / 3f * 135f + 45f) * Time.deltaTime, out movef);
+                missile.RotateTowards(target.position, (missile.TimeToLive / 3f * (135f + (90f * _rageLevel)) + 45f) * Time.deltaTime, out movef);
                 missile.MoveForward(10f * Time.deltaTime);
             }
         }

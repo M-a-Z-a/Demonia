@@ -113,4 +113,6 @@ public abstract class StatusEffect
         yield return new WaitForEndOfFrame();
     }
 
+    public virtual void Refresh()
+    { }
 }
